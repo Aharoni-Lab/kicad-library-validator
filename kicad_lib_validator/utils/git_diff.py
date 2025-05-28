@@ -11,7 +11,7 @@ def get_changed_files(
     library_path: Path,
     compare_commit: str,
     log_level: int = logging.INFO
-) -> Dict[Path, str]:
+) -> Dict[str, str]:
     """
     Get files that have changed since a specific commit.
     
@@ -31,7 +31,7 @@ def get_changed_files(
         handler.setFormatter(formatter)
         logger.addHandler(handler)
     
-    changed_files = {}
+    changed_files: Dict[str, str] = {}
     
     try:
         # Get list of changed files
@@ -45,21 +45,10 @@ def get_changed_files(
         
         # Parse output
         for line in result.stdout.splitlines():
-            status, file_path = line.split(maxsplit=1)
-            file_path = library_path / file_path
-            
-            # Map git status to our status
-            if status == 'A':
-                changed_files[file_path] = 'new'
-            elif status == 'M':
-                changed_files[file_path] = 'modified'
-            elif status == 'D':
-                changed_files[file_path] = 'deleted'
-            elif status == 'R':
-                # Renamed files have format: R100 old_path new_path
-                _, old_path, new_path = line.split(maxsplit=2)
-                changed_files[library_path / new_path] = 'modified'
-                changed_files[library_path / old_path] = 'deleted'
+            status, *file_path = line.split("\t")
+            if file_path:
+                file_str = file_path[-1]
+                changed_files[file_str] = status
         
         logger.info(f"Found {len(changed_files)} changed files")
         

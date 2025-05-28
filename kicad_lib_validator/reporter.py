@@ -306,7 +306,7 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         changed_files = {}
         for file_path, status in get_changed_files(self.library_path, compare_commit).items():
             changed_files[str(file_path)] = FileStatus(
-                path=file_path,
+                path=Path(file_path),
                 status=status
             )
         return changed_files
@@ -315,12 +315,15 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         """Get the markdown status marker for a file."""
         if not changed_files:
             return ""
-        
         status = changed_files.get(file_path, "unchanged")
+        if isinstance(status, FileStatus):
+            status_key = status.status
+        else:
+            status_key = str(status)
         markers = {
             "new": "🆕",
             "modified": "📝",
             "deleted": "🗑️",
             "unchanged": ""
         }
-        return markers.get(status, "") 
+        return markers.get(status_key, "") 

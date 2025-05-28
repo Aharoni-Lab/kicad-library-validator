@@ -2,7 +2,7 @@
 Parser for the actual KiCad library contents, using the structure definition.
 """
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 from kicad_lib_validator.models import (
     KiCadLibrary, Symbol, Footprint, Model3D, Documentation, LibraryStructure
 )
@@ -48,10 +48,10 @@ def parse_library(library_root: Path, structure: LibraryStructure) -> KiCadLibra
     return library
 
 
-def parse_symbol_file(file_path: Path, library_name: str, structure: LibraryStructure, library_root: Path) -> list[Symbol]:
+def parse_symbol_file(file_path: Path, library_name: str, structure: LibraryStructure, library_root: Path) -> List[Symbol]:
     """Parse a KiCad symbol file and extract symbols and their properties."""
     logging.debug(f"Parsing symbol file: {file_path}")
-    symbols = []
+    symbols: List[Symbol] = []
     try:
         # Get the relative path from the symbols directory
         symbols_dir = (library_root / structure.library.directories.symbols).resolve()
@@ -100,11 +100,11 @@ def parse_symbol_file(file_path: Path, library_name: str, structure: LibraryStru
     return symbols
 
 
-def _find_symbols(library_root: Path, structure: LibraryStructure) -> list[Symbol]:
+def _find_symbols(library_root: Path, structure: LibraryStructure) -> List[Symbol]:
     """
     Find all symbol files in the library and parse them.
     """
-    symbols = []
+    symbols: List[Symbol] = []
     symbols_dir = library_root / structure.library.directories.symbols
     abs_symbols_dir = symbols_dir.resolve()
     logger.info(f"Searching for symbol files in: {abs_symbols_dir}")
@@ -121,10 +121,10 @@ def _find_symbols(library_root: Path, structure: LibraryStructure) -> list[Symbo
     return symbols
 
 
-def parse_footprint_file(file_path: Path, library_name: str, structure: LibraryStructure, library_root: Path) -> list[Footprint]:
+def parse_footprint_file(file_path: Path, library_name: str, structure: LibraryStructure, library_root: Path) -> List[Footprint]:
     """Parse a KiCad footprint file and extract footprint names and properties."""
     logging.debug(f"Parsing footprint file: {file_path}")
-    footprints = []
+    footprints: List[Footprint] = []
     try:
         # Get the relative path from the footprints directory
         footprints_dir = (library_root / structure.library.directories.footprints).resolve()
@@ -169,11 +169,11 @@ def parse_footprint_file(file_path: Path, library_name: str, structure: LibraryS
     return footprints
 
 
-def _find_footprints(library_root: Path, structure: LibraryStructure) -> list[Footprint]:
+def _find_footprints(library_root: Path, structure: LibraryStructure) -> List[Footprint]:
     """
     Find all footprint files in the library and parse them.
     """
-    footprints = []
+    footprints: List[Footprint] = []
     footprints_dir = library_root / structure.library.directories.footprints
     abs_footprints_dir = footprints_dir.resolve()
     logger.info(f"Searching for footprint files in: {abs_footprints_dir}")
@@ -190,8 +190,8 @@ def _find_footprints(library_root: Path, structure: LibraryStructure) -> list[Fo
     return footprints
 
 
-def _find_models_3d(library_root: Path, structure: LibraryStructure) -> list[Model3D]:
-    models = []
+def _find_models_3d(library_root: Path, structure: LibraryStructure) -> List[Model3D]:
+    models: List[Model3D] = []
     models_dir = library_root / structure.library.directories.models_3d
     if not models_dir.exists():
         return models
@@ -222,8 +222,8 @@ def _find_models_3d(library_root: Path, structure: LibraryStructure) -> list[Mod
     return models
 
 
-def _find_documentation(library_root: Path, structure: LibraryStructure) -> list[Documentation]:
-    docs = []
+def _find_documentation(library_root: Path, structure: LibraryStructure) -> List[Documentation]:
+    docs: List[Documentation] = []
     docs_dir = library_root / structure.library.directories.documentation
     if not docs_dir.exists():
         return docs

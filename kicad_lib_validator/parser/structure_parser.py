@@ -3,12 +3,12 @@ Parser for KiCad library structure YAML files.
 """
 import yaml
 from pathlib import Path
-from typing import Union, Dict, Any
+from typing import Union, Dict, Any, Optional
 
 from ..models.structure import LibraryStructure
 
 
-def parse_library_structure(file_path: Union[str, Path], library_root: Union[str, Path] = None) -> LibraryStructure:
+def parse_library_structure(file_path: Union[str, Path], library_root: Optional[Union[str, Path]] = None) -> LibraryStructure:
     """
     Parse a library structure YAML file and validate it against the LibraryStructure model.
     
