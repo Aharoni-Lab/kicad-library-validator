@@ -311,3 +311,29 @@ footprints:
             type: "string"
             pattern: "^[0-9.]+%$"
             description: "Placement tolerance"
+
+models_3d:
+  passives:
+    description: "Passive components"
+    categories:
+      capacitors:
+        description: "Capacitors"
+        naming:
+          pattern: "^[A-Z0-9-]+$"  # e.g., "GRM0115C1C120JE01L"
+          description_pattern: "^[A-Z0-9-]+ Capacitor$"
+        required_properties:
+          Description:
+            type: "string"
+            pattern: "^[A-Z0-9-]+ Capacitor$"
+            description: "Component description"
+          Validated:
+            type: "boolean"
+            description: "Whether the component has been validated"
+        optional_properties:
+          Datasheet:
+            type: "string"
+            pattern: "^https?://.*$"
+            description: "Link to datasheet"
+          Manufacturer:
+            type: "string"
+            description: "Component manufacturer"
