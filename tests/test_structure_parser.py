@@ -1,7 +1,9 @@
-import pytest
 from pathlib import Path
-from kicad_lib_validator.parser.structure_parser import parse_library_structure
+
+import pytest
+
 from kicad_lib_validator.models.structure import LibraryStructure
+from kicad_lib_validator.parser.structure_parser import parse_library_structure
 
 
 @pytest.fixture

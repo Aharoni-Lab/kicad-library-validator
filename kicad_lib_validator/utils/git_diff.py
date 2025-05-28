@@ -2,10 +2,10 @@
 Git diff utilities for tracking library changes.
 """
 
+import logging
+import subprocess
 from pathlib import Path
 from typing import Dict, Optional
-import subprocess
-import logging
 
 
 def get_changed_files(

@@ -2,18 +2,20 @@
 Parser for the actual KiCad library contents, using the structure definition.
 """
 
-from pathlib import Path
-from typing import Optional, List
-from kicad_lib_validator.models import (
-    KiCadLibrary,
-    Symbol,
-    Footprint,
-    Model3D,
-    Documentation,
-    LibraryStructure,
-)
-import sexpdata  # type: ignore
 import logging
+from pathlib import Path
+from typing import List, Optional
+
+import sexpdata  # type: ignore
+
+from kicad_lib_validator.models import (
+    Documentation,
+    Footprint,
+    KiCadLibrary,
+    LibraryStructure,
+    Model3D,
+    Symbol,
+)
 
 logger = logging.getLogger(__name__)
 

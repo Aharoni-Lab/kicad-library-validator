@@ -2,9 +2,10 @@
 Parser for KiCad library structure YAML files.
 """
 
-import yaml
 from pathlib import Path
-from typing import Union, Dict, Any, Optional
+from typing import Any, Dict, Optional, Union
+
+import yaml
 
 from ..models.structure import LibraryStructure
 

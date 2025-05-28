@@ -2,13 +2,13 @@
 Main validator class for KiCad library validation.
 """
 
-from pathlib import Path
-from typing import List, Optional, Dict, Any
 import logging
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from .parser.structure_parser import parse_library_structure
 from .models.structure import LibraryStructure
+from .parser.structure_parser import parse_library_structure
 
 
 @dataclass

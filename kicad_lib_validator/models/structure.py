@@ -1,5 +1,6 @@
-from typing import Dict, List, Optional, Literal, Any
 import re
+from typing import Any, Dict, List, Literal, Optional
+
 from pydantic import BaseModel, Field, HttpUrl, field_validator
 
 

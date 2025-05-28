@@ -2,8 +2,10 @@
 Tests for the KiCadLibraryValidator class.
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
+
 from kicad_lib_validator.validator import KiCadLibraryValidator, ValidationResult
 
 

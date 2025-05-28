@@ -1,11 +1,12 @@
 from typing import Dict, List, Optional
+
 from pydantic import BaseModel, Field
 
-from .symbol import Symbol
+from .documentation import Documentation
 from .footprint import Footprint
 from .model3d import Model3D
-from .documentation import Documentation
 from .structure import LibraryStructure
+from .symbol import Symbol
 
 
 class SymbolLibrary(BaseModel):

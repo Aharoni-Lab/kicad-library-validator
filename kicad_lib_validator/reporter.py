@@ -2,15 +2,16 @@
 Library structure reporter for generating markdown reports.
 """
 
-from pathlib import Path
-from typing import Dict, List, Optional, Set, Any
+import logging
 from dataclasses import dataclass
 from datetime import datetime
-import logging
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set
+
+from kicad_lib_validator.models import Documentation, Footprint, KiCadLibrary, Model3D, Symbol
 
 from .models.structure import LibraryStructure
 from .utils.git_diff import get_changed_files
-from kicad_lib_validator.models import KiCadLibrary, Symbol, Footprint, Model3D, Documentation
 
 
 @dataclass

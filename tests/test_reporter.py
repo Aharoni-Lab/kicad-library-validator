@@ -2,12 +2,14 @@
 Tests for the LibraryReporter class.
 """
 
-import pytest
 from pathlib import Path
-from kicad_lib_validator.reporter import LibraryReporter
-from kicad_lib_validator.validator import KiCadLibraryValidator
+
+import pytest
+
 from kicad_lib_validator.parser.library_parser import parse_library
 from kicad_lib_validator.parser.structure_parser import parse_library_structure
+from kicad_lib_validator.reporter import LibraryReporter
+from kicad_lib_validator.validator import KiCadLibraryValidator
 
 
 @pytest.fixture
