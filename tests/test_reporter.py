@@ -1,6 +1,7 @@
 """
 Tests for the LibraryReporter class.
 """
+
 import pytest
 from pathlib import Path
 from kicad_lib_validator.reporter import LibraryReporter
@@ -35,27 +36,27 @@ def test_generate_report(test_data_dir, test_structure_file, tmp_path):
     validator = KiCadLibraryValidator(test_data_dir, test_structure_file)
     result = validator.validate()
     assert not result.has_errors, f"Validation failed: {result.errors}"
-    
+
     # Parse the library
     library = parse_library(test_data_dir, validator.structure)
     assert library is not None
-    
+
     # Create reporter and generate report
     reporter = LibraryReporter(test_data_dir, validator.structure)
     output_path = tmp_path / "library_report.md"
     reporter.generate_library_report(library, output_path)
-    
+
     # Check that the report was generated
     assert output_path.exists()
     report_content = output_path.read_text()
-    
+
     # Basic content checks
     assert "# KiCad Library Report" in report_content
     assert "## Symbols" in report_content
     assert "## Footprints" in report_content
     assert "## 3D Models" in report_content
     assert "## Documentation" in report_content
-    
+
     # Check for actual content
     for library_name, symbol_library in library.symbol_libraries.items():
         for symbol in symbol_library.symbols:
@@ -68,4 +69,4 @@ def test_generate_report(test_data_dir, test_structure_file, tmp_path):
             assert model.name in report_content
     for library_name, doc_library in library.documentation_libraries.items():
         for doc in doc_library.docs:
-            assert doc.name in report_content 
+            assert doc.name in report_content

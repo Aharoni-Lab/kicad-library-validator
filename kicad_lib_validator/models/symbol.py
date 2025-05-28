@@ -6,6 +6,7 @@ from .base import Position
 
 class Pin(BaseModel):
     """Represents a pin in a symbol."""
+
     name: str
     number: str
     type: str  # e.g., "input", "output", "bidirectional", etc.
@@ -17,6 +18,7 @@ class Pin(BaseModel):
 
 class Symbol(BaseModel):
     """Represents a KiCad symbol."""
+
     name: str
     library_name: str  # The name of the library this symbol belongs to
     properties: Dict[str, str] = Field(default_factory=dict)
@@ -24,4 +26,4 @@ class Symbol(BaseModel):
     units: int = 1
     is_power: bool = False
     is_graphic: bool = False
-    is_mechanical: bool = False 
+    is_mechanical: bool = False

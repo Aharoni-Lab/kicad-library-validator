@@ -1,6 +1,7 @@
 """
 Tests for the library parser.
 """
+
 import pytest
 from pathlib import Path
 from kicad_lib_validator.parser.library_parser import parse_library
@@ -37,25 +38,41 @@ def test_parse_symbols(test_data_dir, test_structure):
     """Test parsing symbols from the library."""
     library = parse_library(test_data_dir, test_structure)
     assert any(len(lib.symbols) > 0 for lib in library.symbol_libraries.values())
-    assert any(isinstance(symbol, Symbol) for lib in library.symbol_libraries.values() for symbol in lib.symbols)
+    assert any(
+        isinstance(symbol, Symbol)
+        for lib in library.symbol_libraries.values()
+        for symbol in lib.symbols
+    )
 
 
 def test_parse_footprints(test_data_dir, test_structure):
     """Test parsing footprints from the library."""
     library = parse_library(test_data_dir, test_structure)
     assert any(len(lib.footprints) > 0 for lib in library.footprint_libraries.values())
-    assert any(isinstance(footprint, Footprint) for lib in library.footprint_libraries.values() for footprint in lib.footprints)
+    assert any(
+        isinstance(footprint, Footprint)
+        for lib in library.footprint_libraries.values()
+        for footprint in lib.footprints
+    )
 
 
 def test_parse_models_3d(test_data_dir, test_structure):
     """Test parsing 3D models from the library."""
     library = parse_library(test_data_dir, test_structure)
     assert any(len(lib.models) > 0 for lib in library.model3d_libraries.values())
-    assert any(isinstance(model, Model3D) for lib in library.model3d_libraries.values() for model in lib.models)
+    assert any(
+        isinstance(model, Model3D)
+        for lib in library.model3d_libraries.values()
+        for model in lib.models
+    )
 
 
 def test_parse_documentation(test_data_dir, test_structure):
     """Test parsing documentation from the library."""
     library = parse_library(test_data_dir, test_structure)
     assert any(len(lib.docs) > 0 for lib in library.documentation_libraries.values())
-    assert any(isinstance(doc, Documentation) for lib in library.documentation_libraries.values() for doc in lib.docs) 
+    assert any(
+        isinstance(doc, Documentation)
+        for lib in library.documentation_libraries.values()
+        for doc in lib.docs
+    )

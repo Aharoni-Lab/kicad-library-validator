@@ -10,42 +10,51 @@ from .structure import LibraryStructure
 
 class SymbolLibrary(BaseModel):
     """Represents a category of symbols (e.g., Test_Passives_Capacitors)."""
+
     name: str  # The full library name (e.g., Test_Passives_Capacitors)
     symbols: List[Symbol] = Field(default_factory=list)
-    
+
     def add_symbol(self, symbol: Symbol) -> None:
         """Add a symbol to this library."""
         self.symbols.append(symbol)
 
+
 class FootprintLibrary(BaseModel):
     """Represents a category of footprints."""
+
     name: str
     footprints: List[Footprint] = Field(default_factory=list)
-    
+
     def add_footprint(self, footprint: Footprint) -> None:
         """Add a footprint to this library."""
         self.footprints.append(footprint)
 
+
 class Model3DLibrary(BaseModel):
     """Represents a category of 3D models."""
+
     name: str
     models: List[Model3D] = Field(default_factory=list)
-    
+
     def add_model(self, model: Model3D) -> None:
         """Add a 3D model to this library."""
         self.models.append(model)
 
+
 class DocumentationLibrary(BaseModel):
     """Represents a category of documentation."""
+
     name: str
     docs: List[Documentation] = Field(default_factory=list)
-    
+
     def add_doc(self, doc: Documentation) -> None:
         """Add documentation to this library."""
         self.docs.append(doc)
 
+
 class KiCadLibrary(BaseModel):
     """Main model representing a KiCad library."""
+
     structure: LibraryStructure
     symbol_libraries: Dict[str, SymbolLibrary] = Field(default_factory=dict)
     footprint_libraries: Dict[str, FootprintLibrary] = Field(default_factory=dict)
@@ -61,7 +70,9 @@ class KiCadLibrary(BaseModel):
     def add_footprint(self, footprint: Footprint) -> None:
         """Add a footprint to the appropriate library."""
         if footprint.library_name not in self.footprint_libraries:
-            self.footprint_libraries[footprint.library_name] = FootprintLibrary(name=footprint.library_name)
+            self.footprint_libraries[footprint.library_name] = FootprintLibrary(
+                name=footprint.library_name
+            )
         self.footprint_libraries[footprint.library_name].add_footprint(footprint)
 
     def add_model3d(self, model: Model3D) -> None:
@@ -73,7 +84,9 @@ class KiCadLibrary(BaseModel):
     def add_documentation(self, doc: Documentation) -> None:
         """Add documentation to the appropriate library."""
         if doc.library_name not in self.documentation_libraries:
-            self.documentation_libraries[doc.library_name] = DocumentationLibrary(name=doc.library_name)
+            self.documentation_libraries[doc.library_name] = DocumentationLibrary(
+                name=doc.library_name
+            )
         self.documentation_libraries[doc.library_name].add_doc(doc)
 
     def get_symbol_by_name(self, name: str) -> Optional[Symbol]:
@@ -106,4 +119,4 @@ class KiCadLibrary(BaseModel):
             for doc in library.docs:
                 if doc.name == name:
                     return doc
-        return None 
+        return None

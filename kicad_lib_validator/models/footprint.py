@@ -6,6 +6,7 @@ from .base import Position, Size
 
 class Pad(BaseModel):
     """Represents a pad in a footprint."""
+
     number: str
     type: str  # e.g., "thru_hole", "smd", etc.
     position: Position
@@ -20,9 +21,10 @@ class Pad(BaseModel):
 
 class Footprint(BaseModel):
     """Represents a KiCad footprint."""
+
     name: str
     library_name: str  # The name of the library this footprint belongs to
     properties: Dict[str, str] = Field(default_factory=dict)
     pads: List[Pad] = Field(default_factory=list)
     layers: List[str] = Field(default_factory=list)
-    attr: Optional[Dict] = None  # Footprint attributes (through_hole, smd, etc.) 
+    attr: Optional[Dict] = None  # Footprint attributes (through_hole, smd, etc.)
