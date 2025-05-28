@@ -1,0 +1,300 @@
+"""
+Library structure reporter for generating markdown reports.
+"""
+from pathlib import Path
+from typing import Dict, List, Optional, Set, Any
+from dataclasses import dataclass
+from datetime import datetime
+import logging
+
+from .models.structure import LibraryStructure
+from .utils.git_diff import get_changed_files
+from kicad_library_validator.models import KiCadLibrary, Symbol, Footprint, Model3D, Documentation
+
+
+@dataclass
+class FileStatus:
+    """Status of a file in the library."""
+    path: Path
+    status: str  # 'new', 'modified', 'deleted', or 'unchanged'
+    old_path: Optional[Path] = None  # For renamed files
+
+
+class LibraryReporter:
+    """Generates markdown reports of the library structure."""
+    
+    def __init__(
+        self,
+        library_path: Path,
+        structure: LibraryStructure,
+        log_level: int = logging.INFO
+    ):
+        """
+        Initialize the reporter.
+        
+        Args:
+            library_path: Path to the library root
+            structure: Parsed library structure
+            log_level: Logging level
+        """
+        self.library_path = library_path
+        self.structure = structure
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(log_level)
+        if not self.logger.handlers:
+            handler = logging.StreamHandler()
+            formatter = logging.Formatter('%(levelname)s: %(message)s')
+            handler.setFormatter(formatter)
+            self.logger.addHandler(handler)
+    
+    def generate_report(
+        self,
+        output_path: Optional[Path] = None,
+        compare_commit: Optional[str] = None
+    ) -> str:
+        """
+        Generate a markdown report of the library structure.
+        
+        Args:
+            output_path: Optional path to save the report
+            compare_commit: Optional git commit to compare against
+            
+        Returns:
+            The generated markdown report
+        """
+        self.logger.info("Generating library structure report")
+        
+        # Get changed files if comparing with a commit
+        changed_files: Dict[str, FileStatus] = {}
+        if compare_commit:
+            changed_files = self._get_changed_files(compare_commit)
+        
+        # Generate report sections
+        sections = [
+            self._generate_header(),
+            self._generate_directory_structure(changed_files),
+            self._generate_symbols_section(changed_files),
+            self._generate_footprints_section(changed_files),
+            self._generate_3d_models_section(changed_files),
+            self._generate_documentation_section(changed_files)
+        ]
+        
+        # Combine sections
+        report = "\n\n".join(sections)
+        
+        # Save report if output path is provided
+        if output_path:
+            output_path.write_text(report, encoding='utf-8')
+            self.logger.info(f"Report saved to {output_path}")
+        
+        return report
+    
+    def generate_library_report(self, library: KiCadLibrary, output_path: Path) -> None:
+        """
+        Generate a markdown report with details about the parsed library.
+        
+        Args:
+            library: The parsed KiCadLibrary instance
+            output_path: Path to save the report to
+        """
+        self.logger.info("Generating detailed library report...")
+        
+        report = ["# KiCad Library Report\n"]
+        
+        # Symbols
+        report.append("## Symbols\n")
+        if library.symbols:
+            for symbol in library.symbols:
+                full_name = f"{symbol.library_name}:{symbol.name}"
+                report.append(f"- **{full_name}**")
+                if symbol.properties:
+                    report.append("  - Properties:")
+                    for key, value in symbol.properties.items():
+                        report.append(f"    - {key}: {value}")
+        else:
+            report.append("No symbols found.\n")
+        
+        # Footprints
+        report.append("\n## Footprints\n")
+        if library.footprints:
+            for footprint in library.footprints:
+                full_name = f"{footprint.library_name}:{footprint.name}"
+                report.append(f"- **{full_name}**")
+                if footprint.properties:
+                    report.append("  - Properties:")
+                    for key, value in footprint.properties.items():
+                        report.append(f"    - {key}: {value}")
+        else:
+            report.append("No footprints found.\n")
+        
+        # 3D Models
+        report.append("\n## 3D Models\n")
+        if library.models_3d:
+            for model in library.models_3d:
+                report.append(f"- **{model.name}**")
+        else:
+            report.append("No 3D models found.\n")
+        
+        # Documentation
+        report.append("\n## Documentation\n")
+        if library.documentation:
+            for doc in library.documentation:
+                report.append(f"- **{doc.name}**")
+        else:
+            report.append("No documentation found.\n")
+        
+        # Write report
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write("\n".join(report))
+        self.logger.info(f"Detailed library report saved to {output_path}")
+    
+    def _generate_header(self) -> str:
+        """Generate the report header."""
+        return f"""# Library Structure Report
+
+Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+## Library Information
+- **Name**: {self.structure.library.prefix}
+- **Description**: {self.structure.library.description}
+- **Maintainer**: {self.structure.library.maintainer}
+- **License**: {self.structure.library.license}
+- **Website**: {self.structure.library.website}
+- **Repository**: {self.structure.library.repository}
+"""
+    
+    def _generate_directory_structure(self, changed_files: Dict[str, FileStatus]) -> str:
+        """Generate the directory structure section."""
+        sections = ["## Directory Structure"]
+        
+        # Get directory structure from model
+        directories = self.structure.library.directories.model_dump()
+        
+        for dir_type, dir_name in directories.items():
+            dir_path = self.library_path / dir_name
+            if dir_path.exists():
+                sections.append(f"### {dir_type.title()}")
+                sections.append(f"Path: `{dir_name}`")
+                
+                # List subdirectories
+                if dir_path.is_dir():
+                    subdirs = [d for d in dir_path.iterdir() if d.is_dir()]
+                    if subdirs:
+                        sections.append("\nSubdirectories:")
+                        for subdir in sorted(subdirs):
+                            sections.append(f"- `{subdir.name}`")
+                sections.append("")
+        
+        return "\n".join(sections)
+    
+    def _generate_symbols_section(self, changed_files: Dict[str, FileStatus]) -> str:
+        """Generate the symbols section."""
+        sections = ["## Symbols"]
+        
+        # Get symbols directory
+        symbols_dir = self.library_path / self.structure.library.directories.symbols
+        if not symbols_dir.exists():
+            return "\n".join(sections + ["No symbols directory found.", ""])
+        
+        # List symbol files
+        symbol_files = list(symbols_dir.rglob("*.kicad_sym"))
+        if not symbol_files:
+            return "\n".join(sections + ["No symbol files found.", ""])
+        
+        sections.append("### Symbol Files")
+        for file in sorted(symbol_files):
+            rel_path = file.relative_to(self.library_path)
+            status = self._get_file_status(str(rel_path), changed_files)
+            sections.append(f"- {status} `{rel_path}`")
+        
+        return "\n".join(sections + [""])
+    
+    def _generate_footprints_section(self, changed_files: Dict[str, FileStatus]) -> str:
+        """Generate the footprints section."""
+        sections = ["## Footprints"]
+        
+        # Get footprints directory
+        footprints_dir = self.library_path / self.structure.library.directories.footprints
+        if not footprints_dir.exists():
+            return "\n".join(sections + ["No footprints directory found.", ""])
+        
+        # List footprint files
+        footprint_files = list(footprints_dir.rglob("*.kicad_mod"))
+        if not footprint_files:
+            return "\n".join(sections + ["No footprint files found.", ""])
+        
+        sections.append("### Footprint Files")
+        for file in sorted(footprint_files):
+            rel_path = file.relative_to(self.library_path)
+            status = self._get_file_status(str(rel_path), changed_files)
+            sections.append(f"- {status} `{rel_path}`")
+        
+        return "\n".join(sections + [""])
+    
+    def _generate_3d_models_section(self, changed_files: Dict[str, FileStatus]) -> str:
+        """Generate the 3D models section."""
+        sections = ["## 3D Models"]
+        
+        # Get 3D models directory
+        models_dir = self.library_path / self.structure.library.directories.models_3d
+        if not models_dir.exists():
+            return "\n".join(sections + ["No 3D models directory found.", ""])
+        
+        # List 3D model files
+        model_files = list(models_dir.rglob("*.step"))
+        if not model_files:
+            return "\n".join(sections + ["No 3D model files found.", ""])
+        
+        sections.append("### 3D Model Files")
+        for file in sorted(model_files):
+            rel_path = file.relative_to(self.library_path)
+            status = self._get_file_status(str(rel_path), changed_files)
+            sections.append(f"- {status} `{rel_path}`")
+        
+        return "\n".join(sections + [""])
+    
+    def _generate_documentation_section(self, changed_files: Dict[str, FileStatus]) -> str:
+        """Generate the documentation section."""
+        sections = ["## Documentation"]
+        
+        # Get documentation directory
+        docs_dir = self.library_path / self.structure.library.directories.documentation
+        if not docs_dir.exists():
+            return "\n".join(sections + ["No documentation directory found.", ""])
+        
+        # List documentation files
+        doc_files = list(docs_dir.rglob("*.pdf"))
+        if not doc_files:
+            return "\n".join(sections + ["No documentation files found.", ""])
+        
+        sections.append("### Documentation Files")
+        for file in sorted(doc_files):
+            rel_path = file.relative_to(self.library_path)
+            status = self._get_file_status(str(rel_path), changed_files)
+            sections.append(f"- {status} `{rel_path}`")
+        
+        return "\n".join(sections + [""])
+    
+    def _get_changed_files(self, compare_commit: str) -> Dict[str, FileStatus]:
+        """Get changed files compared to a specific commit."""
+        changed_files = {}
+        for file_path, status in get_changed_files(self.library_path, compare_commit).items():
+            changed_files[str(file_path)] = FileStatus(
+                path=file_path,
+                status=status
+            )
+        return changed_files
+    
+    def _get_file_status(self, file_path: str, changed_files: Dict[str, FileStatus]) -> str:
+        """Get the markdown status marker for a file."""
+        if not changed_files:
+            return ""
+        
+        status = changed_files.get(file_path, "unchanged")
+        markers = {
+            "new": "🆕",
+            "modified": "📝",
+            "deleted": "🗑️",
+            "unchanged": ""
+        }
+        return markers.get(status, "") 
