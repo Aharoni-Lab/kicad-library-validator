@@ -5,7 +5,7 @@ Symbol validation logic for KiCad libraries.
 import re
 from typing import Any, Dict, List
 
-from kicad_lib_validator.models.structure import LibraryStructure
+from kicad_lib_validator.models.structure import LibraryStructure, ComponentType, ComponentCategory
 from kicad_lib_validator.models.symbol import Symbol
 
 
@@ -20,7 +20,7 @@ def validate_symbol(symbol: Symbol, structure: LibraryStructure) -> Dict[str, Li
     successes: List[str] = []
 
     # 1. Determine the symbol's category using the category/subcategory fields
-    symbol_category = None
+    symbol_category: ComponentType | ComponentCategory | None = None
     symbol_category_name = None
     if symbol.category and symbol.subcategory:
         try:

@@ -71,7 +71,7 @@ exclude = 'site-packages'
 [mypy-sexpdata]
 ignore_missing_imports = true
 
-[tool.mypy.overrides]
+[[tool.mypy.overrides]]
 "mypy-pydantic.*" = { follow_imports = "skip", ignore_missing_imports = true }
 
 [tool.ruff]

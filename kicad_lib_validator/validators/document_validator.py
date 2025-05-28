@@ -6,7 +6,7 @@ import re
 from typing import Dict, List
 
 from kicad_lib_validator.models.documentation import Documentation
-from kicad_lib_validator.models.structure import LibraryStructure
+from kicad_lib_validator.models.structure import LibraryStructure, ComponentType, ComponentCategory
 
 
 def validate_document_name(name: str, structure: LibraryStructure, category: str) -> bool:
@@ -33,7 +33,7 @@ def validate_documentation(doc: Documentation, structure: LibraryStructure) -> D
     successes: List[str] = []
 
     # 1. Determine the doc's category using the category/subcategory fields
-    doc_category = None
+    doc_category: ComponentType | ComponentCategory | None = None
     doc_category_name = None
     if doc.category and doc.subcategory:
         try:

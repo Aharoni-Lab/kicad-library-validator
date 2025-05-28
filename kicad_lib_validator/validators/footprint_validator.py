@@ -6,7 +6,7 @@ import re
 from typing import Dict, List
 
 from kicad_lib_validator.models.footprint import Footprint
-from kicad_lib_validator.models.structure import LibraryStructure
+from kicad_lib_validator.models.structure import LibraryStructure, ComponentType, ComponentCategory
 
 
 def validate_footprint_name(name: str, structure: LibraryStructure, category: str) -> bool:
@@ -34,7 +34,7 @@ def validate_footprint(footprint: Footprint, structure: LibraryStructure) -> Dic
     successes: List[str] = []
 
     # 1. Determine the footprint's category using the category/subcategory fields
-    footprint_category = None
+    footprint_category: ComponentType | ComponentCategory | None = None
     footprint_category_name = None
     if footprint.category and footprint.subcategory:
         try:

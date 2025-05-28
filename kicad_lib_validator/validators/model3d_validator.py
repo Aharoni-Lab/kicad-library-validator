@@ -6,7 +6,7 @@ import re
 from typing import Dict, List
 
 from kicad_lib_validator.models.model3d import Model3D
-from kicad_lib_validator.models.structure import LibraryStructure
+from kicad_lib_validator.models.structure import LibraryStructure, ComponentType, ComponentCategory
 
 
 def validate_model3d_name(name: str, structure: LibraryStructure, category: str) -> bool:
@@ -33,7 +33,7 @@ def validate_model3d(model: Model3D, structure: LibraryStructure) -> Dict[str, L
     successes: List[str] = []
 
     # 1. Determine the model's category using the category/subcategory fields
-    model_category = None
+    model_category: ComponentType | ComponentCategory | None = None
     model_category_name = None
     if model.category and model.subcategory:
         try:

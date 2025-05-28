@@ -1,6 +1,6 @@
 # Library Structure Report
 
-Generated: 2025-05-28 11:23:27
+Generated: 2025-05-28 14:33:50
 
 ## Library Information
 - **Name**: Test
@@ -46,26 +46,26 @@ Subdirectories:
 -  `symbols\passives\resistors\resistors.kicad_sym`
 
 ### Symbol Validation Results
-- **Capacitor_SMD:C_0603_1608Metric**
+- **C1**
+    - ✅ Symbol name 'C1' matches pattern '^C[0-9]+$'
+    - ✅ Property 'Reference' value 'C1' matches pattern '^C[0-9]+$'
     - ✅ Property 'Description' value '100nF Capacitor' matches pattern '^[0-9.]+[pnu]F Capacitor$'
     - ⚠️ Property 'Validated' type checking not implemented (expected boolean)
     - ⚠️ Property 'Validated' pattern is not a string or regex: None
-    - ⚠️ Unknown property 'Value' in symbol 'Capacitor_SMD:C_0603_1608Metric'
-    - ⚠️ Unknown property 'Footprint' in symbol 'Capacitor_SMD:C_0603_1608Metric'
-    - ⚠️ Unknown property 'Datasheet' in symbol 'Capacitor_SMD:C_0603_1608Metric'
-    - ⚠️ Unknown property 'Voltage' in symbol 'Capacitor_SMD:C_0603_1608Metric'
-    - ❌ Symbol name 'Capacitor_SMD:C_0603_1608Metric' does not match pattern '^C[0-9]+$' for category passives/capacitors
-    - ❌ Property 'Reference' value 'C' does not match pattern '^C[0-9]+$'
-- **Capacitor_SMD:C_1206_3216Metric**
+    - ⚠️ Unknown property 'Value' in symbol 'C1'
+    - ⚠️ Unknown property 'Footprint' in symbol 'C1'
+    - ⚠️ Unknown property 'Datasheet' in symbol 'C1'
+    - ⚠️ Unknown property 'Voltage' in symbol 'C1'
+- **C2**
+    - ✅ Symbol name 'C2' matches pattern '^C[0-9]+$'
+    - ✅ Property 'Reference' value 'C2' matches pattern '^C[0-9]+$'
     - ✅ Property 'Description' value '10uF Capacitor' matches pattern '^[0-9.]+[pnu]F Capacitor$'
     - ⚠️ Property 'Validated' type checking not implemented (expected boolean)
     - ⚠️ Property 'Validated' pattern is not a string or regex: None
-    - ⚠️ Unknown property 'Value' in symbol 'Capacitor_SMD:C_1206_3216Metric'
-    - ⚠️ Unknown property 'Footprint' in symbol 'Capacitor_SMD:C_1206_3216Metric'
-    - ⚠️ Unknown property 'Datasheet' in symbol 'Capacitor_SMD:C_1206_3216Metric'
-    - ⚠️ Unknown property 'Voltage' in symbol 'Capacitor_SMD:C_1206_3216Metric'
-    - ❌ Symbol name 'Capacitor_SMD:C_1206_3216Metric' does not match pattern '^C[0-9]+$' for category passives/capacitors
-    - ❌ Property 'Reference' value 'C' does not match pattern '^C[0-9]+$'
+    - ⚠️ Unknown property 'Value' in symbol 'C2'
+    - ⚠️ Unknown property 'Footprint' in symbol 'C2'
+    - ⚠️ Unknown property 'Datasheet' in symbol 'C2'
+    - ⚠️ Unknown property 'Voltage' in symbol 'C2'
 - **R1**
     - ✅ Symbol name 'R1' matches pattern '^R[0-9]+$'
     - ✅ Property 'Reference' value 'R1' matches pattern '^R[0-9]+$'
@@ -95,15 +95,13 @@ Subdirectories:
 -  `footprints\smd\capacitors\Test_cap.kicad_mod`
 
 ### Footprint Validation Results
-- **Capacitor_SMD:C_0603_1608Metric**
-    - ⚠️ Property 'Validated' type checking not implemented (expected boolean)
-    - ⚠️ Unknown property 'Value' in footprint 'Capacitor_SMD:C_0603_1608Metric'
-    - ⚠️ Unknown property 'Datasheet' in footprint 'Capacitor_SMD:C_0603_1608Metric'
-    - ❌ Footprint name 'Capacitor_SMD:C_0603_1608Metric' does not match pattern '^C_[0-9]+_[0-9]+Metric$' for category smd/capacitors
-    - ❌ Property 'Reference' value 'C' does not match pattern '^C[0-9]+$'
-    - ❌ Property 'Description' value '100nF Capacitor' does not match pattern '^[0-9.]+[pnu]F SMD Capacitor$'
-    - ❌ Property 'Validated' value 'true' does not match pattern 'None'
-    - ❌ Footprint 'Capacitor_SMD:C_0603_1608Metric' is missing required layers: F.Mask
+- **C_0603_1608Metric**
+    - ✅ Footprint name 'C_0603_1608Metric' matches pattern '^C_[0-9]+_[0-9]+Metric$'
+    - ✅ Property 'Reference' value 'C1' matches pattern '^C[0-9]+$'
+    - ✅ Property 'Description' value '100nF SMD Capacitor' matches pattern '^[0-9.]+[pnu]F SMD Capacitor$'
+    - ✅ Footprint 'C_0603_1608Metric' contains all required layers
+    - ⚠️ Unknown property 'Value' in footprint 'C_0603_1608Metric'
+    - ⚠️ Unknown property 'Datasheet' in footprint 'C_0603_1608Metric'
 
 
 ## 3D Models

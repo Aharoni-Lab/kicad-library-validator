@@ -221,7 +221,7 @@ def _find_footprints(library_root: Path, structure: LibraryStructure) -> List[Fo
 
 
 def _find_models_3d(library_root: Path, structure: LibraryStructure) -> List[Model3D]:
-    models = []
+    models: List[Model3D] = []
     models_dir = library_root / structure.library.directories.models_3d
     if not models_dir.exists():
         return models
@@ -268,7 +268,7 @@ def _find_models_3d(library_root: Path, structure: LibraryStructure) -> List[Mod
 
 
 def _find_documentation(library_root: Path, structure: LibraryStructure) -> List[Documentation]:
-    docs = []
+    docs: List[Documentation] = []
     docs_dir = library_root / structure.library.directories.documentation
     if not docs_dir.exists():
         return docs
