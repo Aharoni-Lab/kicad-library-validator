@@ -83,12 +83,18 @@ def validate_footprint(footprint: Footprint, structure: LibraryStructure) -> Dic
             continue
         value = footprint.properties[prop_name]
         # Type check (only string supported for now)
-        if hasattr(prop_rule, "type") and prop_rule.type != "string":
+        if hasattr(prop_rule, "type") and prop_rule.type == "boolean":
+            # Accept both boolean and string 'true'/'false'
+            if not (value is True or value is False or str(value).lower() in ["true", "false"]):
+                errors.append(
+                    f"Property '{prop_name}' value '{value}' is not a valid boolean (true/false)"
+                )
+        elif hasattr(prop_rule, "type") and prop_rule.type != "string":
             warnings.append(
                 f"Property '{prop_name}' type checking not implemented (expected {prop_rule.type})"
             )
         # Pattern check
-        if hasattr(prop_rule, "pattern"):
+        if hasattr(prop_rule, "pattern") and prop_rule.pattern not in [None, ""]:
             pattern = str(prop_rule.pattern)  # Ensure pattern is a string
             if not re.match(pattern, value):
                 errors.append(

@@ -2,11 +2,11 @@
   (version 20241209)
   (generator "kicad_symbol_editor")
   (generator_version "9.0")
-  (symbol "Capacitor_SMD:C_0603_1608Metric"
+  (symbol "C1"
     (exclude_from_sim no)
     (in_bom yes)
     (on_board yes)
-    (property "Reference" "C"
+    (property "Reference" "C1"
       (at 2.286 2.286 0)
       (effects
         (font
@@ -22,7 +22,7 @@
         )
       )
     )
-    (property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
+    (property "Footprint" "C_0603_1608Metric"
       (at 0 0 0)
       (effects
         (font
@@ -49,7 +49,7 @@
         (hide yes)
       )
     )
-    (property "Validated" "true"
+    (property "Validated" true
       (at 0 0 0)
       (effects
         (font
@@ -67,7 +67,7 @@
         (hide yes)
       )
     )
-    (symbol "Capacitor_SMD:C_0603_1608Metric_0_1"
+    (symbol "C1_0_1"
       (polyline
         (pts
           (xy -2.032 -0.762)
@@ -85,7 +85,7 @@
         (fill (type none))
       )
     )
-    (symbol "Capacitor_SMD:C_0603_1608Metric_1_1"
+    (symbol "C1_1_1"
       (pin passive line
         (at 0 2.54 270)
         (length 1.778)
@@ -124,11 +124,11 @@
       )
     )
   )
-  (symbol "Capacitor_SMD:C_1206_3216Metric"
+  (symbol "C2"
     (exclude_from_sim no)
     (in_bom yes)
     (on_board yes)
-    (property "Reference" "C"
+    (property "Reference" "C2"
       (at 2.286 2.286 0)
       (effects
         (font
@@ -144,7 +144,7 @@
         )
       )
     )
-    (property "Footprint" "Capacitor_SMD:C_1206_3216Metric"
+    (property "Footprint" "C_1206_3216Metric"
       (at 0 0 0)
       (effects
         (font
@@ -171,7 +171,7 @@
         (hide yes)
       )
     )
-    (property "Validated" "true"
+    (property "Validated" true
       (at 0 0 0)
       (effects
         (font
@@ -189,7 +189,7 @@
         (hide yes)
       )
     )
-    (symbol "Capacitor_SMD:C_1206_3216Metric_0_1"
+    (symbol "C2_0_1"
       (polyline
         (pts
           (xy -2.032 -0.762)

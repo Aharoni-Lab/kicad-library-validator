@@ -1,10 +1,10 @@
-(footprint "Capacitor_SMD:C_0603_1608Metric"
+(footprint "C_0603_1608Metric"
   (version 20241229)
   (generator "pcbnew")
   (generator_version "9.0")
   (layer "F.Cu")
   (tags "capacitor smd 0603")
-  (property "Reference" "C"
+  (property "Reference" "C1"
     (at 0 -0.5 0)
     (unlocked yes)
     (layer "F.SilkS")
@@ -41,7 +41,7 @@
       )
     )
   )
-  (property "Description" "100nF Capacitor"
+  (property "Description" "100nF SMD Capacitor"
     (at 0 0 0)
     (unlocked yes)
     (layer "F.Fab")
@@ -54,7 +54,7 @@
       )
     )
   )
-  (property "Validated" "true"
+  (property "Validated" true
     (at 0 0 0)
     (layer "F.SilkS")
     (hide yes)

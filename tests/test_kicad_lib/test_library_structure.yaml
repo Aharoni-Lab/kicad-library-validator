@@ -196,7 +196,6 @@ footprints:
           - "F.Cu"
           - "B.Cu"
           - "F.SilkS"
-          - "F.Mask"
         required_pads:
           min_count: 2
           max_count: 2
@@ -234,7 +233,6 @@ footprints:
           description_pattern: "^[0-9.]+[pnu]F SMD Capacitor$"
         required_layers:
           - "F.Cu"
-          - "F.Mask"
         required_pads:
           min_count: 2
           max_count: 2
