@@ -33,7 +33,7 @@ jobs:
 
       - name: Run type checking
         run: |
-          mypy kicad_lib_validator
+          mypy kicad_lib_validator --exclude site-packages
 
       - name: Run linting
         run: |
