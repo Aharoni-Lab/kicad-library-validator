@@ -225,7 +225,11 @@ def _find_models_3d(library_root: Path, structure: LibraryStructure) -> List[Mod
     models_dir = library_root / structure.library.directories.models_3d
     if not models_dir.exists():
         return models
-    model_files = list(models_dir.rglob("*.step"))
+    # Case-insensitive search for .step and .wrl files
+    model_files = [
+        f for f in models_dir.rglob("*")
+        if f.is_file() and f.suffix.lower() in [".step", ".wrl"]
+    ]
     for file in model_files:
         # Get the relative path from the models_3d directory
         models_dir_abs = models_dir.resolve()
@@ -252,7 +256,7 @@ def _find_models_3d(library_root: Path, structure: LibraryStructure) -> List[Mod
         models.append(
             Model3D(
                 name=file.stem,
-                format="step",
+                format=file.suffix.lower().lstrip("."),
                 units="mm",
                 file_path=str(file),
                 library_name=full_library_name,
