@@ -1,13 +1,14 @@
 # KiCad Library Validator
 
-A Python package for validating KiCad component libraries. This tool ensures the integrity and correctness of KiCad symbols, footprints, and 3D models.
+A Python tool for validating KiCad component libraries, ensuring symbols, footprints, 3D models, and documentation conform to a defined structure and rules.
 
 ## Features
 
-- Validates KiCad symbol libraries.
-- Validates KiCad footprint libraries.
-- Validates 3D models and datasheets.
-- Generates validation reports.
+- Validates KiCad symbol, footprint, and 3D model libraries against a YAML structure definition
+- Checks naming conventions, required properties, and directory structure
+- Supports custom validation rules via a structure file
+- Generates detailed validation and test reports
+- Python 3.10+ supported
 
 ## Installation
 
@@ -17,8 +18,18 @@ pip install kicad-library-validator
 
 ## Usage
 
+Validate a library:
 ```bash
-kicad-library-validator --library-path /path/to/your/library
+kicad-library-validator --library-path /path/to/your/library --structure-file /path/to/structure.yaml
+```
+
+Or use the Python API:
+```python
+from kicad_lib_validator.validator import KiCadLibraryValidator
+
+validator = KiCadLibraryValidator(library_path, structure_file)
+result = validator.validate()
+print(result.errors)
 ```
 
 ## Development
@@ -28,23 +39,27 @@ kicad-library-validator --library-path /path/to/your/library
    git clone https://github.com/yourusername/kicad-library-validator.git
    cd kicad-library-validator
    ```
-
-2. Create a virtual environment:
+2. Create a virtual environment and activate it:
    ```bash
    python -m venv .venv
-   .venv\Scripts\activate  # On Windows
-   source .venv/bin/activate  # On Unix or MacOS
+   # On Windows:
+   .venv\Scripts\activate
+   # On Unix or MacOS:
+   source .venv/bin/activate
    ```
-
 3. Install development dependencies:
    ```bash
-   pip install -e ".[dev]"
+   pip install -e ".[dev,test]"
+   ```
+4. Run tests and type checks:
+   ```bash
+   python -m pytest
+   mypy kicad_lib_validator --exclude site-packages
    ```
 
-4. Run tests:
-   ```bash
-   python scripts/run_tests.py
-   ```
+## Documentation
+
+See the [docs/](docs/) directory for detailed documentation, structure file examples, and advanced usage.
 
 ## License
 
