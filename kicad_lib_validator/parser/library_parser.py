@@ -6,7 +6,7 @@ from typing import Optional
 from kicad_lib_validator.models import (
     KiCadLibrary, Symbol, Footprint, Model3D, Documentation, LibraryStructure
 )
-import sexpdata
+import sexpdata  # type: ignore
 import logging
 
 logger = logging.getLogger(__name__)

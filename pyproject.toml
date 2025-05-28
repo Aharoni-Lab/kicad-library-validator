@@ -36,6 +36,12 @@ dev = [
     "pydantic>=2.0.0"
 ]
 
+test = [
+    "pytest",
+    "pytest-cov",
+    "types-PyYAML"
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["kicad_lib_validator"]
 
@@ -59,6 +65,10 @@ warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
+plugins = []
+
+[mypy-sexpdata]
+ignore_missing_imports = true
 
 [tool.ruff]
 line-length = 100
