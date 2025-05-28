@@ -9,6 +9,16 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 from kicad_lib_validator.models import Documentation, Footprint, KiCadLibrary, Model3D, Symbol
+from kicad_lib_validator.parser.library_parser import (
+    _find_documentation,
+    _find_footprints,
+    _find_models_3d,
+    _find_symbols,
+)
+from kicad_lib_validator.validators.document_validator import validate_documentation
+from kicad_lib_validator.validators.footprint_validator import validate_footprint
+from kicad_lib_validator.validators.model3d_validator import validate_model3d
+from kicad_lib_validator.validators.symbol_validator import validate_symbol
 
 from .models.structure import LibraryStructure
 from .utils.git_diff import get_changed_files
@@ -211,8 +221,19 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
         return "\n".join(sections)
 
+    def _format_validation_results(self, results: Dict[str, List[str]]) -> str:
+        """Format validation results as markdown."""
+        lines = []
+        for msg in results.get("successes", []):
+            lines.append(f"    - ✅ {msg}")
+        for msg in results.get("warnings", []):
+            lines.append(f"    - ⚠️ {msg}")
+        for msg in results.get("errors", []):
+            lines.append(f"    - ❌ {msg}")
+        return "\n".join(lines)
+
     def _generate_symbols_section(self, changed_files: Dict[str, FileStatus]) -> str:
-        """Generate the symbols section."""
+        """Generate the symbols section with validation results."""
         sections = ["## Symbols"]
 
         # Get symbols directory
@@ -231,18 +252,27 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
             status = self._get_file_status(str(rel_path), changed_files)
             sections.append(f"- {status} `{rel_path}`")
 
+        # Parse and validate symbols
+        all_symbols = _find_symbols(self.library_path, self.structure)
+        if all_symbols:
+            sections.append("\n### Symbol Validation Results")
+            for symbol in all_symbols:
+                sections.append(f"- **{symbol.name}**")
+                results = validate_symbol(symbol, self.structure)
+                sections.append(self._format_validation_results(results))
+        else:
+            sections.append("No symbols found to validate.")
+
         return "\n".join(sections + [""])
 
     def _generate_footprints_section(self, changed_files: Dict[str, FileStatus]) -> str:
-        """Generate the footprints section."""
+        """Generate the footprints section with validation results."""
         sections = ["## Footprints"]
 
-        # Get footprints directory
         footprints_dir = self.library_path / self.structure.library.directories.footprints
         if not footprints_dir.exists():
             return "\n".join(sections + ["No footprints directory found.", ""])
 
-        # List footprint files
         footprint_files = list(footprints_dir.rglob("*.kicad_mod"))
         if not footprint_files:
             return "\n".join(sections + ["No footprint files found.", ""])
@@ -253,18 +283,26 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
             status = self._get_file_status(str(rel_path), changed_files)
             sections.append(f"- {status} `{rel_path}`")
 
+        all_footprints = _find_footprints(self.library_path, self.structure)
+        if all_footprints:
+            sections.append("\n### Footprint Validation Results")
+            for footprint in all_footprints:
+                sections.append(f"- **{footprint.name}**")
+                results = validate_footprint(footprint, self.structure)
+                sections.append(self._format_validation_results(results))
+        else:
+            sections.append("No footprints found to validate.")
+
         return "\n".join(sections + [""])
 
     def _generate_3d_models_section(self, changed_files: Dict[str, FileStatus]) -> str:
-        """Generate the 3D models section."""
+        """Generate the 3D models section with validation results."""
         sections = ["## 3D Models"]
 
-        # Get 3D models directory
         models_dir = self.library_path / self.structure.library.directories.models_3d
         if not models_dir.exists():
             return "\n".join(sections + ["No 3D models directory found.", ""])
 
-        # List 3D model files
         model_files = list(models_dir.rglob("*.step"))
         if not model_files:
             return "\n".join(sections + ["No 3D model files found.", ""])
@@ -275,18 +313,26 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
             status = self._get_file_status(str(rel_path), changed_files)
             sections.append(f"- {status} `{rel_path}`")
 
+        all_models = _find_models_3d(self.library_path, self.structure)
+        if all_models:
+            sections.append("\n### 3D Model Validation Results")
+            for model in all_models:
+                sections.append(f"- **{model.name}**")
+                results = validate_model3d(model, self.structure)
+                sections.append(self._format_validation_results(results))
+        else:
+            sections.append("No 3D models found to validate.")
+
         return "\n".join(sections + [""])
 
     def _generate_documentation_section(self, changed_files: Dict[str, FileStatus]) -> str:
-        """Generate the documentation section."""
+        """Generate the documentation section with validation results."""
         sections = ["## Documentation"]
 
-        # Get documentation directory
         docs_dir = self.library_path / self.structure.library.directories.documentation
         if not docs_dir.exists():
             return "\n".join(sections + ["No documentation directory found.", ""])
 
-        # List documentation files
         doc_files = list(docs_dir.rglob("*.pdf"))
         if not doc_files:
             return "\n".join(sections + ["No documentation files found.", ""])
@@ -296,6 +342,16 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
             rel_path = file.relative_to(self.library_path)
             status = self._get_file_status(str(rel_path), changed_files)
             sections.append(f"- {status} `{rel_path}`")
+
+        all_docs = _find_documentation(self.library_path, self.structure)
+        if all_docs:
+            sections.append("\n### Documentation Validation Results")
+            for doc in all_docs:
+                sections.append(f"- **{doc.name}**")
+                results = validate_documentation(doc, self.structure)
+                sections.append(self._format_validation_results(results))
+        else:
+            sections.append("No documentation found to validate.")
 
         return "\n".join(sections + [""])
 

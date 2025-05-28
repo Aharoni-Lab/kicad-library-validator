@@ -10,12 +10,12 @@ def main():
 
     # Parse structure and library
     structure = parse_library_structure(structure_file)
-    library = parse_library(test_data_dir, structure)
+    # library = parse_library(test_data_dir, structure)  # Not needed for validation report
 
-    # Generate report
+    # Generate report with validation results
     reporter = LibraryReporter(test_data_dir, structure)
     output_path = Path("test_library_report.md").resolve()
-    reporter.generate_library_report(library, output_path)
+    reporter.generate_report(output_path=output_path)
 
     print(f"Report generated at {output_path}")
     print("\n--- Markdown Output ---\n")

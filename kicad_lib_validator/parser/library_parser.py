@@ -63,22 +63,17 @@ def parse_symbol_file(
     logging.debug(f"Parsing symbol file: {file_path}")
     symbols: List[Symbol] = []
     try:
-        # Get the relative path from the symbols directory
         symbols_dir = (library_root / structure.library.directories.symbols).resolve()
         rel_path = file_path.relative_to(symbols_dir)
-        # Get the category path (e.g., "passives/capacitors")
-        category_path = str(rel_path.parent).replace("\\", "/")
-        # Split into categories
-        categories = category_path.split("/")
-
-        # Construct the full library name
+        categories = str(rel_path.parent).replace("\\", "/").split("/")
+        category = categories[0] if len(categories) > 0 and categories[0] else None
+        subcategory = categories[1] if len(categories) > 1 else None
         full_library_name = library_name
         if structure.library.naming.symbols.include_categories:
-            for category in categories:
+            for cat in categories:
                 full_library_name += (
-                    structure.library.naming.symbols.category_separator + category.capitalize()
+                    structure.library.naming.symbols.category_separator + cat.capitalize()
                 )
-
         with open(file_path, "r", encoding="utf-8") as f:
             raw_data = f.read()
             logging.debug(f"Raw file content: {raw_data[:200]}...")  # Print first 200 chars
@@ -108,6 +103,8 @@ def parse_symbol_file(
                                         name=symbol_name,
                                         library_name=full_library_name,
                                         properties=properties,
+                                        category=category,
+                                        subcategory=subcategory,
                                     )
                                 )
                                 logging.debug(
@@ -148,22 +145,17 @@ def parse_footprint_file(
     logging.debug(f"Parsing footprint file: {file_path}")
     footprints: List[Footprint] = []
     try:
-        # Get the relative path from the footprints directory
         footprints_dir = (library_root / structure.library.directories.footprints).resolve()
         rel_path = file_path.relative_to(footprints_dir)
-        # Get the category path (e.g., "smd/resistors")
-        category_path = str(rel_path.parent).replace("\\", "/")
-        # Split into categories
-        categories = category_path.split("/")
-
-        # Construct the full library name
+        categories = str(rel_path.parent).replace("\\", "/").split("/")
+        category = categories[0] if len(categories) > 0 and categories[0] else None
+        subcategory = categories[1] if len(categories) > 1 else None
         full_library_name = library_name
         if structure.library.naming.footprints.include_categories:
-            for category in categories:
+            for cat in categories:
                 full_library_name += (
-                    structure.library.naming.footprints.category_separator + category.capitalize()
+                    structure.library.naming.footprints.category_separator + cat.capitalize()
                 )
-
         with open(file_path, "r", encoding="utf-8") as f:
             raw_data = f.read()
             logging.debug(f"Raw file content: {raw_data[:200]}...")  # Print first 200 chars
@@ -172,19 +164,27 @@ def parse_footprint_file(
             logging.debug(f"Parsed data: {data}")
             if isinstance(data, list) and data:
                 logging.debug(f"data[0] type: {type(data[0])}, value: {data[0]}")
-                if str(data[0]) == "footprint":
+                # Accept both (footprint ...) and (kicad_module ...)
+                if str(data[0]) in ("footprint", "kicad_module"):
                     footprint_name = str(data[1])
                     properties = {}
+                    layers = []
                     for prop in data[2:]:
-                        if isinstance(prop, list) and prop and str(prop[0]) == "property":
-                            prop_name = str(prop[1])
-                            prop_value = str(prop[2])
-                            properties[prop_name] = prop_value
+                        if isinstance(prop, list) and prop:
+                            if str(prop[0]) == "property":
+                                prop_name = str(prop[1])
+                                prop_value = str(prop[2])
+                                properties[prop_name] = prop_value
+                            elif str(prop[0]) == "layer":
+                                layers.append(str(prop[1]))
                     footprints.append(
                         Footprint(
                             name=footprint_name,
                             library_name=full_library_name,
                             properties=properties,
+                            layers=layers,
+                            category=category,
+                            subcategory=subcategory,
                         )
                     )
                     logging.debug(
@@ -221,18 +221,22 @@ def _find_footprints(library_root: Path, structure: LibraryStructure) -> List[Fo
 
 
 def _find_models_3d(library_root: Path, structure: LibraryStructure) -> List[Model3D]:
-    models: List[Model3D] = []
+    models = []
     models_dir = library_root / structure.library.directories.models_3d
     if not models_dir.exists():
         return models
-    # Find all .step and .stp files, case-insensitive
-    model_files = [f for f in models_dir.rglob("*") if f.suffix.lower() in [".step", ".stp"]]
+    model_files = list(models_dir.rglob("*.step"))
     for file in model_files:
         # Get the relative path from the models_3d directory
         models_dir_abs = models_dir.resolve()
         rel_path = file.relative_to(models_dir_abs)
         category_path = str(rel_path.parent).replace("\\", "/")
         categories = category_path.split("/") if category_path else []
+
+        # Set category and subcategory
+        category = categories[0] if categories and categories[0] else None
+        subcategory = categories[1] if len(categories) > 1 else None
+
         full_library_name = structure.library.prefix
         if (
             hasattr(structure.library.naming, "models_3d")
@@ -253,13 +257,15 @@ def _find_models_3d(library_root: Path, structure: LibraryStructure) -> List[Mod
                 file_path=str(file),
                 library_name=full_library_name,
                 properties={},
+                category=category,
+                subcategory=subcategory,
             )
         )
     return models
 
 
 def _find_documentation(library_root: Path, structure: LibraryStructure) -> List[Documentation]:
-    docs: List[Documentation] = []
+    docs = []
     docs_dir = library_root / structure.library.directories.documentation
     if not docs_dir.exists():
         return docs
@@ -270,6 +276,11 @@ def _find_documentation(library_root: Path, structure: LibraryStructure) -> List
         rel_path = file.relative_to(docs_dir_abs)
         category_path = str(rel_path.parent).replace("\\", "/")
         categories = category_path.split("/") if category_path else []
+
+        # Set category and subcategory
+        category = categories[0] if categories and categories[0] else None
+        subcategory = categories[1] if len(categories) > 1 else None
+
         full_library_name = structure.library.prefix
         if (
             hasattr(structure.library.naming, "documentation")
@@ -289,6 +300,8 @@ def _find_documentation(library_root: Path, structure: LibraryStructure) -> List
                 file_path=str(file),
                 library_name=full_library_name,
                 properties={},
+                category=category,
+                subcategory=subcategory,
             )
         )
     return docs

@@ -16,3 +16,5 @@ class Documentation(BaseModel):
     language: Optional[str] = None  # e.g., "en", "de", etc.
     version: Optional[str] = None
     last_updated: Optional[str] = None
+    category: Optional[str] = None
+    subcategory: Optional[str] = None

@@ -251,6 +251,8 @@ class LibraryStructure(BaseModel):
     library: LibraryInfo
     symbols: Dict[str, ComponentType]
     footprints: Dict[str, ComponentType]
+    models_3d: Dict[str, ComponentType] = Field(default_factory=dict)
+    documentation: Dict[str, ComponentType] = Field(default_factory=dict)
 
     @field_validator("version")
     @classmethod

@@ -28,3 +28,5 @@ class Symbol(BaseModel):
     is_power: bool = False
     is_graphic: bool = False
     is_mechanical: bool = False
+    category: Optional[str] = None
+    subcategory: Optional[str] = None

@@ -227,6 +227,48 @@ footprints:
             pattern: "^[0-9.]+%$"
             description: "Placement tolerance"
 
+      capacitors:
+        description: "SMD Capacitors"
+        naming:
+          pattern: "^C_[0-9]+_[0-9]+Metric$"  # e.g., "C_0603_1608Metric"
+          description_pattern: "^[0-9.]+[pnu]F SMD Capacitor$"
+        required_layers:
+          - "F.Cu"
+          - "F.Mask"
+        required_pads:
+          min_count: 2
+          max_count: 2
+          required_types:
+            - "passive"
+          naming:
+            pattern: "^[12]$"
+            description_pattern: "^Pad [12]$"
+        required_properties:
+          Reference:
+            type: "string"
+            pattern: "^C[0-9]+$"
+            description: "Component reference designator"
+          Description:
+            type: "string"
+            pattern: "^[0-9.]+[pnu]F SMD Capacitor$"
+            description: "Component description"
+          Validated:
+            type: "boolean"
+            description: "Whether the component has been validated"
+        optional_properties:
+          Size:
+            type: "string"
+            pattern: "^[0-9]+[0-9]*$"
+            description: "Package size (e.g., 0603, 1206)"
+          Voltage:
+            type: "string"
+            pattern: "^[0-9.]+V$"
+            description: "Voltage rating"
+          Datasheet:
+            type: "string"
+            pattern: "^https?://.*$"
+            description: "Link to datasheet"
+
   tht:
     description: "Through Hole Technology"
     categories:

@@ -16,3 +16,5 @@ class Model3D(BaseModel):
     offset: Optional[Dict[str, float]] = None  # x, y, z offset
     scale: Optional[Dict[str, float]] = None  # x, y, z scale factors
     footprint_filters: List[str] = Field(default_factory=list)  # List of compatible footprint names
+    category: Optional[str] = None
+    subcategory: Optional[str] = None

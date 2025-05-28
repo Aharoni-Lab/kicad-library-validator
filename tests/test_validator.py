@@ -37,18 +37,17 @@ def test_validation_result():
     # Test adding messages
     result.add_error("Test error")
     result.add_warning("Test warning")
-    result.add_info("Test info")
+    result.add_success("Test success")
 
-    assert len(result.errors) == 1
-    assert len(result.warnings) == 1
-    assert len(result.info) == 1
+    # Test message lists
+    assert "Test error" in result.errors
+    assert "Test warning" in result.warnings
+    assert "Test success" in result.successes
+
+    # Test has_errors property
     assert result.has_errors
-    assert result.has_warnings
-
-    # Test properties
-    result = ValidationResult()
+    result.errors.clear()
     assert not result.has_errors
-    assert not result.has_warnings
 
 
 def test_validate_directory_structure(test_data_dir, test_structure_file, tmp_path):

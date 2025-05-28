@@ -29,3 +29,5 @@ class Footprint(BaseModel):
     pads: List[Pad] = Field(default_factory=list)
     layers: List[str] = Field(default_factory=list)
     attr: Optional[Dict] = None  # Footprint attributes (through_hole, smd, etc.)
+    category: Optional[str] = None
+    subcategory: Optional[str] = None
