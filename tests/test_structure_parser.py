@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
 import pytest
 
@@ -21,7 +21,7 @@ def get_valid_base_structure() -> Dict[str, Any]:
                 "symbols": "symbols",
                 "footprints": "footprints",
                 "models_3d": "3dmodels",
-                "documentation": "docs"
+                "documentation": "docs",
             },
             "naming": {
                 "symbols": {
@@ -29,31 +29,31 @@ def get_valid_base_structure() -> Dict[str, Any]:
                     "separator": "_",
                     "case": "upper",
                     "include_categories": True,
-                    "category_separator": "_"
+                    "category_separator": "_",
                 },
                 "footprints": {
                     "prefix": True,
                     "separator": "_",
                     "case": "upper",
                     "include_categories": True,
-                    "category_separator": "_"
+                    "category_separator": "_",
                 },
                 "models_3d": {
                     "prefix": False,
                     "separator": "_",
                     "case": "lower",
                     "include_categories": False,
-                    "category_separator": "_"
-                }
-            }
-        }
+                    "category_separator": "_",
+                },
+            },
+        },
     }
 
 
 def test_parse_library_structure():
     """Test parsing a valid library structure with multiple categories."""
     yaml_content = get_valid_base_structure()
-    
+
     # Add multiple symbol categories
     yaml_content["symbols"] = {
         "passives": {
@@ -64,42 +64,42 @@ def test_parse_library_structure():
                     "reference_prefix": "R",
                     "naming": {
                         "pattern": "^R[0-9]+$",
-                        "description_pattern": "^[0-9.]+[kM]?[Ω]? Resistor$"
+                        "description_pattern": "^[0-9.]+[kM]?[Ω]? Resistor$",
                     },
                     "required_properties": {
                         "Reference": {
                             "type": "string",
                             "pattern": "^R[0-9]+$",
-                            "description": "Component reference designator"
+                            "description": "Component reference designator",
                         },
                         "Value": {
                             "type": "string",
                             "pattern": "^[0-9.]+[kM]?[Ω]?$",
-                            "description": "Resistance value"
-                        }
-                    }
+                            "description": "Resistance value",
+                        },
+                    },
                 },
                 "capacitors": {
                     "description": "Capacitors",
                     "reference_prefix": "C",
                     "naming": {
                         "pattern": "^C[0-9]+$",
-                        "description_pattern": "^[0-9.]+[pnu]F Capacitor$"
+                        "description_pattern": "^[0-9.]+[pnu]F Capacitor$",
                     },
                     "required_properties": {
                         "Reference": {
                             "type": "string",
                             "pattern": "^C[0-9]+$",
-                            "description": "Component reference designator"
+                            "description": "Component reference designator",
                         },
                         "Value": {
                             "type": "string",
                             "pattern": "^[0-9.]+[pnu]F$",
-                            "description": "Capacitance value"
-                        }
-                    }
-                }
-            }
+                            "description": "Capacitance value",
+                        },
+                    },
+                },
+            },
         },
         "actives": {
             "description": "Active components",
@@ -107,25 +107,22 @@ def test_parse_library_structure():
                 "ics": {
                     "description": "Integrated Circuits",
                     "reference_prefix": "U",
-                    "naming": {
-                        "pattern": "^U[0-9]+$",
-                        "description_pattern": "^[A-Z0-9-]+ IC$"
-                    },
+                    "naming": {"pattern": "^U[0-9]+$", "description_pattern": "^[A-Z0-9-]+ IC$"},
                     "required_properties": {
                         "Reference": {
                             "type": "string",
                             "pattern": "^U[0-9]+$",
-                            "description": "Component reference designator"
+                            "description": "Component reference designator",
                         },
                         "Value": {
                             "type": "string",
                             "pattern": "^[A-Z0-9-]+$",
-                            "description": "Part number"
-                        }
-                    }
+                            "description": "Part number",
+                        },
+                    },
                 }
-            }
-        }
+            },
+        },
     }
 
     # Add multiple footprint categories
@@ -137,33 +134,33 @@ def test_parse_library_structure():
                     "description": "SMD Resistors",
                     "naming": {
                         "pattern": "^SMD_[0-9]+$",
-                        "description_pattern": "^[0-9]+ SMD Resistor$"
+                        "description_pattern": "^[0-9]+ SMD Resistor$",
                     },
                     "required_layers": ["F.Cu", "B.Cu", "F.SilkS", "F.Mask"],
                     "required_properties": {
                         "Reference": {
                             "type": "string",
                             "pattern": "^R[0-9]+$",
-                            "description": "Component reference designator"
+                            "description": "Component reference designator",
                         }
-                    }
+                    },
                 },
                 "capacitors": {
                     "description": "SMD Capacitors",
                     "naming": {
                         "pattern": "^SMD_[0-9]+$",
-                        "description_pattern": "^[0-9]+ SMD Capacitor$"
+                        "description_pattern": "^[0-9]+ SMD Capacitor$",
                     },
                     "required_layers": ["F.Cu", "B.Cu", "F.SilkS", "F.Mask"],
                     "required_properties": {
                         "Reference": {
                             "type": "string",
                             "pattern": "^C[0-9]+$",
-                            "description": "Component reference designator"
+                            "description": "Component reference designator",
                         }
-                    }
-                }
-            }
+                    },
+                },
+            },
         },
         "tht": {
             "description": "Through Hole Technology",
@@ -172,19 +169,19 @@ def test_parse_library_structure():
                     "description": "THT Resistors",
                     "naming": {
                         "pattern": "^THT_[0-9.]+mm$",
-                        "description_pattern": "^[0-9.]+mm THT Resistor$"
+                        "description_pattern": "^[0-9.]+mm THT Resistor$",
                     },
                     "required_layers": ["F.Cu", "B.Cu", "F.SilkS", "*.Cu"],
                     "required_properties": {
                         "Reference": {
                             "type": "string",
                             "pattern": "^R[0-9]+$",
-                            "description": "Component reference designator"
+                            "description": "Component reference designator",
                         }
-                    }
+                    },
                 }
-            }
-        }
+            },
+        },
     }
 
     structure = parse_library_structure_from_yaml(yaml_content)
@@ -232,7 +229,7 @@ def test_parse_library_structure_missing_required_fields():
     """Test parsing YAML with missing required fields."""
     invalid_yaml = {
         "version": "1.0",
-        "description": "Test"
+        "description": "Test",
         # Missing library field
     }
 
@@ -278,10 +275,10 @@ def test_parse_library_structure_invalid_naming_pattern():
                     "description": "Resistors",
                     "naming": {
                         "pattern": "[invalid pattern",  # Invalid regex
-                        "description_pattern": "^[0-9.]+[kM]?[Ω]? Resistor$"
-                    }
+                        "description_pattern": "^[0-9.]+[kM]?[Ω]? Resistor$",
+                    },
                 }
-            }
+            },
         }
     }
 
@@ -302,11 +299,11 @@ def test_parse_library_structure_invalid_property_type():
                         "Value": {
                             "type": "invalid_type",  # Invalid type
                             "pattern": "^[0-9.]+[kM]?[Ω]?$",
-                            "description": "Resistance value"
+                            "description": "Resistance value",
                         }
-                    }
+                    },
                 }
-            }
+            },
         }
     }
 
@@ -328,11 +325,11 @@ def test_parse_library_structure_invalid_layer():
                         "Reference": {
                             "type": "string",
                             "pattern": "^R[0-9]+$",
-                            "description": "Component reference designator"
+                            "description": "Component reference designator",
                         }
-                    }
+                    },
                 }
-            }
+            },
         }
     }
 
