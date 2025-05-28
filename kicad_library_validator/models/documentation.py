@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 class Documentation(BaseModel):
     """Represents documentation in the library."""
     name: str
+    library_name: str  # The name of the library this documentation belongs to
     format: str  # e.g., "pdf", "html", etc.
     file_path: str
     properties: Dict[str, str] = Field(default_factory=dict)

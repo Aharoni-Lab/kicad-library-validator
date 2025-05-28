@@ -23,18 +23,29 @@ def parse_library(library_root: Path, structure: LibraryStructure) -> KiCadLibra
     Returns:
         KiCadLibrary: The populated library model
     """
-    symbols = _find_symbols(library_root, structure)
-    footprints = _find_footprints(library_root, structure)
-    models_3d = _find_models_3d(library_root, structure)
-    documentation = _find_documentation(library_root, structure)
+    library = KiCadLibrary(structure=structure)
     
-    return KiCadLibrary(
-        structure=structure,
-        symbols=symbols,
-        footprints=footprints,
-        models_3d=models_3d,
-        documentation=documentation
-    )
+    # Parse and add symbols
+    symbols = _find_symbols(library_root, structure)
+    for symbol in symbols:
+        library.add_symbol(symbol)
+    
+    # Parse and add footprints
+    footprints = _find_footprints(library_root, structure)
+    for footprint in footprints:
+        library.add_footprint(footprint)
+    
+    # Parse and add 3D models
+    models_3d = _find_models_3d(library_root, structure)
+    for model in models_3d:
+        library.add_model3d(model)
+    
+    # Parse and add documentation
+    documentation = _find_documentation(library_root, structure)
+    for doc in documentation:
+        library.add_documentation(doc)
+    
+    return library
 
 
 def parse_symbol_file(file_path: Path, library_name: str, structure: LibraryStructure, library_root: Path) -> list[Symbol]:
@@ -180,20 +191,61 @@ def _find_footprints(library_root: Path, structure: LibraryStructure) -> list[Fo
 
 
 def _find_models_3d(library_root: Path, structure: LibraryStructure) -> list[Model3D]:
-    models_dir = library_root / structure.library.directories.models_3d
-    model_files = list(models_dir.rglob("*.step"))
     models = []
+    models_dir = library_root / structure.library.directories.models_3d
+    if not models_dir.exists():
+        return models
+    model_files = list(models_dir.rglob("*.step"))
     for file in model_files:
-        # TODO: Implement actual 3D model file parsing
-        models.append(Model3D(name=file.stem, format="step", units="mm", file_path=str(file)))
+        # Get the relative path from the models_3d directory
+        models_dir_abs = models_dir.resolve()
+        rel_path = file.relative_to(models_dir_abs)
+        category_path = str(rel_path.parent).replace("\\", "/")
+        categories = category_path.split("/") if category_path else []
+        full_library_name = structure.library.prefix
+        if hasattr(structure.library.naming, 'models_3d') and structure.library.naming.models_3d and getattr(structure.library.naming.models_3d, 'include_categories', False):
+            sep = getattr(structure.library.naming.models_3d, 'category_separator', "_")
+            for category in categories:
+                full_library_name += sep + category.capitalize()
+        else:
+            for category in categories:
+                full_library_name += "_" + category.capitalize()
+        models.append(Model3D(
+            name=file.stem,
+            format="step",
+            units="mm",
+            file_path=str(file),
+            library_name=full_library_name,
+            properties={}
+        ))
     return models
 
 
 def _find_documentation(library_root: Path, structure: LibraryStructure) -> list[Documentation]:
-    docs_dir = library_root / structure.library.directories.documentation
-    doc_files = list(docs_dir.rglob("*.pdf"))
     docs = []
+    docs_dir = library_root / structure.library.directories.documentation
+    if not docs_dir.exists():
+        return docs
+    doc_files = list(docs_dir.rglob("*.pdf"))
     for file in doc_files:
-        # TODO: Implement actual documentation file parsing
-        docs.append(Documentation(name=file.stem, format="pdf", file_path=str(file)))
+        # Get the relative path from the documentation directory
+        docs_dir_abs = docs_dir.resolve()
+        rel_path = file.relative_to(docs_dir_abs)
+        category_path = str(rel_path.parent).replace("\\", "/")
+        categories = category_path.split("/") if category_path else []
+        full_library_name = structure.library.prefix
+        if hasattr(structure.library.naming, 'documentation') and structure.library.naming.documentation and getattr(structure.library.naming.documentation, 'include_categories', False):
+            sep = getattr(structure.library.naming.documentation, 'category_separator', "_")
+            for category in categories:
+                full_library_name += sep + category.capitalize()
+        else:
+            for category in categories:
+                full_library_name += "_" + category.capitalize()
+        docs.append(Documentation(
+            name=file.stem,
+            format="pdf",
+            file_path=str(file),
+            library_name=full_library_name,
+            properties={}
+        ))
     return docs 

@@ -2,7 +2,8 @@
 
 ## Symbols
 
-- **Test_Passives_Capacitors:test-symbol-can-delete1**
+### Test_Passives_Capacitors
+- **test-symbol-can-delete1**
   - Properties:
     - Reference: C
     - Value: 
@@ -11,7 +12,7 @@
     - Description: 
     - Validated: No
     - ki_keywords: cap
-- **Test_Passives_Capacitors:test-symbol-can-delete2222**
+- **test-symbol-can-delete2222**
   - Properties:
     - Reference: C
     - Value: 
@@ -23,7 +24,8 @@
 
 ## Footprints
 
-- **Test_Passives_Capacitors:Test_cap**
+### Test_Passives_Capacitors
+- **Test_cap**
   - Properties:
     - Reference: REF**
     - Value: Untitled
@@ -33,8 +35,10 @@
 
 ## 3D Models
 
+### Test_Passives_Capacitors
 - **GRM0115C1C120JE01L**
 
 ## Documentation
 
+### Test_Passives_Capacitors
 - **GRM033R61A474ME05-01A**

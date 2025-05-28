@@ -103,45 +103,71 @@ class LibraryReporter:
         
         # Symbols
         report.append("## Symbols\n")
-        if library.symbols:
-            for symbol in library.symbols:
-                full_name = f"{symbol.library_name}:{symbol.name}"
-                report.append(f"- **{full_name}**")
-                if symbol.properties:
-                    report.append("  - Properties:")
-                    for key, value in symbol.properties.items():
-                        report.append(f"    - {key}: {value}")
+        if library.symbol_libraries:
+            for lib_name, symbol_lib in sorted(library.symbol_libraries.items()):
+                report.append(f"### {lib_name}")
+                if symbol_lib.symbols:
+                    for symbol in symbol_lib.symbols:
+                        report.append(f"- **{symbol.name}**")
+                        if symbol.properties:
+                            report.append("  - Properties:")
+                            for key, value in symbol.properties.items():
+                                report.append(f"    - {key}: {value}")
+                else:
+                    report.append("No symbols found in this library.\n")
         else:
-            report.append("No symbols found.\n")
+            report.append("No symbol libraries found.\n")
         
         # Footprints
         report.append("\n## Footprints\n")
-        if library.footprints:
-            for footprint in library.footprints:
-                full_name = f"{footprint.library_name}:{footprint.name}"
-                report.append(f"- **{full_name}**")
-                if footprint.properties:
-                    report.append("  - Properties:")
-                    for key, value in footprint.properties.items():
-                        report.append(f"    - {key}: {value}")
+        if library.footprint_libraries:
+            for lib_name, footprint_lib in sorted(library.footprint_libraries.items()):
+                report.append(f"### {lib_name}")
+                if footprint_lib.footprints:
+                    for footprint in footprint_lib.footprints:
+                        report.append(f"- **{footprint.name}**")
+                        if footprint.properties:
+                            report.append("  - Properties:")
+                            for key, value in footprint.properties.items():
+                                report.append(f"    - {key}: {value}")
+                else:
+                    report.append("No footprints found in this library.\n")
         else:
-            report.append("No footprints found.\n")
+            report.append("No footprint libraries found.\n")
         
         # 3D Models
         report.append("\n## 3D Models\n")
-        if library.models_3d:
-            for model in library.models_3d:
-                report.append(f"- **{model.name}**")
+        if library.model3d_libraries:
+            for lib_name, model_lib in sorted(library.model3d_libraries.items()):
+                report.append(f"### {lib_name}")
+                if model_lib.models:
+                    for model in model_lib.models:
+                        report.append(f"- **{model.name}**")
+                        if getattr(model, 'properties', None):
+                            report.append("  - Properties:")
+                            for key, value in model.properties.items():
+                                report.append(f"    - {key}: {value}")
+                else:
+                    report.append("No 3D models found in this library.\n")
         else:
-            report.append("No 3D models found.\n")
+            report.append("No 3D model libraries found.\n")
         
         # Documentation
         report.append("\n## Documentation\n")
-        if library.documentation:
-            for doc in library.documentation:
-                report.append(f"- **{doc.name}**")
+        if library.documentation_libraries:
+            for lib_name, doc_lib in sorted(library.documentation_libraries.items()):
+                report.append(f"### {lib_name}")
+                if doc_lib.docs:
+                    for doc in doc_lib.docs:
+                        report.append(f"- **{doc.name}**")
+                        if getattr(doc, 'properties', None):
+                            report.append("  - Properties:")
+                            for key, value in doc.properties.items():
+                                report.append(f"    - {key}: {value}")
+                else:
+                    report.append("No documentation found in this library.\n")
         else:
-            report.append("No documentation found.\n")
+            report.append("No documentation libraries found.\n")
         
         # Write report
         with open(output_path, "w", encoding="utf-8") as f:

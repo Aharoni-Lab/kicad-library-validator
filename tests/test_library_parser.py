@@ -27,31 +27,35 @@ def test_parse_library(test_data_dir, test_structure):
     """Test parsing the library structure and contents."""
     library = parse_library(test_data_dir, test_structure)
     assert isinstance(library, KiCadLibrary)
-    assert len(library.symbols) > 0
-    assert len(library.footprints) > 0
-    assert len(library.models_3d) > 0
-    assert len(library.documentation) > 0
+    assert len(library.symbol_libraries) > 0
+    assert len(library.footprint_libraries) > 0
+    assert len(library.model3d_libraries) > 0
+    assert len(library.documentation_libraries) > 0
 
 
 def test_parse_symbols(test_data_dir, test_structure):
     """Test parsing symbols from the library."""
     library = parse_library(test_data_dir, test_structure)
-    assert any(isinstance(symbol, Symbol) for symbol in library.symbols)
+    assert any(len(lib.symbols) > 0 for lib in library.symbol_libraries.values())
+    assert any(isinstance(symbol, Symbol) for lib in library.symbol_libraries.values() for symbol in lib.symbols)
 
 
 def test_parse_footprints(test_data_dir, test_structure):
     """Test parsing footprints from the library."""
     library = parse_library(test_data_dir, test_structure)
-    assert any(isinstance(footprint, Footprint) for footprint in library.footprints)
+    assert any(len(lib.footprints) > 0 for lib in library.footprint_libraries.values())
+    assert any(isinstance(footprint, Footprint) for lib in library.footprint_libraries.values() for footprint in lib.footprints)
 
 
 def test_parse_models_3d(test_data_dir, test_structure):
     """Test parsing 3D models from the library."""
     library = parse_library(test_data_dir, test_structure)
-    assert any(isinstance(model, Model3D) for model in library.models_3d)
+    assert any(len(lib.models) > 0 for lib in library.model3d_libraries.values())
+    assert any(isinstance(model, Model3D) for lib in library.model3d_libraries.values() for model in lib.models)
 
 
 def test_parse_documentation(test_data_dir, test_structure):
     """Test parsing documentation from the library."""
     library = parse_library(test_data_dir, test_structure)
-    assert any(isinstance(doc, Documentation) for doc in library.documentation) 
+    assert any(len(lib.docs) > 0 for lib in library.documentation_libraries.values())
+    assert any(isinstance(doc, Documentation) for lib in library.documentation_libraries.values() for doc in lib.docs) 
