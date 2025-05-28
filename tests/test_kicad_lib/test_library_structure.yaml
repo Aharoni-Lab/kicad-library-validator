@@ -61,11 +61,11 @@ symbols:
           Validated:
             type: "boolean"
             description: "Whether the component has been validated"
-        optional_properties:
           Value:
             type: "string"
             pattern: "^[0-9.]+[kM]?[Ω]?$"
             description: "Resistance value with unit"
+        optional_properties:
           Footprint:
             type: "string"
             pattern: "^Resistor_.*$"

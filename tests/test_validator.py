@@ -3,7 +3,7 @@ Tests for the KiCadLibraryValidator class.
 """
 import pytest
 from pathlib import Path
-from kicad_library_validator.validator import KiCadLibraryValidator, ValidationResult
+from kicad_lib_validator.validator import KiCadLibraryValidator, ValidationResult
 
 
 @pytest.fixture

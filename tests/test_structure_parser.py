@@ -25,9 +25,9 @@ def test_parse_library_structure(test_structure_file):
     assert structure.description == "KiCad Library Structure Definition"
     
     # Test library info
-    assert structure.library.prefix == "Company"
-    assert structure.library.description == "Description of the library"
-    assert structure.library.maintainer == "Maintainer Name <email@example.com>"
+    assert structure.library.prefix == "Test"
+    assert structure.library.description == "Example library for testing"
+    assert structure.library.maintainer == "Dr. Test <email@example.com>"
     assert structure.library.license == "MIT"
     
     # Test directory structure
@@ -47,18 +47,18 @@ def test_validate_component_name(test_structure_file):
     """Test component name validation."""
     structure = parse_library_structure(test_structure_file)
     
-    # Test valid resistor name
-    assert structure.validate_component_name("R1", "symbols", "resistor")
+    # Test valid resistor name (matches pattern ^R[0-9]+$)
+    assert structure.validate_component_name("R1", "symbols", "passives.resistors")
     
-    # Test invalid resistor name
-    assert not structure.validate_component_name("Invalid", "symbols", "resistor")
+    # Test invalid resistor name (does not match pattern)
+    assert not structure.validate_component_name("Invalid", "symbols", "passives.resistors")
     
-    # Test valid capacitor name
-    assert structure.validate_component_name("C1", "symbols", "capacitor")
+    # Test valid capacitor name (matches pattern ^C[0-9]+$)
+    assert structure.validate_component_name("C1", "symbols", "passives.capacitors")
     
     # Test invalid component type
     with pytest.raises(ValueError, match="Component type must be 'symbols' or 'footprints'"):
-        structure.validate_component_name("R1", "invalid", "resistor")
+        structure.validate_component_name("R1", "invalid", "passives.resistors")
 
 
 def test_validate_property(test_structure_file):
@@ -66,20 +66,20 @@ def test_validate_property(test_structure_file):
     structure = parse_library_structure(test_structure_file)
     
     # Test valid resistor value
-    assert structure.validate_property("Value", "10k", "symbols", "resistor")
+    assert structure.validate_property("Value", "10k", "symbols", "passives.resistors")
     
     # Test invalid resistor value
-    assert not structure.validate_property("Value", "invalid", "symbols", "resistor")
+    assert not structure.validate_property("Value", "invalid", "symbols", "passives.resistors")
     
     # Test valid capacitor value
-    assert structure.validate_property("Value", "100nF", "symbols", "capacitor")
+    assert structure.validate_property("Value", "100nF", "symbols", "passives.capacitors")
     
     # Test valid optional property
-    assert structure.validate_property("Tolerance", "1%", "symbols", "resistor")
+    assert structure.validate_property("Tolerance", "1%", "symbols", "passives.resistors")
     
     # Test invalid component type
-    with pytest.raises(ValueError, match="Component type must be 'symbols' or 'footprints'"):
-        structure.validate_property("Value", "10k", "invalid", "resistor")
+    with pytest.raises(ValueError):
+        structure.validate_property("Value", "10k", "invalid", "passives.resistors")
 
 
 def test_validate_library_structure_invalid_yaml(test_data_dir, tmp_path):

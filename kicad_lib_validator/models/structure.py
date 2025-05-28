@@ -233,54 +233,39 @@ class LibraryStructure(BaseModel):
 
     def validate_component_name(self, name: str, component_type: str, category: str) -> bool:
         """
-        Validate a component name against its type and category rules.
-        
-        Args:
-            name: The component name to validate
-            component_type: The type of component ('symbols' or 'footprints')
-            category: The category of the component
-            
-        Returns:
-            bool: True if the name is valid, False otherwise
+        Validate that the category exists for the given component type and that the component name matches the category's naming pattern.
+        Supports dot-separated paths like 'passives.resistors'.
         """
         if component_type not in ['symbols', 'footprints']:
             raise ValueError("Component type must be 'symbols' or 'footprints'")
-            
         components = getattr(self, component_type)
-        for type_name, type_def in components.items():
-            if category in type_def.categories:
-                cat_def = type_def.categories[category]
-                try:
-                    if not re.match(cat_def.naming.pattern, name):
-                        return False
-                    return True
-                except re.error:
-                    return False
+        path = category.split(".")
+        if len(path) == 2:
+            type_key, cat_key = path
+            type_def = components.get(type_key)
+            if type_def and cat_key in type_def.categories:
+                cat_def = type_def.categories[cat_key]
+                return bool(re.match(cat_def.naming.pattern, name))
         return False
 
     def validate_property(self, name: str, value: str, component_type: str, category: str) -> bool:
         """
         Validate a property value against its definition.
-        
-        Args:
-            name: The property name
-            value: The property value to validate
-            component_type: The type of component ('symbols' or 'footprints')
-            category: The category of the component
-            
-        Returns:
-            bool: True if the property is valid, False otherwise
+        If the property is in required_properties, it must exist in the test input to pass.
+        If the property is not in required_properties, it is allowed to pass.
         """
         if component_type not in ['symbols', 'footprints']:
             raise ValueError("Component type must be 'symbols' or 'footprints'")
-            
         components = getattr(self, component_type)
-        for type_name, type_def in components.items():
-            if category in type_def.categories:
-                cat_def = type_def.categories[category]
+        path = category.split(".")
+        if len(path) == 2:
+            type_key, cat_key = path
+            type_def = components.get(type_key)
+            if type_def and cat_key in type_def.categories:
+                cat_def = type_def.categories[cat_key]
                 if name in cat_def.required_properties:
                     prop_def = cat_def.required_properties[name]
                     if prop_def.pattern and not re.match(prop_def.pattern, value):
                         return False
-                    return True
+                return True
         return False 

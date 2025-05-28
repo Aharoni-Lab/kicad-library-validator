@@ -3,9 +3,9 @@ Tests for the library parser.
 """
 import pytest
 from pathlib import Path
-from kicad_library_validator.parser.library_parser import parse_library
-from kicad_library_validator.parser.structure_parser import parse_library_structure
-from kicad_library_validator.models import KiCadLibrary, Symbol, Footprint, Model3D, Documentation
+from kicad_lib_validator.parser.library_parser import parse_library
+from kicad_lib_validator.parser.structure_parser import parse_library_structure
+from kicad_lib_validator.models import KiCadLibrary, Symbol, Footprint, Model3D, Documentation
 
 
 @pytest.fixture

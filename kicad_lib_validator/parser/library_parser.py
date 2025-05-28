@@ -3,7 +3,7 @@ Parser for the actual KiCad library contents, using the structure definition.
 """
 from pathlib import Path
 from typing import Optional
-from kicad_library_validator.models import (
+from kicad_lib_validator.models import (
     KiCadLibrary, Symbol, Footprint, Model3D, Documentation, LibraryStructure
 )
 import sexpdata

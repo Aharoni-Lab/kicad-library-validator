@@ -1,7 +1,7 @@
 from pathlib import Path
-from kicad_library_validator.parser.structure_parser import parse_library_structure
-from kicad_library_validator.parser.library_parser import parse_library
-from kicad_library_validator.reporter import LibraryReporter
+from kicad_lib_validator.parser.structure_parser import parse_library_structure
+from kicad_lib_validator.parser.library_parser import parse_library
+from kicad_lib_validator.reporter import LibraryReporter
 
 
 def main():

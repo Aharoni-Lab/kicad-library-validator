@@ -9,7 +9,7 @@ import logging
 
 from .models.structure import LibraryStructure
 from .utils.git_diff import get_changed_files
-from kicad_library_validator.models import KiCadLibrary, Symbol, Footprint, Model3D, Documentation
+from kicad_lib_validator.models import KiCadLibrary, Symbol, Footprint, Model3D, Documentation
 
 
 @dataclass

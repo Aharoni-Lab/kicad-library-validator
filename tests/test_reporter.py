@@ -3,10 +3,10 @@ Tests for the LibraryReporter class.
 """
 import pytest
 from pathlib import Path
-from kicad_library_validator.reporter import LibraryReporter
-from kicad_library_validator.validator import KiCadLibraryValidator
-from kicad_library_validator.parser.library_parser import parse_library
-from kicad_library_validator.parser.structure_parser import parse_library_structure
+from kicad_lib_validator.reporter import LibraryReporter
+from kicad_lib_validator.validator import KiCadLibraryValidator
+from kicad_lib_validator.parser.library_parser import parse_library
+from kicad_lib_validator.parser.structure_parser import parse_library_structure
 
 
 @pytest.fixture
@@ -57,7 +57,15 @@ def test_generate_report(test_data_dir, test_structure_file, tmp_path):
     assert "## Documentation" in report_content
     
     # Check for actual content
-    assert any(symbol.name in report_content for symbol in library.symbols)
-    assert any(footprint.name in report_content for footprint in library.footprints)
-    assert any(model.name in report_content for model in library.models_3d)
-    assert any(doc.name in report_content for doc in library.documentation) 
+    for library_name, symbol_library in library.symbol_libraries.items():
+        for symbol in symbol_library.symbols:
+            assert symbol.name in report_content
+    for library_name, footprint_library in library.footprint_libraries.items():
+        for footprint in footprint_library.footprints:
+            assert footprint.name in report_content
+    for library_name, model3d_library in library.model3d_libraries.items():
+        for model in model3d_library.models:
+            assert model.name in report_content
+    for library_name, doc_library in library.documentation_libraries.items():
+        for doc in doc_library.docs:
+            assert doc.name in report_content 
