@@ -38,19 +38,33 @@ def parse_library_structure(
     except yaml.YAMLError as e:
         raise ValueError(f"Invalid YAML in structure file: {e}")
 
-    if library_root is None:
-        library_root = file_path.parent
-    else:
-        library_root = Path(library_root)
+    return parse_library_structure_from_yaml(yaml_content, library_root)
 
-    # Create and validate the library structure
+
+def parse_library_structure_from_yaml(
+    yaml_content: Dict[str, Any], library_root: Optional[Union[str, Path]] = None
+) -> LibraryStructure:
+    """
+    Parse a library structure from a YAML dictionary and validate it against the LibraryStructure model.
+
+    Args:
+        yaml_content: Dictionary containing the YAML content
+        library_root: Optional root directory of the library. If not provided, skips directory validation.
+
+    Returns:
+        LibraryStructure: Validated library structure
+
+    Raises:
+        ValueError: If the structure is invalid
+    """
     try:
         structure = LibraryStructure(**yaml_content)
     except Exception as e:
         raise ValueError(f"Invalid library structure: {e}")
 
-    # Validate directory structure
-    _validate_directory_structure(structure, library_root)
+    # Only validate directory structure if library_root is provided
+    if library_root is not None:
+        _validate_directory_structure(structure, Path(library_root))
 
     return structure
 
@@ -101,34 +115,3 @@ def _validate_directory_structure(structure: LibraryStructure, library_root: Pat
             raise ValueError(f"Documentation directory not found: {docs_dir}")
         if not docs_dir.is_dir():
             raise ValueError(f"Documentation path is not a directory: {docs_dir}")
-
-
-def validate_component_name(name: str, structure: LibraryStructure) -> bool:
-    """
-    Validate a component name against the library structure rules.
-
-    Args:
-        name: Component name to validate
-        structure: LibraryStructure instance
-
-    Returns:
-        bool: True if the name is valid, False otherwise
-    """
-    # TODO: Implement name validation based on structure rules
-    return True
-
-
-def validate_property(property_name: str, value: Any, structure: LibraryStructure) -> bool:
-    """
-    Validate a property value against the library structure rules.
-
-    Args:
-        property_name: Name of the property
-        value: Value to validate
-        structure: LibraryStructure instance
-
-    Returns:
-        bool: True if the property is valid, False otherwise
-    """
-    # TODO: Implement property validation based on structure rules
-    return True
