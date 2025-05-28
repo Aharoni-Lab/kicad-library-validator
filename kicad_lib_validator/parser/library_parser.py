@@ -227,8 +227,7 @@ def _find_models_3d(library_root: Path, structure: LibraryStructure) -> List[Mod
         return models
     # Case-insensitive search for .step and .wrl files
     model_files = [
-        f for f in models_dir.rglob("*")
-        if f.is_file() and f.suffix.lower() in [".step", ".wrl"]
+        f for f in models_dir.rglob("*") if f.is_file() and f.suffix.lower() in [".step", ".wrl"]
     ]
     for file in model_files:
         # Get the relative path from the models_3d directory
