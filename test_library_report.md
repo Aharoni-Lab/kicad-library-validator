@@ -1,6 +1,6 @@
 # Library Structure Report
 
-Generated: 2025-05-28 14:48:47
+Generated: 2025-05-28 15:20:25
 
 ## Library Information
 - **Name**: Test
@@ -46,6 +46,10 @@ Subdirectories:
 -  `symbols\passives\resistors\resistors.kicad_sym`
 
 ### Symbol Validation Results
+
+#### passives
+
+##### capacitors
 - **C1**
     - ✅ Symbol name 'C1' matches pattern '^C[0-9]+$'
     - ✅ Property 'Reference' value 'C1' matches pattern '^C[0-9]+$'
@@ -66,6 +70,8 @@ Subdirectories:
     - ⚠️ Unknown property 'Footprint' in symbol 'C2'
     - ⚠️ Unknown property 'Datasheet' in symbol 'C2'
     - ⚠️ Unknown property 'Voltage' in symbol 'C2'
+
+##### resistors
 - **R1**
     - ✅ Symbol name 'R1' matches pattern '^R[0-9]+$'
     - ✅ Property 'Reference' value 'R1' matches pattern '^R[0-9]+$'
@@ -95,6 +101,10 @@ Subdirectories:
 -  `footprints\smd\capacitors\Test_cap.kicad_mod`
 
 ### Footprint Validation Results
+
+#### smd
+
+##### capacitors
 - **C_0603_1608Metric**
     - ✅ Footprint name 'C_0603_1608Metric' matches pattern '^C_[0-9]+_[0-9]+Metric$'
     - ✅ Property 'Reference' value 'C1' matches pattern '^C[0-9]+$'
@@ -109,6 +119,10 @@ Subdirectories:
 -  `3dmodels\passives\capacitors\GRM0115C1C120JE01L.STEP`
 
 ### 3D Model Validation Results
+
+#### capacitors
+
+##### capacitors
 - **GRM0115C1C120JE01L**
     - ⚠️ Category/subcategory 'capacitors/capacitors' not found in structure for model 'GRM0115C1C120JE01L'
     - ⚠️ Could not determine 3D model category for model 'GRM0115C1C120JE01L'
@@ -119,6 +133,10 @@ Subdirectories:
 -  `docs\passives\capacitors\GRM033R61A474ME05-01A.pdf`
 
 ### Documentation Validation Results
+
+#### capacitors
+
+##### capacitors
 - **GRM033R61A474ME05-01A**
     - ⚠️ Category/subcategory 'capacitors/capacitors' not found in structure for document 'GRM033R61A474ME05-01A'
     - ⚠️ Could not determine documentation category for document 'GRM033R61A474ME05-01A'

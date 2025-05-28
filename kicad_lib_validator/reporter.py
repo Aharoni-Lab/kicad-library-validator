@@ -232,6 +232,19 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
             lines.append(f"    - ❌ {msg}")
         return "\n".join(lines)
 
+    def _group_by_category(self, items: List[Any]) -> Dict[str, Dict[str, List[Any]]]:
+        """Group items by their category and subcategory."""
+        grouped = {}
+        for item in items:
+            category = item.category or "Uncategorized"
+            subcategory = item.subcategory or "Uncategorized"
+            if category not in grouped:
+                grouped[category] = {}
+            if subcategory not in grouped[category]:
+                grouped[category][subcategory] = []
+            grouped[category][subcategory].append(item)
+        return grouped
+
     def _generate_symbols_section(self, changed_files: Dict[str, FileStatus]) -> str:
         """Generate the symbols section with validation results."""
         sections = ["## Symbols"]
@@ -256,10 +269,16 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         all_symbols = _find_symbols(self.library_path, self.structure)
         if all_symbols:
             sections.append("\n### Symbol Validation Results")
-            for symbol in all_symbols:
-                sections.append(f"- **{symbol.name}**")
-                results = validate_symbol(symbol, self.structure)
-                sections.append(self._format_validation_results(results))
+            grouped_symbols = self._group_by_category(all_symbols)
+
+            for category, subcategories in sorted(grouped_symbols.items()):
+                sections.append(f"\n#### {category}")
+                for subcategory, symbols in sorted(subcategories.items()):
+                    sections.append(f"\n##### {subcategory}")
+                    for symbol in sorted(symbols, key=lambda x: x.name):
+                        sections.append(f"- **{symbol.name}**")
+                        results = validate_symbol(symbol, self.structure)
+                        sections.append(self._format_validation_results(results))
         else:
             sections.append("No symbols found to validate.")
 
@@ -286,10 +305,16 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         all_footprints = _find_footprints(self.library_path, self.structure)
         if all_footprints:
             sections.append("\n### Footprint Validation Results")
-            for footprint in all_footprints:
-                sections.append(f"- **{footprint.name}**")
-                results = validate_footprint(footprint, self.structure)
-                sections.append(self._format_validation_results(results))
+            grouped_footprints = self._group_by_category(all_footprints)
+
+            for category, subcategories in sorted(grouped_footprints.items()):
+                sections.append(f"\n#### {category}")
+                for subcategory, footprints in sorted(subcategories.items()):
+                    sections.append(f"\n##### {subcategory}")
+                    for footprint in sorted(footprints, key=lambda x: x.name):
+                        sections.append(f"- **{footprint.name}**")
+                        results = validate_footprint(footprint, self.structure)
+                        sections.append(self._format_validation_results(results))
         else:
             sections.append("No footprints found to validate.")
 
@@ -316,10 +341,16 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         all_models = _find_models_3d(self.library_path, self.structure)
         if all_models:
             sections.append("\n### 3D Model Validation Results")
-            for model in all_models:
-                sections.append(f"- **{model.name}**")
-                results = validate_model3d(model, self.structure)
-                sections.append(self._format_validation_results(results))
+            grouped_models = self._group_by_category(all_models)
+
+            for category, subcategories in sorted(grouped_models.items()):
+                sections.append(f"\n#### {category}")
+                for subcategory, models in sorted(subcategories.items()):
+                    sections.append(f"\n##### {subcategory}")
+                    for model in sorted(models, key=lambda x: x.name):
+                        sections.append(f"- **{model.name}**")
+                        results = validate_model3d(model, self.structure)
+                        sections.append(self._format_validation_results(results))
         else:
             sections.append("No 3D models found to validate.")
 
@@ -346,10 +377,16 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         all_docs = _find_documentation(self.library_path, self.structure)
         if all_docs:
             sections.append("\n### Documentation Validation Results")
-            for doc in all_docs:
-                sections.append(f"- **{doc.name}**")
-                results = validate_documentation(doc, self.structure)
-                sections.append(self._format_validation_results(results))
+            grouped_docs = self._group_by_category(all_docs)
+
+            for category, subcategories in sorted(grouped_docs.items()):
+                sections.append(f"\n#### {category}")
+                for subcategory, docs in sorted(subcategories.items()):
+                    sections.append(f"\n##### {subcategory}")
+                    for doc in sorted(docs, key=lambda x: x.name):
+                        sections.append(f"- **{doc.name}**")
+                        results = validate_documentation(doc, self.structure)
+                        sections.append(self._format_validation_results(results))
         else:
             sections.append("No documentation found to validate.")
 
