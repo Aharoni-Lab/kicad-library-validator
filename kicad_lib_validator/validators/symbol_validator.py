@@ -5,7 +5,7 @@ Symbol validation logic for KiCad libraries.
 import re
 from typing import Any, Dict, List
 
-from kicad_lib_validator.models.structure import LibraryStructure, ComponentType, ComponentCategory
+from kicad_lib_validator.models.structure import ComponentCategory, ComponentType, LibraryStructure
 from kicad_lib_validator.models.symbol import Symbol
 
 

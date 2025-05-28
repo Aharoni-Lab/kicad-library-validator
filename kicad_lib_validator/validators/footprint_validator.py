@@ -6,7 +6,7 @@ import re
 from typing import Dict, List
 
 from kicad_lib_validator.models.footprint import Footprint
-from kicad_lib_validator.models.structure import LibraryStructure, ComponentType, ComponentCategory
+from kicad_lib_validator.models.structure import ComponentCategory, ComponentType, LibraryStructure
 
 
 def validate_footprint_name(name: str, structure: LibraryStructure, category: str) -> bool:

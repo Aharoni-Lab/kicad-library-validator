@@ -6,7 +6,7 @@ import re
 from typing import Dict, List
 
 from kicad_lib_validator.models.documentation import Documentation
-from kicad_lib_validator.models.structure import LibraryStructure, ComponentType, ComponentCategory
+from kicad_lib_validator.models.structure import ComponentCategory, ComponentType, LibraryStructure
 
 
 def validate_document_name(name: str, structure: LibraryStructure, category: str) -> bool:
