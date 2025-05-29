@@ -11,8 +11,9 @@ class LibraryDirectories(BaseModel):
     footprints: str = "footprints"
     models_3d: Optional[str] = "3dmodels"
     documentation: Optional[str] = "docs"
+    tables: Optional[str] = "tables"  # Directory for library-specific table files
 
-    @field_validator("symbols", "footprints", "models_3d", "documentation")
+    @field_validator("symbols", "footprints", "models_3d", "documentation", "tables")
     @classmethod
     def validate_directory_name(cls, v: Optional[str]) -> Optional[str]:
         """Validate directory names are valid."""

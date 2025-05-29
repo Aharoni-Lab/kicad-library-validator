@@ -117,3 +117,11 @@ def _validate_directory_structure(structure: LibraryStructure, library_root: Pat
             raise ValueError(f"Documentation directory not found: {docs_dir}")
         if not docs_dir.is_dir():
             raise ValueError(f"Documentation path is not a directory: {docs_dir}")
+
+    # Validate tables directory if specified
+    if structure.library.directories.tables:
+        tables_dir = library_root / structure.library.directories.tables
+        if not tables_dir.exists():
+            raise ValueError(f"Tables directory not found: {tables_dir}")
+        if not tables_dir.is_dir():
+            raise ValueError(f"Tables path is not a directory: {tables_dir}")

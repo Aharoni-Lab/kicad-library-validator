@@ -151,6 +151,13 @@ def update_kicad_tables(
     structure = parse_library_structure(yaml_path)
     library_root = yaml_path.parent
 
+    # Create library-specific tables directory if it doesn't exist
+    if structure.library.directories and structure.library.directories.tables:
+        tables_dir = library_root / structure.library.directories.tables
+        if not dry_run:
+            tables_dir.mkdir(parents=True, exist_ok=True)
+            logger.info(f"Created/verified tables directory: {tables_dir}")
+
     # Determine output directory for tables
     if output_dir is not None:
         output_dir = Path(output_dir)
@@ -167,6 +174,7 @@ def update_kicad_tables(
     existing_sym_libs = parse_lib_table(sym_lib_table)
 
     # Find all symbol libraries (.kicad_sym files)
+    library_sym_libs = {}  # Store library-specific symbol libraries
     if structure.library.directories and structure.library.directories.symbols:
         symbols_dir = library_root / structure.library.directories.symbols
         if symbols_dir.exists():
@@ -194,23 +202,33 @@ def update_kicad_tables(
                         logger.info(f"Would add symbol library: {lib_name}")
                     else:
                         logger.info(f"Adding symbol library: {lib_name}")
-                        existing_sym_libs[lib_name] = {
+                        lib_config = {
                             "type": "KiCad",
                             "uri": str(rel_path),
                             "options": "",
                             "descr": f"Symbol library for {lib_name}",
                         }
+                        existing_sym_libs[lib_name] = lib_config
+                        library_sym_libs[lib_name] = lib_config
 
     if not dry_run:
+        # Write to KiCad config
         write_lib_table(
             sym_lib_table, existing_sym_libs, is_symbol_table=True, prefix=structure.library.prefix
         )
+        # Write library-specific table
+        if structure.library.directories and structure.library.directories.tables:
+            library_sym_table = library_root / structure.library.directories.tables / "sym-lib-table"
+            write_lib_table(
+                library_sym_table, library_sym_libs, is_symbol_table=True, prefix=structure.library.prefix
+            )
 
     # Update footprint library table
     fp_lib_table = kicad_config / "fp-lib-table"
     existing_fp_libs = parse_lib_table(fp_lib_table)
 
     # Find all footprint libraries (.pretty directories)
+    library_fp_libs = {}  # Store library-specific footprint libraries
     if structure.library.directories and structure.library.directories.footprints:
         footprints_dir = library_root / structure.library.directories.footprints
         if footprints_dir.exists():
@@ -241,17 +259,26 @@ def update_kicad_tables(
                             logger.info(f"Would add footprint library: {lib_name}")
                         else:
                             logger.info(f"Adding footprint library: {lib_name}")
-                            existing_fp_libs[lib_name] = {
+                            lib_config = {
                                 "type": "KiCad",
                                 "uri": str(rel_path),
                                 "options": "",
                                 "descr": f"Footprint library for {lib_name}",
                             }
+                            existing_fp_libs[lib_name] = lib_config
+                            library_fp_libs[lib_name] = lib_config
 
     if not dry_run:
+        # Write to KiCad config
         write_lib_table(
             fp_lib_table, existing_fp_libs, is_symbol_table=False, prefix=structure.library.prefix
         )
+        # Write library-specific table
+        if structure.library.directories and structure.library.directories.tables:
+            library_fp_table = library_root / structure.library.directories.tables / "fp-lib-table"
+            write_lib_table(
+                library_fp_table, library_fp_libs, is_symbol_table=False, prefix=structure.library.prefix
+            )
 
 
 def main():

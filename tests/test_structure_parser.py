@@ -22,6 +22,7 @@ def get_valid_base_structure() -> Dict[str, Any]:
                 "footprints": "footprints",
                 "models_3d": "3dmodels",
                 "documentation": "docs",
+                "tables": "tables",
             },
             "naming": {
                 "symbols": {
@@ -334,4 +335,28 @@ def test_parse_library_structure_invalid_layer():
     }
 
     with pytest.raises(ValueError, match="Invalid layers"):
+        parse_library_structure_from_yaml(yaml_content)
+
+
+def test_parse_library_structure_tables_directory():
+    """Test parsing library structure with tables directory."""
+    yaml_content = get_valid_base_structure()
+    
+    # Ensure tables directory is included
+    assert "tables" in yaml_content["library"]["directories"]
+    assert yaml_content["library"]["directories"]["tables"] == "tables"
+    
+    structure = parse_library_structure_from_yaml(yaml_content)
+    
+    # Verify tables directory is properly parsed
+    assert structure.library.directories.tables == "tables"
+    
+    # Test with custom tables directory name
+    yaml_content["library"]["directories"]["tables"] = "custom_tables"
+    structure = parse_library_structure_from_yaml(yaml_content)
+    assert structure.library.directories.tables == "custom_tables"
+    
+    # Test with invalid tables directory name
+    yaml_content["library"]["directories"]["tables"] = "invalid/tables"
+    with pytest.raises(ValueError, match="Directory name.*contains invalid characters"):
         parse_library_structure_from_yaml(yaml_content)
