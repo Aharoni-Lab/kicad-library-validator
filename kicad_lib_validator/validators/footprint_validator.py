@@ -48,9 +48,11 @@ def _matches_category(footprint: Footprint, category: ComponentCategory) -> bool
     # Check required pads
     if category.required_pads:
         pad_count = len(footprint.pads)
-        if pad_count < category.required_pads.min_count:
+        min_count = category.required_pads.min_count
+        max_count = category.required_pads.max_count
+        if min_count is not None and pad_count < min_count:
             return False
-        if category.required_pads.max_count and pad_count > category.required_pads.max_count:
+        if max_count is not None and pad_count > max_count:
             return False
 
     return True
@@ -67,7 +69,7 @@ def validate_footprint(footprint: Footprint, structure: LibraryStructure) -> Dic
     Returns:
         Dictionary containing validation results
     """
-    results = {"errors": [], "warnings": [], "successes": []}
+    results: Dict[str, List[str]] = {"errors": [], "warnings": [], "successes": []}
 
     # Check if the footprint's category and subcategory are recognized
     if not structure.footprints or footprint.category not in structure.footprints:
@@ -136,19 +138,20 @@ def validate_footprint(footprint: Footprint, structure: LibraryStructure) -> Dic
     # Validate required pads
     if category_obj.required_pads:
         pad_count = len(footprint.pads)
-        if pad_count < category_obj.required_pads.min_count:
-            results["errors"].append(
-                f"Footprint has {pad_count} pads, but minimum required is {category_obj.required_pads.min_count}"
-            )
-            has_errors = True
-        if (
-            category_obj.required_pads.max_count
-            and pad_count > category_obj.required_pads.max_count
-        ):
-            results["errors"].append(
-                f"Footprint has {pad_count} pads, but maximum allowed is {category_obj.required_pads.max_count}"
-            )
-            has_errors = True
+        min_count = category_obj.required_pads.min_count
+        max_count = category_obj.required_pads.max_count
+        if min_count is not None:
+            if pad_count < min_count:
+                results["errors"].append(
+                    f"Footprint has {pad_count} pads, but minimum required is {min_count}"
+                )
+                has_errors = True
+        if max_count is not None:
+            if pad_count > max_count:
+                results["errors"].append(
+                    f"Footprint has {pad_count} pads, but maximum allowed is {max_count}"
+                )
+                has_errors = True
 
     # Validate description pattern if present
     if (

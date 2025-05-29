@@ -35,7 +35,9 @@ def create_directory_structure(
     library_root = yaml_path.parent
 
     # Get all directories from the structure
-    directories = structure.library.directories.model_dump()
+    directories = (
+        structure.library.directories.model_dump() if structure.library.directories else {}
+    )
 
     # Create main directories
     for dir_type, dir_name in directories.items():

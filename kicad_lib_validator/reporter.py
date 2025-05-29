@@ -211,6 +211,9 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         sections = ["## Directory Structure"]
 
         # Get directory structure from model
+        if not self.structure.library.directories:
+            sections.append("No directory information available.")
+            return "\n".join(sections)
         directories = self.structure.library.directories.model_dump()
 
         for dir_type, dir_name in directories.items():
@@ -259,6 +262,8 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         sections = ["## Symbols"]
 
         # Get symbols directory
+        if not self.structure.library.directories or not self.structure.library.directories.symbols:
+            return "\n".join(sections + ["No symbols directory found.", ""])
         symbols_dir = self.library_path / self.structure.library.directories.symbols
         if not symbols_dir.exists():
             return "\n".join(sections + ["No symbols directory found.", ""])
@@ -299,6 +304,11 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         """Generate the footprints section with validation results."""
         sections = ["## Footprints"]
 
+        if (
+            not self.structure.library.directories
+            or not self.structure.library.directories.footprints
+        ):
+            return "\n".join(sections + ["No footprints directory found.", ""])
         footprints_dir = self.library_path / self.structure.library.directories.footprints
         if not footprints_dir.exists():
             return "\n".join(sections + ["No footprints directory found.", ""])
@@ -337,6 +347,11 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         """Generate the 3D models section with validation results."""
         sections = ["## 3D Models"]
 
+        if (
+            not self.structure.library.directories
+            or not self.structure.library.directories.models_3d
+        ):
+            return "\n".join(sections + ["No 3D models directory found.", ""])
         models_dir = self.library_path / self.structure.library.directories.models_3d
         if not models_dir.exists():
             return "\n".join(sections + ["No 3D models directory found.", ""])
@@ -375,6 +390,11 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         """Generate the documentation section with validation results."""
         sections = ["## Documentation"]
 
+        if (
+            not self.structure.library.directories
+            or not self.structure.library.directories.documentation
+        ):
+            return "\n".join(sections + ["No documentation directory found.", ""])
         docs_dir = self.library_path / self.structure.library.directories.documentation
         if not docs_dir.exists():
             return "\n".join(sections + ["No documentation directory found.", ""])

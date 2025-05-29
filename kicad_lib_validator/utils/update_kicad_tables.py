@@ -167,36 +167,39 @@ def update_kicad_tables(
     existing_sym_libs = parse_lib_table(sym_lib_table)
 
     # Find all symbol libraries (.kicad_sym files)
-    symbols_dir = library_root / structure.library.directories.symbols
-    if symbols_dir.exists():
-        for file in symbols_dir.rglob("*.kicad_sym"):
-            rel_path = file.relative_to(library_root)
-            lib_name = structure.library.prefix
-            if structure.library.naming.symbols.include_categories:
-                # Get category and subcategory from path
-                parts = rel_path.parts
-                if len(parts) >= 3:  # symbols/category/subcategory/file.kicad_sym
-                    category = parts[1]
-                    subcategory = parts[2]
-                    lib_name += (
-                        structure.library.naming.symbols.category_separator + category.capitalize()
-                    )
-                    lib_name += (
-                        structure.library.naming.symbols.category_separator
-                        + subcategory.capitalize()
-                    )
+    if structure.library.directories and structure.library.directories.symbols:
+        symbols_dir = library_root / structure.library.directories.symbols
+        if symbols_dir.exists():
+            for file in symbols_dir.rglob("*.kicad_sym"):
+                rel_path = file.relative_to(library_root)
+                lib_name = structure.library.prefix if structure.library.prefix is not None else ""
+                if (
+                    structure.library.naming
+                    and structure.library.naming.symbols
+                    and structure.library.naming.symbols.include_categories
+                ):
+                    # Get category and subcategory from path
+                    parts = rel_path.parts
+                    if len(parts) >= 3:  # symbols/category/subcategory/file.kicad_sym
+                        category = parts[1]
+                        subcategory = parts[2]
+                        sep = structure.library.naming.symbols.category_separator or "_"
+                        if category:
+                            lib_name += sep + category.capitalize()
+                        if subcategory:
+                            lib_name += sep + subcategory.capitalize()
 
-            if lib_name not in existing_sym_libs:
-                if dry_run:
-                    logger.info(f"Would add symbol library: {lib_name}")
-                else:
-                    logger.info(f"Adding symbol library: {lib_name}")
-                    existing_sym_libs[lib_name] = {
-                        "type": "KiCad",
-                        "uri": str(rel_path),
-                        "options": "",
-                        "descr": f"Symbol library for {lib_name}",
-                    }
+                if lib_name not in existing_sym_libs:
+                    if dry_run:
+                        logger.info(f"Would add symbol library: {lib_name}")
+                    else:
+                        logger.info(f"Adding symbol library: {lib_name}")
+                        existing_sym_libs[lib_name] = {
+                            "type": "KiCad",
+                            "uri": str(rel_path),
+                            "options": "",
+                            "descr": f"Symbol library for {lib_name}",
+                        }
 
     if not dry_run:
         write_lib_table(
@@ -208,38 +211,42 @@ def update_kicad_tables(
     existing_fp_libs = parse_lib_table(fp_lib_table)
 
     # Find all footprint libraries (.pretty directories)
-    footprints_dir = library_root / structure.library.directories.footprints
-    if footprints_dir.exists():
-        for dir_path in footprints_dir.rglob("*.pretty"):
-            if dir_path.is_dir():
-                rel_path = dir_path.relative_to(library_root)
-                lib_name = structure.library.prefix
-                if structure.library.naming.footprints.include_categories:
-                    # Get category and subcategory from path
-                    parts = rel_path.parts
-                    if len(parts) >= 3:  # footprints/category/subcategory.pretty
-                        category = parts[1]
-                        subcategory = parts[2].replace(".pretty", "")
-                        lib_name += (
-                            structure.library.naming.footprints.category_separator
-                            + category.capitalize()
-                        )
-                        lib_name += (
-                            structure.library.naming.footprints.category_separator
-                            + subcategory.capitalize()
-                        )
+    if structure.library.directories and structure.library.directories.footprints:
+        footprints_dir = library_root / structure.library.directories.footprints
+        if footprints_dir.exists():
+            for dir_path in footprints_dir.rglob("*.pretty"):
+                if dir_path.is_dir():
+                    rel_path = dir_path.relative_to(library_root)
+                    lib_name = (
+                        structure.library.prefix if structure.library.prefix is not None else ""
+                    )
+                    if (
+                        structure.library.naming
+                        and structure.library.naming.footprints
+                        and structure.library.naming.footprints.include_categories
+                    ):
+                        # Get category and subcategory from path
+                        parts = rel_path.parts
+                        if len(parts) >= 3:  # footprints/category/subcategory.pretty
+                            category = parts[1]
+                            subcategory = parts[2].replace(".pretty", "")
+                            sep = structure.library.naming.footprints.category_separator or "_"
+                            if category:
+                                lib_name += sep + category.capitalize()
+                            if subcategory:
+                                lib_name += sep + subcategory.capitalize()
 
-                if lib_name not in existing_fp_libs:
-                    if dry_run:
-                        logger.info(f"Would add footprint library: {lib_name}")
-                    else:
-                        logger.info(f"Adding footprint library: {lib_name}")
-                        existing_fp_libs[lib_name] = {
-                            "type": "KiCad",
-                            "uri": str(rel_path),
-                            "options": "",
-                            "descr": f"Footprint library for {lib_name}",
-                        }
+                    if lib_name not in existing_fp_libs:
+                        if dry_run:
+                            logger.info(f"Would add footprint library: {lib_name}")
+                        else:
+                            logger.info(f"Adding footprint library: {lib_name}")
+                            existing_fp_libs[lib_name] = {
+                                "type": "KiCad",
+                                "uri": str(rel_path),
+                                "options": "",
+                                "descr": f"Footprint library for {lib_name}",
+                            }
 
     if not dry_run:
         write_lib_table(

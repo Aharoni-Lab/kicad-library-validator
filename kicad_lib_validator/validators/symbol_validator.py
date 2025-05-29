@@ -20,7 +20,7 @@ def validate_symbol(symbol: Symbol, structure: LibraryStructure) -> Dict[str, Li
     Returns:
         Dictionary containing validation results
     """
-    results = {"errors": [], "warnings": [], "successes": []}
+    results: Dict[str, List[str]] = {"errors": [], "warnings": [], "successes": []}
 
     # Check if the symbol's category and subcategory are recognized
     if not structure.symbols or symbol.category not in structure.symbols:
@@ -75,16 +75,20 @@ def validate_symbol(symbol: Symbol, structure: LibraryStructure) -> Dict[str, Li
     # Validate pin requirements
     if category_obj.pins:
         pin_count = len(symbol.pins)
-        if pin_count < category_obj.pins.min_count:
-            results["errors"].append(
-                f"Symbol has {pin_count} pins, but minimum required is {category_obj.pins.min_count}"
-            )
-            has_errors = True
-        if category_obj.pins.max_count and pin_count > category_obj.pins.max_count:
-            results["errors"].append(
-                f"Symbol has {pin_count} pins, but maximum allowed is {category_obj.pins.max_count}"
-            )
-            has_errors = True
+        min_count = category_obj.pins.min_count
+        max_count = category_obj.pins.max_count
+        if min_count is not None:
+            if pin_count < min_count:
+                results["errors"].append(
+                    f"Symbol has {pin_count} pins, but minimum required is {min_count}"
+                )
+                has_errors = True
+        if max_count is not None:
+            if pin_count > max_count:
+                results["errors"].append(
+                    f"Symbol has {pin_count} pins, but maximum allowed is {max_count}"
+                )
+                has_errors = True
 
         # Validate pin types
         if category_obj.pins.required_types:
@@ -157,9 +161,11 @@ def _matches_category(symbol: Symbol, category: ComponentCategory) -> bool:
     # Check pin requirements
     if category.pins:
         pin_count = len(symbol.pins)
-        if pin_count < category.pins.min_count:
+        min_count = category.pins.min_count
+        max_count = category.pins.max_count
+        if min_count is not None and pin_count < min_count:
             return False
-        if category.pins.max_count and pin_count > category.pins.max_count:
+        if max_count is not None and pin_count > max_count:
             return False
 
     return True

@@ -1,6 +1,9 @@
 import re
 from typing import Dict, List
 
+from kicad_lib_validator.models.documentation import Documentation
+from kicad_lib_validator.models.structure import ComponentCategory, LibraryStructure
+
 
 def validate_documentation(doc: Documentation, structure: LibraryStructure) -> Dict[str, List[str]]:
     """
@@ -13,7 +16,7 @@ def validate_documentation(doc: Documentation, structure: LibraryStructure) -> D
     Returns:
         Dictionary containing validation results
     """
-    results = {"errors": [], "warnings": [], "successes": []}
+    results: Dict[str, List[str]] = {"errors": [], "warnings": [], "successes": []}
 
     # Find matching category
     if not structure.documentation:

@@ -111,21 +111,24 @@ class KiCadLibraryValidator:
             return
 
         # Validate required directories
-        required_dirs: Dict[str, Optional[str]] = {
-            "symbols": self.structure.library.directories.symbols,
-            "footprints": self.structure.library.directories.footprints,
-            "3dmodels": self.structure.library.directories.models_3d,
-            "documentation": self.structure.library.directories.documentation,
-        }
+        if self.structure.library.directories is not None:
+            required_dirs: Dict[str, Optional[str]] = {
+                "symbols": self.structure.library.directories.symbols,
+                "footprints": self.structure.library.directories.footprints,
+                "3dmodels": self.structure.library.directories.models_3d,
+                "documentation": self.structure.library.directories.documentation,
+            }
 
-        for dir_type, dir_name in required_dirs.items():
-            if dir_name is None:
-                continue
-            dir_path = self.library_path / dir_name
-            if not dir_path.exists():
-                self.result.add_error(f"Required {dir_type} directory not found: {dir_path}")
-            elif not dir_path.is_dir():
-                self.result.add_error(f"Required {dir_type} path is not a directory: {dir_path}")
+            for dir_type, dir_name in required_dirs.items():
+                if dir_name is None:
+                    continue
+                dir_path = self.library_path / dir_name
+                if not dir_path.exists():
+                    self.result.add_error(f"Required {dir_type} directory not found: {dir_path}")
+                elif not dir_path.is_dir():
+                    self.result.add_error(
+                        f"Required {dir_type} path is not a directory: {dir_path}"
+                    )
 
     def _validate_symbols(self) -> None:
         """Validate symbol files."""

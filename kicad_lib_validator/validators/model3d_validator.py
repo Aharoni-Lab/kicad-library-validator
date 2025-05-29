@@ -59,7 +59,7 @@ def validate_model3d(model3d: Model3D, structure: LibraryStructure) -> Dict[str,
     Returns:
         Dictionary containing validation results
     """
-    results = {"errors": [], "warnings": [], "successes": []}
+    results: Dict[str, List[str]] = {"errors": [], "warnings": [], "successes": []}
 
     # Validate format
     supported_formats = ["step", "stp", "iges", "igs"]

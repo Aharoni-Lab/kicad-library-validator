@@ -35,18 +35,30 @@ def validate_documentation(doc: Documentation, structure: LibraryStructure) -> D
     # 1. Determine the doc's category using the category/subcategory fields
     doc_category: ComponentType | ComponentCategory | None = None
     doc_category_name = None
-    if doc.category and doc.subcategory:
+    if doc.category and doc.subcategory and structure.documentation:
         try:
-            doc_category = structure.documentation[doc.category].categories[doc.subcategory]
-            doc_category_name = f"{doc.category}/{doc.subcategory}"
+            doc_type = structure.documentation.get(doc.category)
+            if doc_type and doc_type.categories and doc.subcategory in doc_type.categories:
+                doc_category = doc_type.categories[doc.subcategory]
+                doc_category_name = f"{doc.category}/{doc.subcategory}"
+            else:
+                warnings.append(
+                    f"Category/subcategory '{doc.category}/{doc.subcategory}' not found in structure for document '{doc.name}'"
+                )
         except Exception:
             warnings.append(
                 f"Category/subcategory '{doc.category}/{doc.subcategory}' not found in structure for document '{doc.name}'"
             )
-    elif doc.category:
+    elif doc.category and structure.documentation:
         try:
-            doc_category = structure.documentation[doc.category]
-            doc_category_name = doc.category
+            doc_type = structure.documentation.get(doc.category)
+            if doc_type:
+                doc_category = doc_type
+                doc_category_name = doc.category
+            else:
+                warnings.append(
+                    f"Category '{doc.category}' not found in structure for document '{doc.name}'"
+                )
         except Exception:
             warnings.append(
                 f"Category '{doc.category}' not found in structure for document '{doc.name}'"
