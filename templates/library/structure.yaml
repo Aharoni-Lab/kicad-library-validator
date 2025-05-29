@@ -1,0 +1,132 @@
+library:
+  name: "LabLibrary"
+  description: "KiCad library for [Lab Name]"
+  maintainer: "Lab Maintainer <maintainer@example.com>"
+  license: "MIT"
+  website: "https://github.com/[org]/[repo]"
+  repository: "https://github.com/[org]/[repo].git"
+
+  directories:
+    symbols: "symbols"
+    footprints: "footprints"
+    models: "3dmodels"
+    docs: "docs"
+    tables: "tables"
+
+  naming:
+    symbols:
+      include_categories: true
+      category_separator: "_"
+      pattern: "^[A-Z][A-Za-z0-9_]+$"
+    footprints:
+      include_categories: true
+      category_separator: "_"
+      pattern: "^[A-Z][A-Za-z0-9_]+$"
+    models:
+      include_categories: true
+      category_separator: "_"
+      pattern: "^[A-Z][A-Za-z0-9_]+$"
+
+  categories:
+    symbols:
+      actives:
+        ics:
+          description: "Integrated Circuits"
+          required_properties:
+            value:
+              type: "string"
+              pattern: "^[A-Z0-9-]+$"
+            manufacturer:
+              type: "string"
+            datasheet:
+              type: "string"
+              pattern: "^https?://.+$"
+        transistors:
+          description: "Transistors and other active components"
+          required_properties:
+            value:
+              type: "string"
+              pattern: "^[A-Z0-9-]+$"
+            manufacturer:
+              type: "string"
+            datasheet:
+              type: "string"
+              pattern: "^https?://.+$"
+      passives:
+        capacitors:
+          description: "Capacitors"
+          required_properties:
+            value:
+              type: "string"
+              pattern: "^[0-9.]+[pPnNuUmMkK]?F$"
+            voltage:
+              type: "string"
+              pattern: "^[0-9.]+V$"
+            tolerance:
+              type: "string"
+              pattern: "^[0-9.]+%$"
+        resistors:
+          description: "Resistors"
+          required_properties:
+            value:
+              type: "string"
+              pattern: "^[0-9.]+[mMkKR]?$"
+            tolerance:
+              type: "string"
+              pattern: "^[0-9.]+%$"
+            power:
+              type: "string"
+              pattern: "^[0-9.]+W$"
+
+    footprints:
+      smd:
+        capacitors:
+          description: "Surface mount capacitors"
+          required_properties:
+            package:
+              type: "string"
+            value:
+              type: "string"
+        resistors:
+          description: "Surface mount resistors"
+          required_properties:
+            package:
+              type: "string"
+            value:
+              type: "string"
+
+  documentation:
+    required:
+      - name: "README.md"
+        format: "markdown"
+        required_properties:
+          description:
+            type: "string"
+          usage:
+            type: "string"
+      - name: "CONTRIBUTING.md"
+        format: "markdown"
+        required_properties:
+          guidelines:
+            type: "string"
+          process:
+            type: "string"
+    categories:
+      symbols:
+        required:
+          - name: "README.md"
+            format: "markdown"
+            required_properties:
+              description:
+                type: "string"
+              usage:
+                type: "string"
+      footprints:
+        required:
+          - name: "README.md"
+            format: "markdown"
+            required_properties:
+              description:
+                type: "string"
+              usage:
+                type: "string" 
