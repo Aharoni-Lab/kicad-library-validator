@@ -189,8 +189,8 @@ class ComponentCategory(BaseModel):
 
     description: str
     prefix: Optional[str] = None
-    naming: ComponentNaming
-    required_properties: Dict[str, PropertyDefinition]
+    naming: Optional[ComponentNaming] = None
+    required_properties: Optional[Dict[str, PropertyDefinition]] = None
     pins: Optional[PinRequirements] = None
     required_layers: Optional[List[str]] = None
     required_pads: Optional[PinRequirements] = None
@@ -233,6 +233,8 @@ class ComponentType(BaseModel):
     description: str
     prefix: Optional[str] = None
     categories: Dict[str, ComponentCategory]
+    naming: Optional[ComponentNaming] = None
+    required_properties: Optional[Dict[str, PropertyDefinition]] = None
 
     @field_validator("prefix")
     @classmethod
@@ -261,3 +263,9 @@ class LibraryStructure(BaseModel):
         if not re.match(r"^\d+\.\d+(\.\d+)?$", v):
             raise ValueError("Version must be in format 'X.Y' or 'X.Y.Z'")
         return v
+
+
+class Category(BaseModel):
+    description: str
+    naming: Optional[Dict[str, Any]] = None
+    required_properties: Optional[Dict[str, Any]] = None

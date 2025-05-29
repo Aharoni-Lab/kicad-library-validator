@@ -8,6 +8,8 @@ A Python tool for validating KiCad component libraries, ensuring symbols, footpr
 - Checks naming conventions, required properties, and directory structure
 - Supports custom validation rules via a structure file
 - Generates detailed validation and test reports
+- Creates library directory structures from YAML configuration
+- Generates KiCad library tables (sym-lib-table and fp-lib-table)
 - Python 3.10+ supported
 
 ## Installation
@@ -17,6 +19,8 @@ pip install kicad-library-validator
 ```
 
 ## Usage
+
+### Library Validation
 
 Validate a library:
 ```bash
@@ -31,6 +35,22 @@ validator = KiCadLibraryValidator(library_path, structure_file)
 result = validator.validate()
 print(result.errors)
 ```
+
+### Utility Scripts
+
+The package includes two utility scripts:
+
+1. **Library Structure Creator**: Creates a directory structure for a KiCad library based on a YAML configuration
+   ```bash
+   python -m kicad_lib_validator.utils.create_library_structure /path/to/structure.yaml
+   ```
+
+2. **KiCad Table Updater**: Generates KiCad library tables (sym-lib-table and fp-lib-table)
+   ```bash
+   python -m kicad_lib_validator.utils.update_kicad_tables /path/to/structure.yaml [--output-dir /path/to/output]
+   ```
+
+For detailed documentation on these utilities, see [Utility Scripts](docs/utility_scripts.md).
 
 ## Development
 

@@ -43,4 +43,7 @@ htmlcov/
 
 # Project specific
 validation_report.md
-*.log 
+*.log
+
+# Data directory for test files
+/data/ 
