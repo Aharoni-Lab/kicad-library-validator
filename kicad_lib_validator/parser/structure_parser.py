@@ -83,19 +83,24 @@ def _validate_directory_structure(structure: LibraryStructure, library_root: Pat
     Raises:
         ValueError: If any required directory is missing or invalid
     """
+    if not structure.library.directories:
+        raise ValueError("Library directories configuration is missing")
+
     # Validate symbols directory
-    symbols_dir = library_root / structure.library.directories.symbols
-    if not symbols_dir.exists():
-        raise ValueError(f"Symbols directory not found: {symbols_dir}")
-    if not symbols_dir.is_dir():
-        raise ValueError(f"Symbols path is not a directory: {symbols_dir}")
+    if structure.library.directories.symbols:
+        symbols_dir = library_root / structure.library.directories.symbols
+        if not symbols_dir.exists():
+            raise ValueError(f"Symbols directory not found: {symbols_dir}")
+        if not symbols_dir.is_dir():
+            raise ValueError(f"Symbols path is not a directory: {symbols_dir}")
 
     # Validate footprints directory
-    footprints_dir = library_root / structure.library.directories.footprints
-    if not footprints_dir.exists():
-        raise ValueError(f"Footprints directory not found: {footprints_dir}")
-    if not footprints_dir.is_dir():
-        raise ValueError(f"Footprints path is not a directory: {footprints_dir}")
+    if structure.library.directories.footprints:
+        footprints_dir = library_root / structure.library.directories.footprints
+        if not footprints_dir.exists():
+            raise ValueError(f"Footprints directory not found: {footprints_dir}")
+        if not footprints_dir.is_dir():
+            raise ValueError(f"Footprints path is not a directory: {footprints_dir}")
 
     # Validate 3D models directory if specified
     if structure.library.directories.models_3d:

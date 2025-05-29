@@ -1,6 +1,6 @@
 # Library Structure Report
 
-Generated: 2025-05-28 15:20:25
+Generated: 2025-05-28 21:09:00
 
 ## Library Information
 - **Name**: Test
@@ -51,49 +51,49 @@ Subdirectories:
 
 ##### capacitors
 - **C1**
-    - ✅ Symbol name 'C1' matches pattern '^C[0-9]+$'
-    - ✅ Property 'Reference' value 'C1' matches pattern '^C[0-9]+$'
-    - ✅ Property 'Description' value '100nF Capacitor' matches pattern '^[0-9.]+[pnu]F Capacitor$'
-    - ⚠️ Property 'Validated' type checking not implemented (expected boolean)
-    - ⚠️ Property 'Validated' pattern is not a string or regex: None
-    - ⚠️ Unknown property 'Value' in symbol 'C1'
-    - ⚠️ Unknown property 'Footprint' in symbol 'C1'
-    - ⚠️ Unknown property 'Datasheet' in symbol 'C1'
-    - ⚠️ Unknown property 'Voltage' in symbol 'C1'
+    - ✅ Symbol name 'C1' matches pattern: ^C[0-9]+$
+    - ✅ Property Reference value 'C1' matches pattern: ^C[0-9]+$
+    - ✅ Property Description value '100nF Capacitor' matches pattern: ^[0-9.]+[pnu]F Capacitor$
+    - ✅ Property Validated value 'true' matches pattern: None
+    - ⚠️ Unknown property: Value
+    - ⚠️ Unknown property: Footprint
+    - ⚠️ Unknown property: Datasheet
+    - ⚠️ Unknown property: Voltage
+    - ❌ Symbol has 0 pins, but minimum required is 2
 - **C2**
-    - ✅ Symbol name 'C2' matches pattern '^C[0-9]+$'
-    - ✅ Property 'Reference' value 'C2' matches pattern '^C[0-9]+$'
-    - ✅ Property 'Description' value '10uF Capacitor' matches pattern '^[0-9.]+[pnu]F Capacitor$'
-    - ⚠️ Property 'Validated' type checking not implemented (expected boolean)
-    - ⚠️ Property 'Validated' pattern is not a string or regex: None
-    - ⚠️ Unknown property 'Value' in symbol 'C2'
-    - ⚠️ Unknown property 'Footprint' in symbol 'C2'
-    - ⚠️ Unknown property 'Datasheet' in symbol 'C2'
-    - ⚠️ Unknown property 'Voltage' in symbol 'C2'
+    - ✅ Symbol name 'C2' matches pattern: ^C[0-9]+$
+    - ✅ Property Reference value 'C2' matches pattern: ^C[0-9]+$
+    - ✅ Property Description value '10uF Capacitor' matches pattern: ^[0-9.]+[pnu]F Capacitor$
+    - ✅ Property Validated value 'true' matches pattern: None
+    - ⚠️ Unknown property: Value
+    - ⚠️ Unknown property: Footprint
+    - ⚠️ Unknown property: Datasheet
+    - ⚠️ Unknown property: Voltage
+    - ❌ Symbol has 0 pins, but minimum required is 2
 
 ##### resistors
 - **R1**
-    - ✅ Symbol name 'R1' matches pattern '^R[0-9]+$'
-    - ✅ Property 'Reference' value 'R1' matches pattern '^R[0-9]+$'
-    - ✅ Property 'Description' value '10k Resistor' matches pattern '^[0-9.]+[kM]?[Î©]? Resistor$'
-    - ✅ Property 'Value' value '10k' matches pattern '^[0-9.]+[kM]?[Î©]?$'
-    - ⚠️ Property 'Validated' type checking not implemented (expected boolean)
-    - ⚠️ Property 'Validated' pattern is not a string or regex: None
-    - ⚠️ Unknown property 'Footprint' in symbol 'R1'
-    - ⚠️ Unknown property 'Datasheet' in symbol 'R1'
-    - ⚠️ Unknown property 'Tolerance' in symbol 'R1'
-    - ⚠️ Unknown property 'Power' in symbol 'R1'
+    - ✅ Symbol name 'R1' matches pattern: ^R[0-9]+$
+    - ✅ Property Reference value 'R1' matches pattern: ^R[0-9]+$
+    - ✅ Property Description value '10k Resistor' matches pattern: ^[0-9.]+[kM]?[Î©]? Resistor$
+    - ✅ Property Validated value 'true' matches pattern: None
+    - ✅ Property Value value '10k' matches pattern: ^[0-9.]+[kM]?[Î©]?$
+    - ⚠️ Unknown property: Footprint
+    - ⚠️ Unknown property: Datasheet
+    - ⚠️ Unknown property: Tolerance
+    - ⚠️ Unknown property: Power
+    - ❌ Symbol has 0 pins, but minimum required is 2
 - **R2**
-    - ✅ Symbol name 'R2' matches pattern '^R[0-9]+$'
-    - ✅ Property 'Reference' value 'R2' matches pattern '^R[0-9]+$'
-    - ✅ Property 'Description' value '1M Resistor' matches pattern '^[0-9.]+[kM]?[Î©]? Resistor$'
-    - ✅ Property 'Value' value '1M' matches pattern '^[0-9.]+[kM]?[Î©]?$'
-    - ⚠️ Property 'Validated' type checking not implemented (expected boolean)
-    - ⚠️ Property 'Validated' pattern is not a string or regex: None
-    - ⚠️ Unknown property 'Footprint' in symbol 'R2'
-    - ⚠️ Unknown property 'Datasheet' in symbol 'R2'
-    - ⚠️ Unknown property 'Tolerance' in symbol 'R2'
-    - ⚠️ Unknown property 'Power' in symbol 'R2'
+    - ✅ Symbol name 'R2' matches pattern: ^R[0-9]+$
+    - ✅ Property Reference value 'R2' matches pattern: ^R[0-9]+$
+    - ✅ Property Description value '1M Resistor' matches pattern: ^[0-9.]+[kM]?[Î©]? Resistor$
+    - ✅ Property Validated value 'true' matches pattern: None
+    - ✅ Property Value value '1M' matches pattern: ^[0-9.]+[kM]?[Î©]?$
+    - ⚠️ Unknown property: Footprint
+    - ⚠️ Unknown property: Datasheet
+    - ⚠️ Unknown property: Tolerance
+    - ⚠️ Unknown property: Power
+    - ❌ Symbol has 0 pins, but minimum required is 2
 
 
 ## Footprints
@@ -106,12 +106,14 @@ Subdirectories:
 
 ##### capacitors
 - **C_0603_1608Metric**
-    - ✅ Footprint name 'C_0603_1608Metric' matches pattern '^C_[0-9]+_[0-9]+Metric$'
-    - ✅ Property 'Reference' value 'C1' matches pattern '^C[0-9]+$'
-    - ✅ Property 'Description' value '100nF SMD Capacitor' matches pattern '^[0-9.]+[pnu]F SMD Capacitor$'
-    - ✅ Footprint 'C_0603_1608Metric' contains all required layers
-    - ⚠️ Unknown property 'Value' in footprint 'C_0603_1608Metric'
-    - ⚠️ Unknown property 'Datasheet' in footprint 'C_0603_1608Metric'
+    - ✅ Footprint name 'C_0603_1608Metric' matches pattern: ^C_[0-9]+_[0-9]+Metric$
+    - ✅ Property Reference value 'C1' matches pattern: ^C[0-9]+$
+    - ✅ Property Description value '100nF SMD Capacitor' matches pattern: ^[0-9.]+[pnu]F SMD Capacitor$
+    - ✅ Property Validated value 'true' matches pattern: None
+    - ✅ Footprint contains all required layers: F.Cu
+    - ⚠️ Unknown property: Value
+    - ⚠️ Unknown property: Datasheet
+    - ❌ Footprint has 0 pads, but minimum required is 2
 
 
 ## 3D Models
@@ -124,8 +126,10 @@ Subdirectories:
 
 ##### capacitors
 - **GRM0115C1C120JE01L**
-    - ⚠️ Category/subcategory 'capacitors/capacitors' not found in structure for model 'GRM0115C1C120JE01L'
-    - ⚠️ Could not determine 3D model category for model 'GRM0115C1C120JE01L'
+    - ✅ Model name 'GRM0115C1C120JE01L' matches pattern: ^[A-Z0-9-]+$
+    - ⚠️ Model does not match any defined category
+    - ❌ Missing required property: Description
+    - ❌ Missing required property: Validated
 
 
 ## Documentation

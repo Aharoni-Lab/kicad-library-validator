@@ -42,9 +42,9 @@ class NamingConvention(BaseModel):
 class LibraryNaming(BaseModel):
     """Naming conventions for different library elements."""
 
-    symbols: Optional[NamingConvention] = Field(default_factory=NamingConvention)
-    footprints: Optional[NamingConvention] = Field(default_factory=NamingConvention)
-    models_3d: Optional[NamingConvention] = Field(default_factory=NamingConvention)
+    symbols: Optional[NamingConvention] = Field(default_factory=lambda: NamingConvention())
+    footprints: Optional[NamingConvention] = Field(default_factory=lambda: NamingConvention())
+    models_3d: Optional[NamingConvention] = Field(default_factory=lambda: NamingConvention())
 
 
 class LibraryInfo(BaseModel):
@@ -236,7 +236,7 @@ class ComponentType(BaseModel):
 
     description: Optional[str] = ""
     prefix: Optional[str] = None
-    categories: Optional[Dict[str, ComponentCategory]] = Field(default_factory=dict)
+    categories: Optional[Dict[str, ComponentCategory]] = Field(default_factory=lambda: {})
     naming: Optional[ComponentNaming] = None
     required_properties: Optional[Dict[str, PropertyDefinition]] = None
 
@@ -255,10 +255,10 @@ class LibraryStructure(BaseModel):
     version: str = "1.0"
     description: Optional[str] = ""
     library: LibraryInfo
-    symbols: Optional[Dict[str, ComponentType]] = Field(default_factory=dict)
-    footprints: Optional[Dict[str, ComponentType]] = Field(default_factory=dict)
-    models_3d: Optional[Dict[str, ComponentType]] = Field(default_factory=dict)
-    documentation: Optional[Dict[str, ComponentType]] = Field(default_factory=dict)
+    symbols: Optional[Dict[str, ComponentType]] = Field(default_factory=lambda: {})
+    footprints: Optional[Dict[str, ComponentType]] = Field(default_factory=lambda: {})
+    models_3d: Optional[Dict[str, ComponentType]] = Field(default_factory=lambda: {})
+    documentation: Optional[Dict[str, ComponentType]] = Field(default_factory=lambda: {})
 
     @field_validator("version")
     @classmethod

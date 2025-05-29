@@ -23,105 +23,152 @@ def validate_footprint_property(
     return True
 
 
+def _matches_category(footprint: Footprint, category: ComponentCategory) -> bool:
+    """
+    Check if a footprint matches a category based on its properties.
+
+    Args:
+        footprint: Footprint to check
+        category: Category to match against
+
+    Returns:
+        True if the footprint matches the category, False otherwise
+    """
+    # Check prefix if specified
+    if category.prefix:
+        if not footprint.name.startswith(category.prefix):
+            return False
+
+    # Check required properties
+    if category.required_properties:
+        for prop_name, prop_def in category.required_properties.items():
+            if not prop_def.optional and prop_name not in footprint.properties:
+                return False
+
+    # Check required pads
+    if category.required_pads:
+        pad_count = len(footprint.pads)
+        if pad_count < category.required_pads.min_count:
+            return False
+        if category.required_pads.max_count and pad_count > category.required_pads.max_count:
+            return False
+
+    return True
+
+
 def validate_footprint(footprint: Footprint, structure: LibraryStructure) -> Dict[str, List[str]]:
     """
-    Validate a Footprint against the library structure definition.
+    Validate a footprint against the library structure.
 
-    Returns a dict with keys: 'errors', 'warnings', 'successes'.
+    Args:
+        footprint: Footprint to validate
+        structure: Library structure definition
+
+    Returns:
+        Dictionary containing validation results
     """
-    errors: List[str] = []
-    warnings: List[str] = []
-    successes: List[str] = []
+    results = {"errors": [], "warnings": [], "successes": []}
 
-    # 1. Determine the footprint's category using the category/subcategory fields
-    footprint_category: ComponentType | ComponentCategory | None = None
-    footprint_category_name = None
-    if footprint.category and footprint.subcategory:
-        try:
-            footprint_category = structure.footprints[footprint.category].categories[
-                footprint.subcategory
-            ]
-            footprint_category_name = f"{footprint.category}/{footprint.subcategory}"
-        except Exception:
-            errors.append(
-                f"Category/subcategory '{footprint.category}/{footprint.subcategory}' not found in structure for footprint '{footprint.name}'"
-            )
-            return {"errors": errors, "warnings": warnings, "successes": successes}
-    elif footprint.category:
-        try:
-            footprint_category = structure.footprints[footprint.category]
-            footprint_category_name = footprint.category
-        except Exception:
-            errors.append(
-                f"Category '{footprint.category}' not found in structure for footprint '{footprint.name}'"
-            )
-            return {"errors": errors, "warnings": warnings, "successes": successes}
-    else:
-        errors.append(f"No category information for footprint '{footprint.name}'")
-        return {"errors": errors, "warnings": warnings, "successes": successes}
+    # Check if the footprint's category and subcategory are recognized
+    if not structure.footprints or footprint.category not in structure.footprints:
+        results["errors"].append("Could not determine footprint category")
+        return results
 
-    # 2. Validate footprint name against naming pattern
-    naming = getattr(footprint_category, "naming", None)
-    if naming and hasattr(naming, "pattern"):
-        pattern = str(naming.pattern)  # Ensure pattern is a string
-        if not re.match(pattern, footprint.name):
-            errors.append(
-                f"Footprint name '{footprint.name}' does not match pattern '{pattern}' for category {footprint_category_name}"
+    component_type = structure.footprints[footprint.category]
+    if not component_type.categories or footprint.subcategory not in component_type.categories:
+        results["errors"].append("Could not determine footprint category")
+        return results
+
+    category_obj = component_type.categories[footprint.subcategory]
+    has_errors = False
+
+    # Check naming pattern first
+    if category_obj.naming and category_obj.naming.pattern:
+        if not re.match(category_obj.naming.pattern, footprint.name):
+            results["errors"].append(
+                f"Footprint name '{footprint.name}' does not match pattern: {category_obj.naming.pattern}"
             )
+            has_errors = True
         else:
-            successes.append(f"Footprint name '{footprint.name}' matches pattern '{pattern}'")
-    else:
-        warnings.append(f"No naming pattern defined for category {footprint_category_name}")
+            results["successes"].append(
+                f"Footprint name '{footprint.name}' matches pattern: {category_obj.naming.pattern}"
+            )
 
-    # 3. Validate required properties
-    required_props = getattr(footprint_category, "required_properties", {})
-    for prop_name, prop_rule in required_props.items():
-        if prop_name not in footprint.properties:
-            errors.append(
-                f"Missing required property '{prop_name}' for footprint '{footprint.name}'"
-            )
-            continue
-        value = footprint.properties[prop_name]
-        # Type check (only string supported for now)
-        if hasattr(prop_rule, "type") and prop_rule.type == "boolean":
-            # Accept both boolean and string 'true'/'false'
-            if not (value is True or value is False or str(value).lower() in ["true", "false"]):
-                errors.append(
-                    f"Property '{prop_name}' value '{value}' is not a valid boolean (true/false)"
-                )
-        elif hasattr(prop_rule, "type") and prop_rule.type != "string":
-            warnings.append(
-                f"Property '{prop_name}' type checking not implemented (expected {prop_rule.type})"
-            )
-        # Pattern check
-        if hasattr(prop_rule, "pattern") and prop_rule.pattern not in [None, ""]:
-            pattern = str(prop_rule.pattern)  # Ensure pattern is a string
-            if not re.match(pattern, value):
-                errors.append(
-                    f"Property '{prop_name}' value '{value}' does not match pattern '{pattern}'"
-                )
+    # Check required properties
+    if category_obj.required_properties:
+        # Check for unknown properties
+        known_properties = set(category_obj.required_properties.keys())
+        for prop_name in footprint.properties:
+            if prop_name not in known_properties:
+                results["warnings"].append(f"Unknown property: {prop_name}")
+
+        for prop_name, prop_def in category_obj.required_properties.items():
+            if prop_name not in footprint.properties:
+                if not prop_def.optional:
+                    results["errors"].append(f"Missing required property: {prop_name}")
+                    has_errors = True
             else:
-                successes.append(
-                    f"Property '{prop_name}' value '{value}' matches pattern '{pattern}'"
-                )
+                value = footprint.properties[prop_name]
+                if prop_def.pattern and not re.match(prop_def.pattern, value):
+                    results["errors"].append(
+                        f"Property {prop_name} value '{value}' does not match pattern: {prop_def.pattern}"
+                    )
+                    has_errors = True
+                else:
+                    results["successes"].append(
+                        f"Property {prop_name} value '{value}' matches pattern: {prop_def.pattern}"
+                    )
 
-    # 4. Validate required layers
-    required_layers = getattr(footprint_category, "required_layers", None)
-    if required_layers:
-        # Assume footprint has a 'layers' attribute (list of str)
-        footprint_layers = set(getattr(footprint, "layers", []))
-        missing_layers = set(required_layers) - footprint_layers
+    # Validate required layers
+    if category_obj.required_layers:
+        missing_layers = []
+        for layer_name in category_obj.required_layers:
+            if layer_name not in footprint.layers:
+                missing_layers.append(layer_name)
         if missing_layers:
-            errors.append(
-                f"Footprint '{footprint.name}' is missing required layers: {', '.join(missing_layers)}"
-            )
+            results["errors"].append(f"missing required layers: {', '.join(missing_layers)}")
+            has_errors = True
         else:
-            successes.append(f"Footprint '{footprint.name}' contains all required layers")
+            results["successes"].append(
+                f"Footprint contains all required layers: {', '.join(category_obj.required_layers)}"
+            )
 
-    # 5. Optionally, check for extra/unknown properties
-    allowed_props = set(required_props.keys())
-    for prop in footprint.properties:
-        if prop not in allowed_props:
-            warnings.append(f"Unknown property '{prop}' in footprint '{footprint.name}'")
+    # Validate required pads
+    if category_obj.required_pads:
+        pad_count = len(footprint.pads)
+        if pad_count < category_obj.required_pads.min_count:
+            results["errors"].append(
+                f"Footprint has {pad_count} pads, but minimum required is {category_obj.required_pads.min_count}"
+            )
+            has_errors = True
+        if (
+            category_obj.required_pads.max_count
+            and pad_count > category_obj.required_pads.max_count
+        ):
+            results["errors"].append(
+                f"Footprint has {pad_count} pads, but maximum allowed is {category_obj.required_pads.max_count}"
+            )
+            has_errors = True
 
-    return {"errors": errors, "warnings": warnings, "successes": successes}
+    # Validate description pattern if present
+    if (
+        category_obj.naming
+        and category_obj.naming.description_pattern
+        and hasattr(footprint, "description")
+    ):
+        if not re.match(category_obj.naming.description_pattern, footprint.description):
+            results["errors"].append(
+                f"Footprint description '{footprint.description}' does not match pattern: {category_obj.naming.description_pattern}"
+            )
+            has_errors = True
+        else:
+            results["successes"].append(
+                f"Footprint description '{footprint.description}' matches pattern: {category_obj.naming.description_pattern}"
+            )
+
+    if not has_errors:
+        results["successes"].append(
+            f"Footprint matches category {footprint.category}/{footprint.subcategory}"
+        )
+
+    return results

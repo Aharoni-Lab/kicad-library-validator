@@ -243,7 +243,7 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
     def _group_by_category(self, items: List[Any]) -> Dict[str, Dict[str, List[Any]]]:
         """Group items by their category and subcategory."""
-        grouped = {}
+        grouped: Dict[str, Dict[str, List[Any]]] = {}
         for item in items:
             category = item.category or "Uncategorized"
             subcategory = item.subcategory or "Uncategorized"
@@ -286,8 +286,10 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
                     sections.append(f"\n##### {subcategory}")
                     for symbol in sorted(symbols, key=lambda x: x.name):
                         sections.append(f"- **{symbol.name}**")
-                        results = validate_symbol(symbol, self.structure)
-                        sections.append(self._format_validation_results(results))
+                        # Only validate symbols against their intended category and subcategory
+                        if symbol.category == category and symbol.subcategory == subcategory:
+                            results = validate_symbol(symbol, self.structure)
+                            sections.append(self._format_validation_results(results))
         else:
             sections.append("No symbols found to validate.")
 
@@ -322,8 +324,10 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
                     sections.append(f"\n##### {subcategory}")
                     for footprint in sorted(footprints, key=lambda x: x.name):
                         sections.append(f"- **{footprint.name}**")
-                        results = validate_footprint(footprint, self.structure)
-                        sections.append(self._format_validation_results(results))
+                        # Only validate footprints against their intended category and subcategory
+                        if footprint.category == category and footprint.subcategory == subcategory:
+                            results = validate_footprint(footprint, self.structure)
+                            sections.append(self._format_validation_results(results))
         else:
             sections.append("No footprints found to validate.")
 
@@ -358,8 +362,10 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
                     sections.append(f"\n##### {subcategory}")
                     for model in sorted(models, key=lambda x: x.name):
                         sections.append(f"- **{model.name}**")
-                        results = validate_model3d(model, self.structure)
-                        sections.append(self._format_validation_results(results))
+                        # Only validate 3D models against their intended category and subcategory
+                        if model.category == category and model.subcategory == subcategory:
+                            results = validate_model3d(model, self.structure)
+                            sections.append(self._format_validation_results(results))
         else:
             sections.append("No 3D models found to validate.")
 

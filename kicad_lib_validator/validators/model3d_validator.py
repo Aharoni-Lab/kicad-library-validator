@@ -23,87 +23,131 @@ def validate_model3d_property(
     return True
 
 
-def validate_model3d(model: Model3D, structure: LibraryStructure) -> Dict[str, List[str]]:
+def _matches_category(model3d: Model3D, category: ComponentCategory) -> bool:
     """
-    Validate a Model3D against the library structure definition.
-    Returns a dict with keys: 'errors', 'warnings', 'successes'.
+    Check if a 3D model matches a category based on its properties.
+
+    Args:
+        model3d: 3D model to check
+        category: Category to match against
+
+    Returns:
+        True if the 3D model matches the category, False otherwise
     """
-    errors: List[str] = []
-    warnings: List[str] = []
-    successes: List[str] = []
+    # Check prefix if specified
+    if category.prefix:
+        if not model3d.name.startswith(category.prefix):
+            return False
 
-    # 1. Determine the model's category using the category/subcategory fields
-    model_category: ComponentType | ComponentCategory | None = None
-    model_category_name = None
-    if model.category and model.subcategory:
-        try:
-            model_category = structure.models_3d[model.category].categories[model.subcategory]
-            model_category_name = f"{model.category}/{model.subcategory}"
-        except Exception:
-            warnings.append(
-                f"Category/subcategory '{model.category}/{model.subcategory}' not found in structure for model '{model.name}'"
-            )
-    elif model.category:
-        try:
-            model_category = structure.models_3d[model.category]
-            model_category_name = model.category
-        except Exception:
-            warnings.append(
-                f"Category '{model.category}' not found in structure for model '{model.name}'"
-            )
-    else:
-        warnings.append(f"No category information for model '{model.name}'")
+    # Check required properties
+    if category.required_properties:
+        for prop_name, prop_def in category.required_properties.items():
+            if not prop_def.optional and prop_name not in model3d.properties:
+                return False
 
-    # If no category found, just warn (3D models may not always be categorized)
-    if not model_category:
-        warnings.append(f"Could not determine 3D model category for model '{model.name}'")
-    else:
-        # 2. Validate model name against naming pattern
-        naming = getattr(model_category, "naming", None)
-        if naming and hasattr(naming, "pattern"):
-            pattern = naming.pattern
-            if not re.match(pattern, model.name):
-                errors.append(
-                    f"3D model name '{model.name}' does not match pattern '{pattern}' for category {model_category_name}"
-                )
-            else:
-                successes.append(f"3D model name '{model.name}' matches pattern '{pattern}'")
-        else:
-            warnings.append(f"No naming pattern defined for category {model_category_name}")
+    return True
 
-        # 3. Validate required properties
-        required_props = getattr(model_category, "required_properties", {})
-        for prop_name, prop_rule in required_props.items():
-            if prop_name not in model.properties:
-                errors.append(f"Missing required property '{prop_name}' for model '{model.name}'")
-                continue
-            value = model.properties[prop_name]
-            if hasattr(prop_rule, "type") and prop_rule.type != "string":
-                warnings.append(
-                    f"Property '{prop_name}' type checking not implemented (expected {prop_rule.type})"
-                )
-            if hasattr(prop_rule, "pattern"):
-                if not re.match(prop_rule.pattern, value):
-                    errors.append(
-                        f"Property '{prop_name}' value '{value}' does not match pattern '{prop_rule.pattern}'"
+
+def validate_model3d(model3d: Model3D, structure: LibraryStructure) -> Dict[str, List[str]]:
+    """
+    Validate a 3D model against the library structure.
+
+    Args:
+        model3d: 3D model to validate
+        structure: Library structure definition
+
+    Returns:
+        Dictionary containing validation results
+    """
+    results = {"errors": [], "warnings": [], "successes": []}
+
+    # Validate format
+    supported_formats = ["step", "stp", "iges", "igs"]
+    if model3d.format.lower() not in supported_formats:
+        results["errors"].append(f"unsupported format: {model3d.format}")
+
+    # Validate units
+    supported_units = ["mm", "inch"]
+    if model3d.units.lower() not in supported_units:
+        results["errors"].append(f"unsupported units: {model3d.units}")
+
+    # Find matching category
+    if not structure.models_3d:
+        return results
+
+    for type_name, component_type in structure.models_3d.items():
+        if not component_type.categories:
+            continue
+
+        for category_name, category in component_type.categories.items():
+            has_errors = False
+
+            # Check naming pattern first
+            if category.naming and category.naming.pattern:
+                if not re.match(category.naming.pattern, model3d.name):
+                    results["errors"].append(
+                        f"Model name '{model3d.name}' does not match pattern: {category.naming.pattern}"
                     )
+                    has_errors = True
                 else:
-                    successes.append(
-                        f"Property '{prop_name}' value '{value}' matches pattern '{prop_rule.pattern}'"
+                    results["successes"].append(
+                        f"Model name '{model3d.name}' matches pattern: {category.naming.pattern}"
                     )
 
-    # 4. Validate format and units (if specified)
-    if hasattr(model, "format") and model.format.lower() not in {"step", "stp", "wrl"}:
-        errors.append(f"3D model '{model.name}' has unsupported format '{model.format}'")
-    if hasattr(model, "units") and model.units.lower() not in {"mm", "inch"}:
-        errors.append(f"3D model '{model.name}' has unsupported units '{model.units}'")
+            # Check required properties
+            if category.required_properties:
+                # Check for unknown properties
+                known_properties = set(category.required_properties.keys())
+                for prop_name in model3d.properties:
+                    if prop_name not in known_properties:
+                        results["warnings"].append(f"Unknown property: {prop_name}")
 
-    # 5. Optionally, check for extra/unknown properties
-    allowed_props = (
-        set(getattr(model_category, "required_properties", {}).keys()) if model_category else set()
-    )
-    for prop in model.properties:
-        if prop not in allowed_props:
-            warnings.append(f"Unknown property '{prop}' in 3D model '{model.name}'")
+                for prop_name, prop_def in category.required_properties.items():
+                    if prop_name not in model3d.properties:
+                        if not prop_def.optional:
+                            results["errors"].append(f"Missing required property: {prop_name}")
+                            has_errors = True
+                    else:
+                        value = model3d.properties[prop_name]
+                        if prop_def.pattern and not re.match(prop_def.pattern, value):
+                            results["errors"].append(
+                                f"Property {prop_name} value '{value}' does not match pattern: {prop_def.pattern}"
+                            )
+                            has_errors = True
+                        else:
+                            results["successes"].append(
+                                f"Property {prop_name} value '{value}' matches pattern: {prop_def.pattern}"
+                            )
 
-    return {"errors": errors, "warnings": warnings, "successes": successes}
+            # If we have errors, continue to next category
+            if has_errors:
+                continue
+
+            # Check if model matches category
+            if not _matches_category(model3d, category):
+                continue
+
+            # Validate description pattern if present
+            if (
+                category.naming
+                and category.naming.description_pattern
+                and hasattr(model3d, "description")
+            ):
+                if not re.match(category.naming.description_pattern, model3d.description):
+                    results["errors"].append(
+                        f"Model description '{model3d.description}' does not match pattern: {category.naming.description_pattern}"
+                    )
+                    has_errors = True
+                else:
+                    results["successes"].append(
+                        f"Model description '{model3d.description}' matches pattern: {category.naming.description_pattern}"
+                    )
+
+            # If we found a matching category and passed all validations, add a success message
+            if not has_errors:
+                results["successes"].append(f"Model matches category {type_name}/{category_name}")
+                return results
+
+    # If no matching category was found
+    results["warnings"].append("Model does not match any defined category")
+    return results

@@ -11,106 +11,111 @@ from kicad_lib_validator.models.symbol import Symbol
 
 def validate_symbol(symbol: Symbol, structure: LibraryStructure) -> Dict[str, List[str]]:
     """
-    Validate a Symbol against the library structure definition.
+    Validate a symbol against the library structure.
 
-    Returns a dict with keys: 'errors', 'warnings', 'successes'.
+    Args:
+        symbol: Symbol to validate
+        structure: Library structure definition
+
+    Returns:
+        Dictionary containing validation results
     """
-    errors: List[str] = []
-    warnings: List[str] = []
-    successes: List[str] = []
+    results = {"errors": [], "warnings": [], "successes": []}
 
-    # 1. Determine the symbol's category using the category/subcategory fields
-    symbol_category: ComponentType | ComponentCategory | None = None
-    symbol_category_name = None
-    if symbol.category and symbol.subcategory:
-        try:
-            symbol_category = structure.symbols[symbol.category].categories[symbol.subcategory]
-            symbol_category_name = f"{symbol.category}/{symbol.subcategory}"
-        except Exception:
-            errors.append(
-                f"Category/subcategory '{symbol.category}/{symbol.subcategory}' not found in structure for symbol '{symbol.name}'"
-            )
-            return {"errors": errors, "warnings": warnings, "successes": successes}
-    elif symbol.category:
-        try:
-            symbol_category = structure.symbols[symbol.category]
-            symbol_category_name = symbol.category
-        except Exception:
-            errors.append(
-                f"Category '{symbol.category}' not found in structure for symbol '{symbol.name}'"
-            )
-            return {"errors": errors, "warnings": warnings, "successes": successes}
-    else:
-        # Try to determine category from reference prefix
-        ref_prefix = (
-            symbol.properties.get("Reference", "")[0] if symbol.properties.get("Reference") else ""
-        )
-        for category, cat_type in structure.symbols.items():
-            for subcat, subcat_type in cat_type.categories.items():
-                if subcat_type.prefix == ref_prefix:
-                    symbol_category = subcat_type
-                    symbol_category_name = f"{category}/{subcat}"
-                    break
-            if symbol_category:
-                break
-        if not symbol_category:
-            errors.append(f"Could not determine symbol category for symbol '{symbol.name}'")
-            return {"errors": errors, "warnings": warnings, "successes": successes}
+    # Check if the symbol's category and subcategory are recognized
+    if not structure.symbols or symbol.category not in structure.symbols:
+        results["errors"].append("Could not determine symbol category")
+        return results
 
-    # 2. Validate symbol name against naming pattern
-    naming = getattr(symbol_category, "naming", None)
-    if naming and hasattr(naming, "pattern"):
-        pattern = naming.pattern
-        if not isinstance(pattern, (str, type(re.compile("")))):
-            warnings.append(
-                f"Naming pattern for category {symbol_category_name} is not a string or regex: {pattern}"
+    component_type = structure.symbols[symbol.category]
+    if not component_type.categories or symbol.subcategory not in component_type.categories:
+        results["errors"].append("Could not determine symbol category")
+        return results
+
+    category_obj = component_type.categories[symbol.subcategory]
+    has_errors = False
+
+    # Check naming pattern first
+    if category_obj.naming and category_obj.naming.pattern:
+        if not re.match(category_obj.naming.pattern, symbol.name):
+            results["errors"].append(
+                f"Symbol name '{symbol.name}' does not match pattern: {category_obj.naming.pattern}"
             )
+            has_errors = True
         else:
-            if not re.match(pattern, symbol.name):
-                errors.append(
-                    f"Symbol name '{symbol.name}' does not match pattern '{pattern}' for category {symbol_category_name}"
-                )
-            else:
-                successes.append(f"Symbol name '{symbol.name}' matches pattern '{pattern}'")
-    else:
-        warnings.append(f"No naming pattern defined for category {symbol_category_name}")
-
-    # 3. Validate required properties
-    required_props = getattr(symbol_category, "required_properties", {})
-    for prop_name, prop_rule in required_props.items():
-        if prop_name not in symbol.properties:
-            errors.append(f"Missing required property '{prop_name}' for symbol '{symbol.name}'")
-            continue
-        value = symbol.properties[prop_name]
-        # Type check (only string supported for now)
-        if hasattr(prop_rule, "type") and prop_rule.type != "string":
-            warnings.append(
-                f"Property '{prop_name}' type checking not implemented (expected {prop_rule.type})"
+            results["successes"].append(
+                f"Symbol name '{symbol.name}' matches pattern: {category_obj.naming.pattern}"
             )
-        # Pattern check
-        if hasattr(prop_rule, "pattern"):
-            prop_pattern = prop_rule.pattern
-            if not isinstance(prop_pattern, (str, type(re.compile("")))):
-                warnings.append(
-                    f"Property '{prop_name}' pattern is not a string or regex: {prop_pattern}"
-                )
+
+    # Check required properties
+    if category_obj.required_properties:
+        # Check for unknown properties
+        known_properties = set(category_obj.required_properties.keys())
+        for prop_name in symbol.properties:
+            if prop_name not in known_properties:
+                results["warnings"].append(f"Unknown property: {prop_name}")
+
+        for prop_name, prop_def in category_obj.required_properties.items():
+            if prop_name not in symbol.properties:
+                if not prop_def.optional:
+                    results["errors"].append(f"Missing required property: {prop_name}")
+                    has_errors = True
             else:
-                if not re.match(prop_pattern, value):
-                    errors.append(
-                        f"Property '{prop_name}' value '{value}' does not match pattern '{prop_pattern}'"
+                value = symbol.properties[prop_name]
+                if prop_def.pattern and not re.match(prop_def.pattern, value):
+                    results["errors"].append(
+                        f"Property {prop_name} value '{value}' does not match pattern: {prop_def.pattern}"
                     )
+                    has_errors = True
                 else:
-                    successes.append(
-                        f"Property '{prop_name}' value '{value}' matches pattern '{prop_pattern}'"
+                    results["successes"].append(
+                        f"Property {prop_name} value '{value}' matches pattern: {prop_def.pattern}"
                     )
 
-    # 4. Optionally, check for extra/unknown properties
-    allowed_props = set(required_props.keys())
-    for prop in symbol.properties:
-        if prop not in allowed_props:
-            warnings.append(f"Unknown property '{prop}' in symbol '{symbol.name}'")
+    # Validate pin requirements
+    if category_obj.pins:
+        pin_count = len(symbol.pins)
+        if pin_count < category_obj.pins.min_count:
+            results["errors"].append(
+                f"Symbol has {pin_count} pins, but minimum required is {category_obj.pins.min_count}"
+            )
+            has_errors = True
+        if category_obj.pins.max_count and pin_count > category_obj.pins.max_count:
+            results["errors"].append(
+                f"Symbol has {pin_count} pins, but maximum allowed is {category_obj.pins.max_count}"
+            )
+            has_errors = True
 
-    return {"errors": errors, "warnings": warnings, "successes": successes}
+        # Validate pin types
+        if category_obj.pins.required_types:
+            for pin in symbol.pins:
+                if pin.type not in category_obj.pins.required_types:
+                    results["warnings"].append(
+                        f"Pin {pin.name} has type {pin.type}, but allowed types are: {', '.join(category_obj.pins.required_types)}"
+                    )
+
+    # Validate description pattern if present
+    if (
+        category_obj.naming
+        and category_obj.naming.description_pattern
+        and hasattr(symbol, "description")
+    ):
+        if not re.match(category_obj.naming.description_pattern, symbol.description):
+            results["errors"].append(
+                f"Symbol description '{symbol.description}' does not match pattern: {category_obj.naming.description_pattern}"
+            )
+            has_errors = True
+        else:
+            results["successes"].append(
+                f"Symbol description '{symbol.description}' matches pattern: {category_obj.naming.description_pattern}"
+            )
+
+    if not has_errors:
+        results["successes"].append(
+            f"Symbol matches category {symbol.category}/{symbol.subcategory}"
+        )
+
+    return results
 
 
 def validate_symbol_name(name: str, structure: LibraryStructure, category: str) -> bool:
@@ -124,4 +129,37 @@ def validate_symbol_property(
 ) -> bool:
     """Validate a symbol property value against the structure rules for the given category."""
     # TODO: Implement symbol property validation logic
+    return True
+
+
+def _matches_category(symbol: Symbol, category: ComponentCategory) -> bool:
+    """
+    Check if a symbol matches a category based on its properties.
+
+    Args:
+        symbol: Symbol to check
+        category: Category to match against
+
+    Returns:
+        True if the symbol matches the category, False otherwise
+    """
+    # Check prefix if specified
+    if category.prefix:
+        if not symbol.name.startswith(category.prefix):
+            return False
+
+    # Check required properties
+    if category.required_properties:
+        for prop_name, prop_def in category.required_properties.items():
+            if not prop_def.optional and prop_name not in symbol.properties:
+                return False
+
+    # Check pin requirements
+    if category.pins:
+        pin_count = len(symbol.pins)
+        if pin_count < category.pins.min_count:
+            return False
+        if category.pins.max_count and pin_count > category.pins.max_count:
+            return False
+
     return True

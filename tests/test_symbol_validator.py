@@ -71,6 +71,8 @@ def test_valid_symbol():
         name="R10",
         library_name="Test",
         properties={"Reference": "R10", "Value": "10k"},
+        category="passives",
+        subcategory="resistors",
     )
     result = validate_symbol(symbol, structure)
     assert not result["errors"]
@@ -84,6 +86,8 @@ def test_invalid_symbol_name():
         name="X10",
         library_name="Test",
         properties={"Reference": "R10", "Value": "10k"},
+        category="passives",
+        subcategory="resistors",
     )
     result = validate_symbol(symbol, structure)
     assert any("does not match pattern" in e for e in result["errors"])
@@ -95,6 +99,8 @@ def test_missing_required_property():
         name="R10",
         library_name="Test",
         properties={"Reference": "R10"},  # Missing Value
+        category="passives",
+        subcategory="resistors",
     )
     result = validate_symbol(symbol, structure)
     assert any("Missing required property" in e for e in result["errors"])
@@ -106,6 +112,8 @@ def test_property_value_pattern_fail():
         name="R10",
         library_name="Test",
         properties={"Reference": "R10", "Value": "badvalue"},
+        category="passives",
+        subcategory="resistors",
     )
     result = validate_symbol(symbol, structure)
     assert any("does not match pattern" in e for e in result["errors"])
@@ -117,6 +125,8 @@ def test_unknown_property_warning():
         name="R10",
         library_name="Test",
         properties={"Reference": "R10", "Value": "10k", "Extra": "foo"},
+        category="passives",
+        subcategory="resistors",
     )
     result = validate_symbol(symbol, structure)
     assert any("Unknown property" in w for w in result["warnings"])
@@ -128,6 +138,9 @@ def test_unrecognized_reference_prefix():
         name="Q1",
         library_name="Test",
         properties={"Reference": "Q1", "Value": "NPN"},
+        category="passives",
+        subcategory="resistors",
     )
     result = validate_symbol(symbol, structure)
-    assert any("Could not determine symbol category" in e for e in result["errors"])
+    assert any("does not match pattern" in e for e in result["errors"])
+    assert any("Reference" in e for e in result["errors"])
