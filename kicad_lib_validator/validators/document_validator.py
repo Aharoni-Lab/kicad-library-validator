@@ -3,7 +3,7 @@ Document validation logic for KiCad libraries.
 """
 
 import re
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, cast
 
 from kicad_lib_validator.models.documentation import Documentation
 from kicad_lib_validator.models.structure import ComponentCategory, ComponentType, LibraryStructure
@@ -66,10 +66,12 @@ def validate_documentation(
         and documentation.subcategory
         and getattr(structure, "documentation", None)
     ):
-        doc_type = structure.documentation.get(documentation.category)
+        doc_types = cast(Dict[str, ComponentType], structure.documentation)
+        doc_type = doc_types.get(documentation.category)
         if (
             doc_type
             and hasattr(doc_type, "categories")
+            and doc_type.categories is not None
             and documentation.subcategory in doc_type.categories
         ):
             doc_category = doc_type.categories[documentation.subcategory]
@@ -79,7 +81,8 @@ def validate_documentation(
                 f"Category/subcategory '{documentation.category}/{documentation.subcategory}' not found in structure for document '{documentation.name}'"
             )
     elif documentation.category and getattr(structure, "documentation", None):
-        doc_type = structure.documentation.get(documentation.category)
+        doc_types = cast(Dict[str, ComponentType], structure.documentation)
+        doc_type = doc_types.get(documentation.category)
         if doc_type:
             doc_category = doc_type
             doc_category_name = documentation.category

@@ -97,4 +97,64 @@ set MYLIB_DIR=C:\path\to\your\library
 export MYLIB_DIR=/path/to/your/library
 ```
 
-This makes the library tables portable across different systems and installations. 
+This makes the library tables portable across different systems and installations.
+
+## Library Report Generator
+
+The `generate_report.py` script generates a validation report for a KiCad library based on its structure definition.
+
+### Usage
+
+```bash
+python -m kicad_lib_validator.utils.generate_report /path/to/library [--structure-file /path/to/structure.yaml] [--output-path /path/to/report.md]
+```
+
+### Features
+
+- Generates a comprehensive markdown report of the library structure
+- Validates library components against the structure definition
+- Shows library information, directory structure, and component details
+- Supports custom structure file and output path
+
+### Options
+
+- `--structure-file`: Path to the structure YAML file (defaults to library_dir/structure.yaml)
+- `--output-path`: Path where to save the report (defaults to library_dir/library_report.md)
+- `--verbose`: Show the generated report in the console
+
+### Example Output
+
+```markdown
+# Library Structure Report
+
+Generated: 2024-03-14 15:30:45
+
+## Library Information
+- **Name**: MyLib
+- **Description**: Example library
+- **Maintainer**: John Doe <john@example.com>
+- **License**: MIT
+- **Website**: https://example.com/library
+
+## Directory Structure
+### Symbols
+Path: `symbols`
+Subdirectories:
+- `actives`
+- `passives`
+
+### Footprints
+Path: `footprints`
+Subdirectories:
+- `smd`
+
+## Symbols
+### Symbol Files
+- `symbols/actives/ics/ics.kicad_sym`
+- `symbols/passives/capacitors/capacitors.kicad_sym`
+
+## Footprints
+### Footprint Files
+- `footprints/smd/capacitors/capacitors.pretty`
+- `footprints/smd/resistors/resistors.pretty`
+``` 
