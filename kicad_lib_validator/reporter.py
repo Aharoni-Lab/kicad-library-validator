@@ -33,6 +33,15 @@ class FileStatus:
     old_path: Optional[Path] = None  # For renamed files
 
 
+@dataclass
+class Issue:
+    """Represents a validation issue."""
+
+    type: str
+    message: str
+    severity: str  # 'error', 'warning', or 'success'
+
+
 class LibraryReporter:
     """Generates markdown reports of the library structure."""
 

@@ -5,7 +5,8 @@ Utility script to update KiCad's library tables based on the YAML configuration.
 import logging
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Any
+from typing import Any, Dict, List, Optional, Set
+
 import yaml
 
 from kicad_lib_validator.parser.structure_parser import parse_library_structure

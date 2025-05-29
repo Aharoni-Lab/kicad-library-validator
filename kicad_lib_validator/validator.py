@@ -4,7 +4,7 @@ Main validator class for KiCad libraries.
 
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
 
 from kicad_lib_validator.models import (
     Documentation,
