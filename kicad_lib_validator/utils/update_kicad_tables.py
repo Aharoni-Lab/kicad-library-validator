@@ -218,9 +218,14 @@ def update_kicad_tables(
         )
         # Write library-specific table
         if structure.library.directories and structure.library.directories.tables:
-            library_sym_table = library_root / structure.library.directories.tables / "sym-lib-table"
+            library_sym_table = (
+                library_root / structure.library.directories.tables / "sym-lib-table"
+            )
             write_lib_table(
-                library_sym_table, library_sym_libs, is_symbol_table=True, prefix=structure.library.prefix
+                library_sym_table,
+                library_sym_libs,
+                is_symbol_table=True,
+                prefix=structure.library.prefix,
             )
 
     # Update footprint library table
@@ -277,7 +282,10 @@ def update_kicad_tables(
         if structure.library.directories and structure.library.directories.tables:
             library_fp_table = library_root / structure.library.directories.tables / "fp-lib-table"
             write_lib_table(
-                library_fp_table, library_fp_libs, is_symbol_table=False, prefix=structure.library.prefix
+                library_fp_table,
+                library_fp_libs,
+                is_symbol_table=False,
+                prefix=structure.library.prefix,
             )
 
 
