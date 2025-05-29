@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 import yaml
 
 from kicad_lib_validator.parser.structure_parser import parse_library_structure
+
 from ..models.structure import LibraryStructure
 
 
@@ -126,7 +127,10 @@ def write_lib_table(
 
 
 def generate_instructions_markdown(
-    structure: LibraryStructure, library_root: Path, library_sym_libs: Dict[str, Dict[str, str]], library_fp_libs: Dict[str, Dict[str, str]]
+    structure: LibraryStructure,
+    library_root: Path,
+    library_sym_libs: Dict[str, Dict[str, str]],
+    library_fp_libs: Dict[str, Dict[str, str]],
 ) -> str:
     """
     Generate markdown instructions for manually adding the library tables to KiCad.
@@ -142,11 +146,14 @@ def generate_instructions_markdown(
     """
     prefix = structure.library.prefix
     env_var = f"{prefix.upper()}_DIR"
-    
+
     # Get the relative paths for the tables
+    if not structure.library.directories or not structure.library.directories.tables:
+        raise ValueError("Library directories or tables directory not defined")
+
     sym_table_path = Path(structure.library.directories.tables) / "sym-lib-table"
     fp_table_path = Path(structure.library.directories.tables) / "fp-lib-table"
-    
+
     content = [
         f"# {prefix} Library Tables Setup Guide",
         "",
@@ -158,7 +165,7 @@ def generate_instructions_markdown(
         "",
         "### Windows",
         "```batch",
-        f"setx {env_var} \"{library_root.absolute()}\"",
+        f'setx {env_var} "{library_root.absolute()}"',
         "```",
         "",
         "### Linux/macOS",
@@ -209,7 +216,7 @@ def generate_instructions_markdown(
         "The library tables in this directory are specific to this library and should be kept in version control. ",
         "They contain only the entries for this library's symbols and footprints.",
     ]
-    
+
     return "\n".join(content)
 
 
@@ -229,8 +236,8 @@ def update_kicad_tables(
         output_dir: Optional path to write the tables instead of the real KiCad config directory
     """
     # Ensure these are always defined
-    library_sym_libs = {}
-    library_fp_libs = {}
+    library_sym_libs: Dict[str, Dict[str, str]] = {}
+    library_fp_libs: Dict[str, Dict[str, str]] = {}
     logger = logging.getLogger(__name__)
     logger.setLevel(log_level)
     if not logger.handlers:
@@ -393,7 +400,7 @@ def update_kicad_tables(
             logger.info(f"Generated instructions in {instructions_file}")
 
 
-def main():
+def main() -> None:
     """Command line interface for updating KiCad tables."""
     import argparse
 

@@ -102,7 +102,7 @@ def create_directory_structure(
                                 subcategory_dir.rename(pretty_dir)
 
 
-def main():
+def main() -> None:
     """Command line interface for creating library structure."""
     import argparse
 
