@@ -12,6 +12,7 @@ This directory contains templates and documentation for incorporating the KiCad 
   - `structure.yaml` - Example library structure definition
   - `README.md` - Library README template
   - `CONTRIBUTING.md` - Contribution guidelines template
+  - `.gitignore` - Git ignore rules for KiCad libraries
 - `docs/` - Documentation templates
   - `validation_rules.md` - Validation rules documentation template
   - `library_usage.md` - Library usage documentation template
@@ -34,8 +35,9 @@ This directory contains templates and documentation for incorporating the KiCad 
 ### Library Structure Setup
 
 1. Copy `library/structure.yaml` to your repository root
-2. Customize the structure definition to match your library's organization
-3. Copy and customize `library/README.md` and `library/CONTRIBUTING.md`
+2. Copy `library/.gitignore` to your repository root
+3. Customize the structure definition to match your library's organization
+4. Copy and customize `library/README.md` and `library/CONTRIBUTING.md`
 
 ### Documentation Setup
 
