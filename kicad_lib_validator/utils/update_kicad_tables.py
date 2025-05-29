@@ -5,7 +5,8 @@ Utility script to update KiCad's library tables based on the YAML configuration.
 import logging
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Any
+import yaml
 
 from kicad_lib_validator.parser.structure_parser import parse_library_structure
 
@@ -44,7 +45,7 @@ def parse_lib_table(table_path: Path) -> Dict[str, Dict[str, str]]:
 
     libraries = {}
     current_lib = None
-    current_config = {}
+    current_config: Dict[str, Any] = {}
 
     with open(table_path, "r", encoding="utf-8") as f:
         for line in f:

@@ -4,7 +4,7 @@ Main validator class for KiCad libraries.
 
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 from kicad_lib_validator.models import (
     Documentation,
@@ -30,7 +30,7 @@ from kicad_lib_validator.validators.symbol_validator import validate_symbol
 class ValidationResult:
     """Holds validation results."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.errors: List[str] = []
         self.warnings: List[str] = []
         self.successes: List[str] = []
@@ -60,7 +60,7 @@ class ValidationResult:
 class KiCadLibraryValidator:
     """Main validator class for KiCad libraries."""
 
-    def __init__(self, library_path: Path, structure_file: Optional[Path] = None):
+    def __init__(self, library_path: Path, structure_file: Optional[Path] = None) -> None:
         self.library_path = Path(library_path)
         if structure_file is None:
             self.structure_file = self.library_path / "library_structure.yaml"
@@ -111,7 +111,7 @@ class KiCadLibraryValidator:
             return
 
         # Validate required directories
-        required_dirs = {
+        required_dirs: Dict[str, Optional[str]] = {
             "symbols": self.structure.library.directories.symbols,
             "footprints": self.structure.library.directories.footprints,
             "3dmodels": self.structure.library.directories.models_3d,
@@ -119,6 +119,8 @@ class KiCadLibraryValidator:
         }
 
         for dir_type, dir_name in required_dirs.items():
+            if dir_name is None:
+                continue
             dir_path = self.library_path / dir_name
             if not dir_path.exists():
                 self.result.add_error(f"Required {dir_type} directory not found: {dir_path}")

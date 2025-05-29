@@ -410,3 +410,12 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
             status_key = str(status)
         markers = {"new": "🆕", "modified": "📝", "deleted": "🗑️", "unchanged": ""}
         return markers.get(status_key, "")
+
+    def _group_issues_by_type(self, issues: List[Issue]) -> Dict[str, List[Issue]]:
+        """Group issues by their type."""
+        grouped: Dict[str, List[Issue]] = {}
+        for issue in issues:
+            if issue.type not in grouped:
+                grouped[issue.type] = []
+            grouped[issue.type].append(issue)
+        return grouped
