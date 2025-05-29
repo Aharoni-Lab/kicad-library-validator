@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 import yaml
+from pydantic import ValidationError
 
 from ..models.structure import LibraryStructure
 
@@ -59,8 +60,10 @@ def parse_library_structure_from_yaml(
     """
     try:
         structure = LibraryStructure(**yaml_content)
-    except Exception as e:
+    except ValidationError as e:
         raise ValueError(f"Invalid library structure: {e}")
+    except Exception as e:
+        raise ValueError(f"Unexpected error parsing library structure: {e}")
 
     # Only validate directory structure if library_root is provided
     if library_root is not None:
@@ -95,10 +98,7 @@ def _validate_directory_structure(structure: LibraryStructure, library_root: Pat
         raise ValueError(f"Footprints path is not a directory: {footprints_dir}")
 
     # Validate 3D models directory if specified
-    if (
-        hasattr(structure.library.directories, "models_3d")
-        and structure.library.directories.models_3d
-    ):
+    if structure.library.directories.models_3d:
         models_dir = library_root / structure.library.directories.models_3d
         if not models_dir.exists():
             raise ValueError(f"3D models directory not found: {models_dir}")
@@ -106,10 +106,7 @@ def _validate_directory_structure(structure: LibraryStructure, library_root: Pat
             raise ValueError(f"3D models path is not a directory: {models_dir}")
 
     # Validate documentation directory if specified
-    if (
-        hasattr(structure.library.directories, "documentation")
-        and structure.library.directories.documentation
-    ):
+    if structure.library.directories.documentation:
         docs_dir = library_root / structure.library.directories.documentation
         if not docs_dir.exists():
             raise ValueError(f"Documentation directory not found: {docs_dir}")

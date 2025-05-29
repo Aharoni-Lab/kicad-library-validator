@@ -1,5 +1,5 @@
 import re
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, Field, HttpUrl, field_validator
 
@@ -9,14 +9,14 @@ class LibraryDirectories(BaseModel):
 
     symbols: str = "symbols"
     footprints: str = "footprints"
-    models_3d: str = "3dmodels"
-    documentation: str = "docs"
+    models_3d: Optional[str] = "3dmodels"
+    documentation: Optional[str] = "docs"
 
     @field_validator("symbols", "footprints", "models_3d", "documentation")
     @classmethod
-    def validate_directory_name(cls, v: str) -> str:
+    def validate_directory_name(cls, v: Optional[str]) -> Optional[str]:
         """Validate directory names are valid."""
-        if not re.match(r"^[a-zA-Z0-9_-]+$", v):
+        if v is not None and not re.match(r"^[a-zA-Z0-9_-]+$", v):
             raise ValueError(f"Directory name '{v}' contains invalid characters")
         return v
 
@@ -24,17 +24,17 @@ class LibraryDirectories(BaseModel):
 class NamingConvention(BaseModel):
     """Naming convention configuration."""
 
-    prefix: bool = True
-    separator: str = "_"
-    case: Literal["upper", "lower", "mixed"] = "upper"
-    include_categories: bool = False
-    category_separator: str = "_"
+    prefix: Optional[bool] = True
+    separator: Optional[str] = "_"
+    case: Optional[Literal["upper", "lower", "mixed"]] = "upper"
+    include_categories: Optional[bool] = False
+    category_separator: Optional[str] = "_"
 
     @field_validator("separator")
     @classmethod
-    def validate_separator(cls, v: str) -> str:
+    def validate_separator(cls, v: Optional[str]) -> Optional[str]:
         """Validate separator is a single character."""
-        if len(v) != 1:
+        if v is not None and len(v) != 1:
             raise ValueError("Separator must be a single character")
         return v
 
@@ -42,22 +42,22 @@ class NamingConvention(BaseModel):
 class LibraryNaming(BaseModel):
     """Naming conventions for different library elements."""
 
-    symbols: NamingConvention
-    footprints: NamingConvention
-    models_3d: NamingConvention
+    symbols: Optional[NamingConvention] = Field(default_factory=NamingConvention)
+    footprints: Optional[NamingConvention] = Field(default_factory=NamingConvention)
+    models_3d: Optional[NamingConvention] = Field(default_factory=NamingConvention)
 
 
 class LibraryInfo(BaseModel):
     """Library metadata and configuration."""
 
     prefix: str
-    description: str
-    maintainer: str
-    license: str
+    description: Optional[str] = ""
+    maintainer: Optional[str] = None
+    license: Optional[str] = None
     website: Optional[HttpUrl] = None
     repository: Optional[HttpUrl] = None
-    directories: LibraryDirectories = Field(default_factory=LibraryDirectories)
-    naming: LibraryNaming
+    directories: Optional[LibraryDirectories] = Field(default_factory=LibraryDirectories)
+    naming: Optional[LibraryNaming] = Field(default_factory=LibraryNaming)
 
     @field_validator("prefix")
     @classmethod
@@ -69,9 +69,9 @@ class LibraryInfo(BaseModel):
 
     @field_validator("maintainer")
     @classmethod
-    def validate_maintainer(cls, v: str) -> str:
-        """Validate maintainer email format."""
-        if not re.match(r"^[^<]+ <[^>]+>$", v):
+    def validate_maintainer(cls, v: Optional[str]) -> Optional[str]:
+        """Validate maintainer email format if provided."""
+        if v is not None and not re.match(r"^[^<]+ <[^>]+>$", v):
             raise ValueError("Maintainer must be in format 'Name <email@example.com>'")
         return v
 
@@ -81,7 +81,7 @@ class PropertyDefinition(BaseModel):
 
     type: str
     pattern: Optional[str] = None
-    optional: bool = False
+    optional: Optional[bool] = False
     description: Optional[str] = None
 
     @field_validator("type")
@@ -108,40 +108,41 @@ class PropertyDefinition(BaseModel):
 class PinNaming(BaseModel):
     """Naming rules for pins."""
 
-    pattern: str
-    description_pattern: str
+    pattern: Optional[str] = None
+    description_pattern: Optional[str] = None
 
     @field_validator("pattern", "description_pattern")
     @classmethod
-    def validate_patterns(cls, v: str) -> str:
-        """Validate regex patterns."""
-        try:
-            re.compile(v)
-        except re.error as e:
-            raise ValueError(f"Invalid regex pattern: {e}")
+    def validate_patterns(cls, v: Optional[str]) -> Optional[str]:
+        """Validate regex patterns if provided."""
+        if v is not None:
+            try:
+                re.compile(v)
+            except re.error as e:
+                raise ValueError(f"Invalid regex pattern: {e}")
         return v
 
 
 class PinRequirements(BaseModel):
     """Requirements for pins in a component."""
 
-    min_count: int
+    min_count: Optional[int] = 0
     max_count: Optional[int] = None
-    required_types: List[str]
+    required_types: Optional[List[str]] = None
     naming: Optional[PinNaming] = None
 
     @field_validator("min_count")
     @classmethod
-    def validate_min_count(cls, v: int) -> int:
-        """Validate minimum pin count."""
-        if v < 0:
+    def validate_min_count(cls, v: Optional[int]) -> Optional[int]:
+        """Validate minimum pin count if provided."""
+        if v is not None and v < 0:
             raise ValueError("Minimum pin count cannot be negative")
         return v
 
     @field_validator("max_count")
     @classmethod
     def validate_max_count(cls, v: Optional[int], info: Any) -> Optional[int]:
-        """Validate maximum pin count."""
+        """Validate maximum pin count if provided."""
         if v is not None:
             min_count = info.data.get("min_count", 0)
             if v < min_count:
@@ -150,44 +151,47 @@ class PinRequirements(BaseModel):
 
     @field_validator("required_types")
     @classmethod
-    def validate_required_types(cls, v: List[str]) -> List[str]:
-        """Validate required pin types."""
-        valid_types = {
-            "input",
-            "output",
-            "bidirectional",
-            "tri_state",
-            "passive",
-            "power",
-            "unspecified",
-        }
-        invalid_types = [t for t in v if t.lower() not in valid_types]
-        if invalid_types:
-            raise ValueError(f"Invalid pin types: {', '.join(invalid_types)}")
-        return [t.lower() for t in v]
+    def validate_required_types(cls, v: Optional[List[str]]) -> Optional[List[str]]:
+        """Validate required pin types if provided."""
+        if v is not None:
+            valid_types = {
+                "input",
+                "output",
+                "bidirectional",
+                "tri_state",
+                "passive",
+                "power",
+                "unspecified",
+            }
+            invalid_types = [t for t in v if t.lower() not in valid_types]
+            if invalid_types:
+                raise ValueError(f"Invalid pin types: {', '.join(invalid_types)}")
+            return [t.lower() for t in v]
+        return v
 
 
 class ComponentNaming(BaseModel):
     """Naming rules for a component."""
 
-    pattern: str
-    description_pattern: str
+    pattern: Optional[str] = None
+    description_pattern: Optional[str] = None
 
     @field_validator("pattern", "description_pattern")
     @classmethod
-    def validate_patterns(cls, v: str) -> str:
-        """Validate regex patterns."""
-        try:
-            re.compile(v)
-        except re.error as e:
-            raise ValueError(f"Invalid regex pattern: {e}")
+    def validate_patterns(cls, v: Optional[str]) -> Optional[str]:
+        """Validate regex patterns if provided."""
+        if v is not None:
+            try:
+                re.compile(v)
+            except re.error as e:
+                raise ValueError(f"Invalid regex pattern: {e}")
         return v
 
 
 class ComponentCategory(BaseModel):
     """Definition of a component category."""
 
-    description: str
+    description: Optional[str] = ""
     prefix: Optional[str] = None
     naming: Optional[ComponentNaming] = None
     required_properties: Optional[Dict[str, PropertyDefinition]] = None
@@ -198,7 +202,7 @@ class ComponentCategory(BaseModel):
     @field_validator("prefix")
     @classmethod
     def validate_prefix(cls, v: Optional[str]) -> Optional[str]:
-        """Validate component prefix."""
+        """Validate component prefix if provided."""
         if v is not None and not re.match(r"^[A-Za-z0-9]+$", v):
             raise ValueError("Component prefix must contain only alphanumeric characters")
         return v
@@ -206,7 +210,7 @@ class ComponentCategory(BaseModel):
     @field_validator("required_layers")
     @classmethod
     def validate_layers(cls, v: Optional[List[str]]) -> Optional[List[str]]:
-        """Validate required layers."""
+        """Validate required layers if provided."""
         if v is not None:
             valid_layers = {
                 "F.Cu",
@@ -230,16 +234,16 @@ class ComponentCategory(BaseModel):
 class ComponentType(BaseModel):
     """Definition of a component type (e.g., passive, active)."""
 
-    description: str
+    description: Optional[str] = ""
     prefix: Optional[str] = None
-    categories: Dict[str, ComponentCategory]
+    categories: Optional[Dict[str, ComponentCategory]] = Field(default_factory=dict)
     naming: Optional[ComponentNaming] = None
     required_properties: Optional[Dict[str, PropertyDefinition]] = None
 
     @field_validator("prefix")
     @classmethod
     def validate_prefix(cls, v: Optional[str]) -> Optional[str]:
-        """Validate component type prefix."""
+        """Validate component type prefix if provided."""
         if v is not None and not re.match(r"^[A-Za-z0-9]+$", v):
             raise ValueError("Component type prefix must contain only alphanumeric characters")
         return v
@@ -248,24 +252,18 @@ class ComponentType(BaseModel):
 class LibraryStructure(BaseModel):
     """Complete library structure definition."""
 
-    version: str
-    description: str
+    version: str = "1.0"
+    description: Optional[str] = ""
     library: LibraryInfo
-    symbols: Dict[str, ComponentType]
-    footprints: Dict[str, ComponentType]
-    models_3d: Dict[str, ComponentType] = Field(default_factory=dict)
-    documentation: Dict[str, ComponentType] = Field(default_factory=dict)
+    symbols: Optional[Dict[str, ComponentType]] = Field(default_factory=dict)
+    footprints: Optional[Dict[str, ComponentType]] = Field(default_factory=dict)
+    models_3d: Optional[Dict[str, ComponentType]] = Field(default_factory=dict)
+    documentation: Optional[Dict[str, ComponentType]] = Field(default_factory=dict)
 
     @field_validator("version")
     @classmethod
     def validate_version(cls, v: str) -> str:
         """Validate version format."""
-        if not re.match(r"^\d+\.\d+(\.\d+)?$", v):
-            raise ValueError("Version must be in format 'X.Y' or 'X.Y.Z'")
+        if not re.match(r"^\d+\.\d+$", v):
+            raise ValueError("Version must be in format 'major.minor'")
         return v
-
-
-class Category(BaseModel):
-    description: str
-    naming: Optional[Dict[str, Any]] = None
-    required_properties: Optional[Dict[str, Any]] = None
