@@ -52,6 +52,7 @@ class LibraryInfo(BaseModel):
     """Library metadata and configuration."""
 
     prefix: str
+    env_prefix: Optional[str] = None  # Environment variable prefix (no dots allowed)
     description: Optional[str] = ""
     maintainer: Optional[str] = None
     license: Optional[str] = None
@@ -66,6 +67,17 @@ class LibraryInfo(BaseModel):
         """Validate library prefix."""
         if not re.match(r"^[A-Za-z0-9.]+$", v):
             raise ValueError("Library prefix must contain only alphanumeric characters and periods")
+        return v
+
+    @field_validator("env_prefix")
+    @classmethod
+    def validate_env_prefix(cls, v: Optional[str], info: Any) -> Optional[str]:
+        """Validate environment variable prefix."""
+        if v is None:
+            # If not provided, use the display prefix but remove dots
+            return info.data.get("prefix", "").replace(".", "")
+        if not re.match(r"^[A-Za-z0-9]+$", v):
+            raise ValueError("Environment prefix must contain only alphanumeric characters (no dots)")
         return v
 
     @field_validator("maintainer")

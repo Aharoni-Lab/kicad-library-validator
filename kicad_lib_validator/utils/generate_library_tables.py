@@ -53,6 +53,7 @@ def write_lib_table(
     libraries: Dict[str, Dict[str, str]],
     is_symbol_table: bool = False,
     prefix: str = "",
+    env_prefix: str = "",
 ) -> None:
     """
     Write a KiCad library table file.
@@ -61,7 +62,8 @@ def write_lib_table(
         table_path: Path to the library table file
         libraries: Dictionary mapping library names to their configurations
         is_symbol_table: Whether this is a symbol library table (True) or footprint library table (False)
-        prefix: The library prefix to use for environment variable paths
+        prefix: The library prefix to use for display names
+        env_prefix: The library prefix to use for environment variable paths
     """
     with open(table_path, "w", encoding="utf-8") as f:
         # Use correct root element based on table type
@@ -71,9 +73,9 @@ def write_lib_table(
         for lib_name, config in sorted(libraries.items()):
             f.write(f'  (lib (name "{lib_name}")\n')
             for key, value in config.items():
-                if key == "uri" and prefix:
+                if key == "uri" and env_prefix:
                     # Convert the path to use the environment variable
-                    path_var = f"{prefix.upper()}_DIR"
+                    path_var = f"{env_prefix.upper()}_DIR"
                     rel_path = value.replace("\\", "/")  # Ensure forward slashes
                     value = f"${{{path_var}}}/{rel_path}"
                 f.write(f'    ({key} "{value}")\n')
@@ -100,7 +102,8 @@ def generate_instructions_markdown(
         Markdown content as a string
     """
     prefix = structure.library.prefix
-    env_var = f"{prefix.upper()}_DIR"
+    env_prefix = structure.library.env_prefix
+    env_var = f"{env_prefix.upper()}_DIR"
 
     # Get the relative paths for the tables
     if not structure.library.directories or not structure.library.directories.tables:
@@ -250,6 +253,7 @@ def generate_library_tables(
         library_sym_libs,
         is_symbol_table=True,
         prefix=structure.library.prefix,
+        env_prefix=structure.library.env_prefix,
     )
     sym_table_str = str(library_sym_table.relative_to(library_root))
     changes["modified_files"].append(str(sym_table_str))
@@ -284,6 +288,7 @@ def generate_library_tables(
         library_fp_libs,
         is_symbol_table=False,
         prefix=structure.library.prefix,
+        env_prefix=structure.library.env_prefix,
     )
     fp_table_str = str(library_fp_table.relative_to(library_root))
     changes["modified_files"].append(str(fp_table_str))
