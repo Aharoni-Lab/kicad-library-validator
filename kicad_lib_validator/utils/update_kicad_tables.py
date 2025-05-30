@@ -5,7 +5,7 @@ Utility script to append local library tables to KiCad's configuration.
 import logging
 import os
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from kicad_lib_validator.models.structure import LibraryStructure
 from kicad_lib_validator.parser.structure_parser import parse_library_structure
@@ -107,7 +107,7 @@ def update_kicad_tables(
     yaml_path: Path,
     dry_run: bool = False,
     log_level: int = logging.INFO,
-) -> Dict[str, list]:
+) -> Dict[str, List[str]]:
     """
     Append local library tables to KiCad's configuration.
 
@@ -150,7 +150,7 @@ def update_kicad_tables(
         )
 
     # Track changes for summary
-    changes = {"symbol_libs": [], "footprint_libs": [], "modified_files": []}
+    changes: Dict[str, List[str]] = {"symbol_libs": [], "footprint_libs": [], "modified_files": []}
 
     # Update symbol library table
     sym_lib_table = kicad_config / "sym-lib-table"

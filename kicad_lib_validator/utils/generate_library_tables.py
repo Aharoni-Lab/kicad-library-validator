@@ -3,8 +3,9 @@ Utility script to generate local library table files for a KiCad library reposit
 """
 
 import logging
+import os
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from kicad_lib_validator.models.structure import LibraryStructure
 from kicad_lib_validator.parser.structure_parser import parse_library_structure
@@ -177,7 +178,7 @@ def generate_instructions_markdown(
 def generate_library_tables(
     yaml_path: Path,
     log_level: int = logging.INFO,
-) -> Dict[str, list]:
+) -> Dict[str, List[str]]:
     """
     Generate local library table files for a KiCad library repository.
 
@@ -209,7 +210,11 @@ def generate_library_tables(
     logger.info(f"Created/verified tables directory: {tables_dir}")
 
     # Track changes for summary
-    changes = {"symbol_libs": [], "footprint_libs": [], "modified_files": []}
+    changes: Dict[str, List[str]] = {
+        "symbol_libs": list(),
+        "footprint_libs": list(),
+        "modified_files": list(),
+    }
 
     # Initialize library dictionaries
     library_sym_libs: Dict[str, Dict[str, str]] = {}
@@ -246,7 +251,8 @@ def generate_library_tables(
         is_symbol_table=True,
         prefix=structure.library.prefix,
     )
-    changes["modified_files"].append(str(library_sym_table.relative_to(library_root)))
+    sym_table_str = str(library_sym_table.relative_to(library_root))
+    changes["modified_files"].append(str(sym_table_str))
 
     # Find all footprint libraries (.pretty directories)
     if structure.library.directories.footprints:
@@ -279,7 +285,8 @@ def generate_library_tables(
         is_symbol_table=False,
         prefix=structure.library.prefix,
     )
-    changes["modified_files"].append(str(library_fp_table.relative_to(library_root)))
+    fp_table_str = str(library_fp_table.relative_to(library_root))
+    changes["modified_files"].append(str(fp_table_str))
 
     # Generate and write instructions
     instructions = generate_instructions_markdown(
@@ -287,7 +294,8 @@ def generate_library_tables(
     )
     instructions_file = tables_dir / "README.md"
     instructions_file.write_text(instructions, encoding="utf-8")
-    changes["modified_files"].append(str(instructions_file.relative_to(library_root)))
+    readme_str = str(instructions_file.relative_to(library_root))
+    changes["modified_files"].append(str(readme_str))
     logger.info(f"Generated instructions in {instructions_file}")
 
     # Print summary of changes
@@ -303,8 +311,9 @@ def generate_library_tables(
                 logger.info(f"- {lib}")
         if changes["modified_files"]:
             logger.info("\nModified Files:")
-            for file in changes["modified_files"]:
-                logger.info(f"- {file}")
+            for file in changes["modified_files"]:  # type: ignore
+                file_str: str = str(file)  # Ensure file is treated as a string
+                logger.info(f"- {file_str}")
     else:
         logger.info("\nNo changes were made to the library tables.")
 
