@@ -123,6 +123,13 @@ def create_directory_structure(
                 dir_path.mkdir(parents=True, exist_ok=True)
 
     # Create component directories for each type
+    dir_type_to_field = {
+        "symbols": "symbols",
+        "footprints": "footprints",
+        "models_3d": "models_3d",
+        "documentation": "documentation"
+    }
+    
     for dir_type in ["symbols", "footprints", "models_3d", "documentation"]:
         if dir_type not in directories:
             continue
@@ -132,7 +139,7 @@ def create_directory_structure(
             continue
 
         # Get component groups from the structure
-        groups = getattr(structure, dir_type, {})
+        groups = getattr(structure, dir_type_to_field[dir_type], {})
 
         # Create directories for each top-level group
         for group_name, group in groups.items():
