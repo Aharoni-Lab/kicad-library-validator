@@ -32,19 +32,22 @@ def get_library_name_from_path(
     if not naming_convention or not naming_convention.include_categories:
         return prefix
 
-    # Get path components relative to the library root
+    # For footprints, the category is the parent directory of the .pretty folder
+    if not is_symbol and path.suffix == ".pretty":
+        # path: footprints/category.pretty
+        category = path.stem  # e.g. 'passive' from 'passive.pretty'
+        sep = naming_convention.category_separator or "_"
+        return f"{prefix}{sep}{category.capitalize()}"
+
+    # For symbols, use the previous logic
     parts = path.parts
     if len(parts) < 3:  # Need at least type/category/subcategory
         return prefix
 
-    # Build library name from path components
     sep = naming_convention.category_separator or "_"
     components = [prefix]
-
-    # Add all path components except the last one (which is the file/directory name)
     for part in parts[1:-1]:
         components.append(part.capitalize())
-
     return sep.join(components)
 
 
@@ -53,7 +56,7 @@ def write_lib_table(
     libraries: Dict[str, Dict[str, str]],
     is_symbol_table: bool = False,
     prefix: str = "",
-    env_prefix: str = "",
+    env_prefix: Optional[str] = None,
 ) -> None:
     """
     Write a KiCad library table file.
@@ -65,6 +68,9 @@ def write_lib_table(
         prefix: The library prefix to use for display names
         env_prefix: The library prefix to use for environment variable paths
     """
+    # Use env_prefix if provided, otherwise create a default from the prefix
+    env_prefix = env_prefix or prefix.replace(".", "").upper()
+
     with open(table_path, "w", encoding="utf-8") as f:
         # Use correct root element based on table type
         root_element = "sym_lib_table" if is_symbol_table else "fp_lib_table"
@@ -73,9 +79,9 @@ def write_lib_table(
         for lib_name, config in sorted(libraries.items()):
             f.write(f'  (lib (name "{lib_name}")\n')
             for key, value in config.items():
-                if key == "uri" and env_prefix:
+                if key == "uri":
                     # Convert the path to use the environment variable
-                    path_var = f"{env_prefix.upper()}_DIR"
+                    path_var = f"{env_prefix}_DIR"
                     rel_path = value.replace("\\", "/")  # Ensure forward slashes
                     value = f"${{{path_var}}}/{rel_path}"
                 f.write(f'    ({key} "{value}")\n')
@@ -102,8 +108,9 @@ def generate_instructions_markdown(
         Markdown content as a string
     """
     prefix = structure.library.prefix
-    env_prefix = structure.library.env_prefix
-    env_var = f"{env_prefix.upper()}_DIR"
+    # Use env_prefix if provided, otherwise create a default from the prefix
+    env_prefix = structure.library.env_prefix or prefix.replace(".", "").upper()
+    env_var = f"{env_prefix}_DIR"
 
     # Get the relative paths for the tables
     if not structure.library.directories or not structure.library.directories.tables:
@@ -265,6 +272,8 @@ def generate_library_tables(
             for dir_path in footprints_dir.rglob("*.pretty"):
                 if dir_path.is_dir():
                     rel_path = dir_path.relative_to(library_root)
+                    # Get the category name from the directory name (remove .pretty)
+                    category = dir_path.stem
                     lib_name = get_library_name_from_path(
                         rel_path,
                         structure.library.prefix,

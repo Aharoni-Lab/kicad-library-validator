@@ -75,9 +75,14 @@ class LibraryInfo(BaseModel):
         """Validate environment variable prefix."""
         if v is None:
             # If not provided, use the display prefix but remove dots
-            return info.data.get("prefix", "").replace(".", "")
+            prefix = info.data.get("prefix", "")
+            if isinstance(prefix, str):
+                return prefix.replace(".", "")
+            return ""
         if not re.match(r"^[A-Za-z0-9]+$", v):
-            raise ValueError("Environment prefix must contain only alphanumeric characters (no dots)")
+            raise ValueError(
+                "Environment prefix must contain only alphanumeric characters (no dots)"
+            )
         return v
 
     @field_validator("maintainer")

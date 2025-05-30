@@ -38,6 +38,37 @@ def create_component_directories(
             logger.info(f"Creating directory: {current_dir}")
             current_dir.mkdir(parents=True, exist_ok=True)
 
+    # Process entries: create a subdirectory for each entry
+    if group.entries:
+        for entry_name in group.entries:
+            entry_dir = current_dir / entry_name
+            if not entry_dir.exists():
+                if dry_run:
+                    logger.info(f"Would create entry directory: {entry_dir}")
+                else:
+                    logger.info(f"Creating entry directory: {entry_dir}")
+                    entry_dir.mkdir(parents=True, exist_ok=True)
+            # For symbols, create .kicad_sym file in the final entry directory
+            if is_symbol:
+                sym_file = entry_dir / f"{entry_name}.kicad_sym"
+                if not sym_file.exists():
+                    if dry_run:
+                        logger.info(f"Would create empty symbol library file: {sym_file}")
+                    else:
+                        logger.info(f"Creating empty symbol library file: {sym_file}")
+                        sym_file.write_text(
+                            "(kicad_symbol_lib (version 20211014) (generator kicad_symbol_editor)\n)\n"
+                        )
+            # For footprints, rename the final entry directory to end with .pretty
+            elif not is_symbol:
+                pretty_dir = entry_dir.with_name(f"{entry_name}.pretty")
+                if not pretty_dir.exists():
+                    if dry_run:
+                        logger.info(f"Would rename directory to: {pretty_dir}")
+                    else:
+                        logger.info(f"Renaming directory to: {pretty_dir}")
+                        entry_dir.rename(pretty_dir)
+
     # Process subgroups
     if group.subgroups:
         for subgroup_name, subgroup in group.subgroups.items():
@@ -49,28 +80,6 @@ def create_component_directories(
                 logger,
                 is_symbol,
             )
-
-    # Process entries
-    if group.entries:
-        # For symbols, create .kicad_sym file in the current directory
-        if is_symbol:
-            sym_file = current_dir / f"{current_path[-1]}.kicad_sym"
-            if not sym_file.exists():
-                if dry_run:
-                    logger.info(f"Would create empty symbol library file: {sym_file}")
-                else:
-                    logger.info(f"Creating empty symbol library file: {sym_file}")
-                    sym_file.write_text(
-                        "(kicad_symbol_lib (version 20211014) (generator kicad_symbol_editor)\n)\n"
-                    )
-        # For footprints, rename the directory to end with .pretty
-        elif current_dir.name != f"{current_path[-1]}.pretty":
-            pretty_dir = current_dir.with_name(f"{current_path[-1]}.pretty")
-            if dry_run:
-                logger.info(f"Would rename directory to: {pretty_dir}")
-            else:
-                logger.info(f"Renaming directory to: {pretty_dir}")
-                current_dir.rename(pretty_dir)
 
 
 def create_directory_structure(
