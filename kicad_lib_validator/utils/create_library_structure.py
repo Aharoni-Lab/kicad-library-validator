@@ -39,7 +39,9 @@ def create_component_directories(
             current_dir.mkdir(parents=True, exist_ok=True)
             # Add README.md to ensure directory is tracked by git
             readme_path = current_dir / "README.md"
-            readme_content = f"# {current_path[-1]}\n\nThis directory contains {current_path[-1]} components."
+            readme_content = (
+                f"# {current_path[-1]}\n\nThis directory contains {current_path[-1]} components."
+            )
             if dry_run:
                 logger.info(f"Would create README.md: {readme_path}")
             else:
@@ -58,7 +60,9 @@ def create_component_directories(
                     entry_dir.mkdir(parents=True, exist_ok=True)
                     # Add README.md to ensure directory is tracked by git
                     readme_path = entry_dir / "README.md"
-                    readme_content = f"# {entry_name}\n\nThis directory contains {entry_name} components."
+                    readme_content = (
+                        f"# {entry_name}\n\nThis directory contains {entry_name} components."
+                    )
                     if dry_run:
                         logger.info(f"Would create README.md: {readme_path}")
                     else:
@@ -145,12 +149,14 @@ def create_directory_structure(
             else:
                 logger.info(f"Creating directory: {dir_path}")
                 dir_path.mkdir(parents=True, exist_ok=True)
-        
+
         # Add README.md to 3dmodels and docs directories
         if dir_type in ["models_3d", "documentation"]:
             readme_path = dir_path / "README.md"
             if not readme_path.exists():
-                readme_content = f"# {dir_name}\n\nThis directory contains {dir_name} for the KiCad library."
+                readme_content = (
+                    f"# {dir_name}\n\nThis directory contains {dir_name} for the KiCad library."
+                )
                 if dry_run:
                     logger.info(f"Would create README.md: {readme_path}")
                 else:
@@ -162,9 +168,9 @@ def create_directory_structure(
         "symbols": "symbols",
         "footprints": "footprints",
         "models_3d": "models_3d",
-        "documentation": "documentation"
+        "documentation": "documentation",
     }
-    
+
     for dir_type in ["symbols", "footprints", "models_3d", "documentation"]:
         if dir_type not in directories:
             continue
