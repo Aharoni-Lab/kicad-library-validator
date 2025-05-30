@@ -15,20 +15,134 @@ python -m kicad_lib_validator.utils.create_library_structure /path/to/structure.
 ### YAML Structure Example
 
 ```yaml
+version: "1.0"
+description: "KiCad library for [Lab Name]"
 library:
-  prefix: "MyLib"
+  prefix: "LabLib"
   directories:
     symbols: "symbols"
     footprints: "footprints"
-    models: "3dmodels"
-    docs: "docs"
+    models_3d: "3dmodels"
+    documentation: "docs"
+    tables: "tables"
   naming:
     symbols:
+      prefix: true
+      separator: "_"
+      case: "upper"
       include_categories: true
       category_separator: "_"
     footprints:
+      prefix: true
+      separator: "_"
+      case: "upper"
       include_categories: true
       category_separator: "_"
+    models_3d:
+      prefix: false
+      separator: "_"
+      case: "lower"
+      include_categories: false
+      category_separator: "_"
+symbols:
+  Passive:
+    subgroups:
+      Capacitor:
+        subgroups:
+          Murata:
+            subgroups:
+              GRM:
+                entries:
+                  GRM188R71C104KA01:
+                    naming:
+                      pattern: "^[A-Z0-9-]+$"
+                      description_pattern: "^[A-Z0-9-]+ Capacitor$"
+                    required_properties:
+                      Reference:
+                        type: "string"
+                        pattern: "^C[0-9]+$"
+                        description: "Component reference designator"
+                      Value:
+                        type: "string"
+                        pattern: "^[0-9.]+[pPnNuUmMkK]?F$"
+                        description: "Capacitance value"
+                      Voltage:
+                        type: "string"
+                        pattern: "^[0-9.]+V$"
+                        description: "Voltage rating"
+                      Validated:
+                        type: "boolean"
+                        description: "Whether the component has been validated"
+                    pins:
+                      min_count: 2
+                      max_count: 2
+                      required_types:
+                        - "passive"
+footprints:
+  Capacitor:
+    subgroups:
+      SMD:
+        subgroups:
+          Murata:
+            subgroups:
+              GRM:
+                entries:
+                  GRM188R71C104KA01:
+                    naming:
+                      pattern: "^[A-Z0-9-]+$"
+                      description_pattern: "^[A-Z0-9-]+ Capacitor$"
+                    required_layers:
+                      - "F.Cu"
+                      - "B.Cu"
+                      - "F.SilkS"
+                    required_pads:
+                      min_count: 2
+                      required_types:
+                        - "smd"
+                      naming:
+                        pattern: "^[12]$"
+                        description_pattern: "^Pad [12]$"
+                    required_properties:
+                      Reference:
+                        type: "string"
+                        pattern: "^C[0-9]+$"
+                        description: "Component reference designator"
+                      Validated:
+                        type: "boolean"
+                        description: "Whether the component has been validated"
+models_3d:
+  Capacitor:
+    subgroups:
+      SMD:
+        subgroups:
+          Murata:
+            subgroups:
+              GRM:
+                entries:
+                  GRM188R71C104KA01:
+                    naming:
+                      pattern: "^[A-Z0-9-]+$"
+                      description_pattern: "^[A-Z0-9-]+ Capacitor$"
+                    required_properties:
+                      Description:
+                        type: "string"
+                        pattern: "^[A-Z0-9-]+ Capacitor$"
+                        description: "Component description"
+                      Validated:
+                        type: "boolean"
+                        description: "Whether the component has been validated"
+documentation:
+  passives:
+    description: "Passive components"
+    categories:
+      datasheets:
+        description: "Component datasheets"
+        required_properties:
+          title:
+            type: "string"
+          url:
+            type: "string"
+            pattern: "^https?://.+$"
 ```
 
 ### Options
@@ -64,11 +178,11 @@ python -m kicad_lib_validator.utils.update_kicad_tables /path/to/structure.yaml 
 Symbol library table:
 ```
 (sym_lib_table
-  (lib (name "MyLib_Actives_Ics")
+  (lib (name "LabLib_Passive_Capacitor_Murata_GRM")
     (type "KiCad")
-    (uri "${MYLIB_DIR}/symbols/actives/ics/ics.kicad_sym")
+    (uri "${LABLIB_DIR}/symbols/Passive/Capacitor/Murata/GRM/GRM188R71C104KA01.kicad_sym")
     (options "")
-    (descr "Symbol library for MyLib_Actives_Ics")
+    (descr "Symbol library for LabLib_Passive_Capacitor_Murata_GRM")
   )
 )
 ```
@@ -76,25 +190,25 @@ Symbol library table:
 Footprint library table:
 ```
 (fp_lib_table
-  (lib (name "MyLib_Smd_Capacitors")
+  (lib (name "LabLib_Capacitor_SMD_Murata_GRM")
     (type "KiCad")
-    (uri "${MYLIB_DIR}/footprints/smd/capacitors.pretty")
+    (uri "${LABLIB_DIR}/footprints/Capacitor/SMD/Murata/GRM/GRM188R71C104KA01.pretty")
     (options "")
-    (descr "Footprint library for MyLib_Smd_Capacitors")
+    (descr "Footprint library for LabLib_Capacitor_SMD_Murata_GRM")
   )
 )
 ```
 
 ### Environment Variables
 
-The script uses environment variables for library paths. For example, if your library prefix is "MyLib", you'll need to set:
+The script uses environment variables for library paths. For example, if your library prefix is "LabLib", you'll need to set:
 
 ```bash
 # Windows
-set MYLIB_DIR=C:\path\to\your\library
+set LABLIB_DIR=C:\path\to\your\library
 
 # Unix/Linux/MacOS
-export MYLIB_DIR=/path/to/your/library
+export LABLIB_DIR=/path/to/your/library
 ```
 
 This makes the library tables portable across different systems and installations.
@@ -130,31 +244,27 @@ python -m kicad_lib_validator.utils.generate_report /path/to/library [--structur
 Generated: 2024-03-14 15:30:45
 
 ## Library Information
-- **Name**: MyLib
+- **Name**: LabLib
 - **Description**: Example library
-- **Maintainer**: John Doe <john@example.com>
+- **Maintainer**: Lab Maintainer <maintainer@example.com>
 - **License**: MIT
-- **Website**: https://example.com/library
+- **Website**: https://github.com/[org]/[repo]
 
 ## Directory Structure
 ### Symbols
 Path: `symbols`
 Subdirectories:
-- `actives`
-- `passives`
+- `Passive/Capacitor/Murata/GRM`
 
 ### Footprints
 Path: `footprints`
 Subdirectories:
-- `smd`
+- `Capacitor/SMD/Murata/GRM`
 
 ## Symbols
 ### Symbol Files
-- `symbols/actives/ics/ics.kicad_sym`
-- `symbols/passives/capacitors/capacitors.kicad_sym`
+- `symbols/Passive/Capacitor/Murata/GRM/GRM188R71C104KA01.kicad_sym`
 
 ## Footprints
 ### Footprint Files
-- `footprints/smd/capacitors/capacitors.pretty`
-- `footprints/smd/resistors/resistors.pretty`
-``` 
+- `footprints/Capacitor/SMD/Murata/GRM/GRM188R71C104KA01.pretty`

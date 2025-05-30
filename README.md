@@ -5,8 +5,9 @@ A Python tool for validating KiCad component libraries, ensuring symbols, footpr
 ## Features
 
 - Validates KiCad symbol, footprint, and 3D model libraries against a YAML structure definition
-- Checks naming conventions, required properties, and directory structure
-- Supports custom validation rules via a structure file
+- Supports deeply nested component organization with subgroups and entries
+- Enforces naming conventions, required properties, and directory structure
+- Validates component-specific requirements (pins, layers, pads)
 - Generates detailed validation and test reports
 - Creates library directory structures from YAML configuration
 - Generates KiCad library tables (sym-lib-table and fp-lib-table)
@@ -38,7 +39,7 @@ print(result.errors)
 
 ### Utility Scripts
 
-The package includes two utility scripts:
+The package includes utility scripts for common tasks:
 
 1. **Library Structure Creator**: Creates a directory structure for a KiCad library based on a YAML configuration
    ```bash
@@ -48,6 +49,11 @@ The package includes two utility scripts:
 2. **KiCad Table Updater**: Generates KiCad library tables (sym-lib-table and fp-lib-table)
    ```bash
    python -m kicad_lib_validator.utils.update_kicad_tables /path/to/structure.yaml [--output-dir /path/to/output]
+   ```
+
+3. **Library Report Generator**: Generates a comprehensive markdown report of your library structure
+   ```bash
+   python -m kicad_lib_validator.utils.generate_report /path/to/library [--structure-file /path/to/structure.yaml]
    ```
 
 For detailed documentation on these utilities, see [Utility Scripts](docs/utility_scripts.md).
@@ -79,7 +85,11 @@ For detailed documentation on these utilities, see [Utility Scripts](docs/utilit
 
 ## Documentation
 
-See the [docs/](docs/) directory for detailed documentation, structure file examples, and advanced usage.
+See the [docs/](docs/) directory for detailed documentation:
+- [Overview](docs/overview.md) - High-level overview of the validator
+- [Structure File Guide](docs/structure-file.md) - Detailed guide to the YAML structure definition
+- [Utility Scripts](docs/utility_scripts.md) - Documentation for utility scripts
+- [Advanced Usage](docs/advanced-usage.md) - Advanced usage patterns and tips
 
 ## License
 
