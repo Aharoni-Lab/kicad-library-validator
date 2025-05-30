@@ -9,9 +9,8 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 import yaml
 
+from kicad_lib_validator.models.structure import ComponentGroup, LibraryStructure
 from kicad_lib_validator.parser.structure_parser import parse_library_structure
-
-from ..models.structure import LibraryStructure
 
 
 def get_kicad_config_path() -> Path:
@@ -220,6 +219,43 @@ def generate_instructions_markdown(
     return "\n".join(content)
 
 
+def get_library_name_from_path(
+    path: Path,
+    prefix: str,
+    naming_convention: Optional[Any],
+    is_symbol: bool = False,
+) -> str:
+    """
+    Generate a library name from a path based on the naming convention.
+
+    Args:
+        path: Path to the library file/directory
+        prefix: Library prefix
+        naming_convention: Naming convention configuration
+        is_symbol: Whether this is a symbol library
+
+    Returns:
+        Generated library name
+    """
+    if not naming_convention or not naming_convention.include_categories:
+        return prefix
+
+    # Get path components relative to the library root
+    parts = path.parts
+    if len(parts) < 3:  # Need at least type/category/subcategory
+        return prefix
+
+    # Build library name from path components
+    sep = naming_convention.category_separator or "_"
+    components = [prefix]
+
+    # Add all path components except the last one (which is the file/directory name)
+    for part in parts[1:-1]:
+        components.append(part.capitalize())
+
+    return sep.join(components)
+
+
 def update_kicad_tables(
     yaml_path: Path,
     dry_run: bool = False,
@@ -278,22 +314,12 @@ def update_kicad_tables(
         if symbols_dir.exists():
             for file in symbols_dir.rglob("*.kicad_sym"):
                 rel_path = file.relative_to(library_root)
-                lib_name = structure.library.prefix if structure.library.prefix is not None else ""
-                if (
-                    structure.library.naming
-                    and structure.library.naming.symbols
-                    and structure.library.naming.symbols.include_categories
-                ):
-                    # Get category and subcategory from path
-                    parts = rel_path.parts
-                    if len(parts) >= 3:  # symbols/category/subcategory/file.kicad_sym
-                        category = parts[1]
-                        subcategory = parts[2]
-                        sep = structure.library.naming.symbols.category_separator or "_"
-                        if category:
-                            lib_name += sep + category.capitalize()
-                        if subcategory:
-                            lib_name += sep + subcategory.capitalize()
+                lib_name = get_library_name_from_path(
+                    rel_path,
+                    structure.library.prefix,
+                    structure.library.naming.symbols if structure.library.naming else None,
+                    is_symbol=True,
+                )
 
                 if lib_name not in existing_sym_libs:
                     if dry_run:
@@ -325,13 +351,6 @@ def update_kicad_tables(
                 is_symbol_table=True,
                 prefix=structure.library.prefix,
             )
-            # Generate and write instructions (moved here so both sym and fp libs are available)
-            instructions = generate_instructions_markdown(
-                structure, library_root, library_sym_libs, library_fp_libs
-            )
-            instructions_file = library_root / structure.library.directories.tables / "README.md"
-            instructions_file.write_text(instructions, encoding="utf-8")
-            logger.info(f"Generated instructions in {instructions_file}")
 
     # Update footprint library table
     fp_lib_table = kicad_config / "fp-lib-table"
@@ -344,24 +363,11 @@ def update_kicad_tables(
             for dir_path in footprints_dir.rglob("*.pretty"):
                 if dir_path.is_dir():
                     rel_path = dir_path.relative_to(library_root)
-                    lib_name = (
-                        structure.library.prefix if structure.library.prefix is not None else ""
+                    lib_name = get_library_name_from_path(
+                        rel_path,
+                        structure.library.prefix,
+                        structure.library.naming.footprints if structure.library.naming else None,
                     )
-                    if (
-                        structure.library.naming
-                        and structure.library.naming.footprints
-                        and structure.library.naming.footprints.include_categories
-                    ):
-                        # Get category and subcategory from path
-                        parts = rel_path.parts
-                        if len(parts) >= 3:  # footprints/category/subcategory.pretty
-                            category = parts[1]
-                            subcategory = parts[2].replace(".pretty", "")
-                            sep = structure.library.naming.footprints.category_separator or "_"
-                            if category:
-                                lib_name += sep + category.capitalize()
-                            if subcategory:
-                                lib_name += sep + subcategory.capitalize()
 
                     if lib_name not in existing_fp_libs:
                         if dry_run:
@@ -391,7 +397,7 @@ def update_kicad_tables(
                 is_symbol_table=False,
                 prefix=structure.library.prefix,
             )
-            # Generate and write instructions (moved here so both sym and fp libs are available)
+            # Generate and write instructions
             instructions = generate_instructions_markdown(
                 structure, library_root, library_sym_libs, library_fp_libs
             )

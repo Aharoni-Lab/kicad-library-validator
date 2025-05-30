@@ -6,7 +6,7 @@ import re
 from typing import Dict, List, Optional, Union, cast
 
 from kicad_lib_validator.models.documentation import Documentation
-from kicad_lib_validator.models.structure import ComponentCategory, ComponentType, LibraryStructure
+from kicad_lib_validator.models.structure import ComponentEntry, ComponentGroup, LibraryStructure
 
 ValidationResult = Union[bool, str]  # True for success, str for error message
 
@@ -52,110 +52,95 @@ def validate_documentation(
         structure: Library structure definition
 
     Returns:
-        Dictionary of validation results
+        Dictionary containing validation results
     """
-    errors = []
-    warnings = []
-    successes = []
+    result: Dict[str, List[str]] = {"errors": [], "warnings": [], "successes": []}
 
-    # 1. Determine the doc's category using the category/subcategory fields
-    doc_category = None
-    doc_category_name = None
+    # Validate format
+    supported_formats = ["pdf", "html"]
+    if documentation.format.lower() not in supported_formats:
+        result["errors"].append(f"unsupported format: {documentation.format}")
+
+    # Require categories for lookup
     if (
-        documentation.category
-        and documentation.subcategory
-        and getattr(structure, "documentation", None)
+        not documentation.categories
+        or not isinstance(documentation.categories, list)
+        or len(documentation.categories) == 0
     ):
-        doc_types = cast(Dict[str, ComponentType], structure.documentation)
-        doc_type = doc_types.get(documentation.category)
-        if (
-            doc_type
-            and hasattr(doc_type, "categories")
-            and doc_type.categories is not None
-            and documentation.subcategory in doc_type.categories
-        ):
-            doc_category = doc_type.categories[documentation.subcategory]
-            doc_category_name = f"{documentation.category}/{documentation.subcategory}"
-        else:
-            warnings.append(
-                f"Category/subcategory '{documentation.category}/{documentation.subcategory}' not found in structure for document '{documentation.name}'"
-            )
-    elif documentation.category and getattr(structure, "documentation", None):
-        doc_types = cast(Dict[str, ComponentType], structure.documentation)
-        doc_type = doc_types.get(documentation.category)
-        if doc_type:
-            doc_category = doc_type
-            doc_category_name = documentation.category
-        else:
-            warnings.append(
-                f"Category '{documentation.category}' not found in structure for document '{documentation.name}'"
-            )
-    else:
-        warnings.append(f"No category information for document '{documentation.name}'")
-
-    # If no category found, just warn (docs may not always be categorized)
-    if not doc_category:
-        warnings.append(
-            f"Could not determine documentation category for document '{documentation.name}'"
+        result["errors"].append(
+            "Documentation must specify a non-empty categories list for validation."
         )
-    else:
-        # 2. Validate doc name against naming pattern
-        naming = getattr(doc_category, "naming", None)
-        if naming and hasattr(naming, "pattern") and naming.pattern:
-            pattern = naming.pattern
-            if not re.match(pattern, documentation.name):
-                errors.append(
-                    f"Documentation name '{documentation.name}' does not match pattern '{pattern}' for category {doc_category_name}"
-                )
+        return result
+
+    # Traverse the nested structure using categories
+    group = structure.documentation
+    entry = None
+    path = documentation.categories.copy()
+    while path:
+        key = path.pop(0)
+        if isinstance(group, dict):
+            if key not in group:
+                result["errors"].append(f"Unknown group: {key}")
+                return result
+            group = group[key]
+        elif isinstance(group, ComponentGroup):
+            if group.subgroups and key in group.subgroups:
+                group = group.subgroups[key]
+            elif group.entries and key in group.entries:
+                entry = group.entries[key]
+                break
             else:
-                successes.append(
-                    f"Documentation name '{documentation.name}' matches pattern '{pattern}'"
-                )
+                result["errors"].append(f"Unknown subgroup or entry: {key}")
+                return result
         else:
-            warnings.append(f"No naming pattern defined for category {doc_category_name}")
+            result["errors"].append(f"Invalid group structure at: {key}")
+            return result
 
-        # 3. Validate required properties
-        required_props = getattr(doc_category, "required_properties", {})
-        for prop_name, prop_rule in required_props.items():
+    if entry is None:
+        # If we ended on a ComponentGroup with only one entry, use it
+        if isinstance(group, ComponentGroup) and group.entries and len(group.entries) == 1:
+            entry = next(iter(group.entries.values()))
+        else:
+            result["errors"].append(
+                "Could not resolve a ComponentEntry for the given categories path."
+            )
+            return result
+
+    # Validate document name
+    if entry.naming and entry.naming.pattern:
+        pattern = entry.naming.pattern
+        if isinstance(pattern, str):
+            pattern = re.compile(pattern)
+        if not pattern.match(documentation.name):
+            result["errors"].append(
+                f"Document name '{documentation.name}' does not match pattern: {entry.naming.pattern}"
+            )
+        else:
+            result["successes"].append(
+                f"Document name '{documentation.name}' matches pattern: {entry.naming.pattern}"
+            )
+
+    # Validate required properties
+    if entry.required_properties:
+        for prop_name, prop_def in entry.required_properties.items():
             if prop_name not in documentation.properties:
-                errors.append(
-                    f"Missing required property '{prop_name}' for document '{documentation.name}'"
-                )
-                continue
-            value = documentation.properties[prop_name]
-            if hasattr(prop_rule, "type") and prop_rule.type != "string":
-                warnings.append(
-                    f"Property '{prop_name}' type checking not implemented (expected {prop_rule.type})"
-                )
-            if hasattr(prop_rule, "pattern"):
-                if not re.match(prop_rule.pattern, value):
-                    errors.append(
-                        f"Property '{prop_name}' value '{value}' does not match pattern '{prop_rule.pattern}'"
-                    )
-                else:
-                    successes.append(
-                        f"Property '{prop_name}' value '{value}' matches pattern '{prop_rule.pattern}'"
+                result["errors"].append(f"Missing required property: {prop_name}")
+            elif prop_def.pattern:
+                pattern = prop_def.pattern
+                if isinstance(pattern, str):
+                    pattern = re.compile(pattern)
+                if not pattern.match(documentation.properties[prop_name]):
+                    result["errors"].append(
+                        f"Property '{prop_name}' value '{documentation.properties[prop_name]}' does not match pattern: {prop_def.pattern}"
                     )
 
-    # 4. Optionally, check for extra/unknown properties
-    allowed_props = (
-        set(getattr(doc_category, "required_properties", {}).keys()) if doc_category else set()
-    )
-    for prop in documentation.properties:
-        if prop not in allowed_props:
-            warnings.append(f"Unknown property '{prop}' in documentation '{documentation.name}'")
+    # Check for unknown properties
+    if entry.required_properties:
+        for prop_name in documentation.properties:
+            if prop_name not in entry.required_properties:
+                result["warnings"].append(f"Unknown property: {prop_name}")
 
-    # 5. Validate format (if specified)
-    if (
-        hasattr(documentation, "format")
-        and documentation.format
-        and documentation.format.lower() not in {"pdf", "html"}
-    ):
-        errors.append(
-            f"Documentation '{documentation.name}' has unsupported format '{documentation.format}'"
-        )
-
-    return {"errors": errors, "warnings": warnings, "successes": successes}
+    return result
 
 
 class DocumentValidator:
@@ -180,5 +165,7 @@ class DocumentValidator:
         Returns:
             True if valid, error message if invalid
         """
-        # Implementation here
+        result = validate_documentation(documentation, self.structure)
+        if result["errors"]:
+            return "\n".join(result["errors"])
         return True

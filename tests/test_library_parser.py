@@ -78,3 +78,23 @@ def test_parse_documentation(test_data_dir, test_structure):
         for lib in library.documentation_libraries.values()
         for doc in lib.docs
     )
+
+
+def test_structure_subgroups_and_entries(test_structure):
+    """Test that the structure contains the expected subgroups and entries."""
+    # Symbols
+    assert "passives" in test_structure.symbols
+    assert "resistors" in test_structure.symbols["passives"].subgroups
+    assert "standard" in test_structure.symbols["passives"].subgroups["resistors"].entries
+    # Footprints
+    assert "smd" in test_structure.footprints
+    assert "resistors" in test_structure.footprints["smd"].subgroups
+    assert "standard" in test_structure.footprints["smd"].subgroups["resistors"].entries
+    # Models 3D
+    assert "passives" in test_structure.models_3d
+    assert "capacitors" in test_structure.models_3d["passives"].subgroups
+    assert "standard" in test_structure.models_3d["passives"].subgroups["capacitors"].entries
+    # Documentation
+    assert "passives" in test_structure.documentation
+    assert "datasheets" in test_structure.documentation["passives"].subgroups
+    assert "standard" in test_structure.documentation["passives"].subgroups["datasheets"].entries

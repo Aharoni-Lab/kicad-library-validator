@@ -42,296 +42,339 @@ library:
 symbols:
   passives:
     description: "Passive components"
-    categories:
+    subgroups:
       resistors:
         description: "Resistors"
-        reference_prefix: "R"  # Required reference prefix for resistors
-        naming:
-          pattern: "^R[0-9]+$"  # e.g., "R1", "R2"
-          description_pattern: "^[0-9.]+[kM]?[Ω]? Resistor$"  # e.g., "10k Resistor"
-        required_properties:
-          Reference:
-            type: "string"
-            pattern: "^R[0-9]+$"
-            description: "Component reference designator"
-          Description:
-            type: "string"
-            pattern: "^[0-9.]+[kM]?[Ω]? Resistor$"
-            description: "Component description"
-          Validated:
-            type: "boolean"
-            description: "Whether the component has been validated"
-          Value:
-            type: "string"
-            pattern: "^[0-9.]+[kM]?[Ω]?$"
-            description: "Resistance value with unit"
-        optional_properties:
-          Footprint:
-            type: "string"
-            pattern: "^Resistor_.*$"
-            description: "Matching footprint name"
-          Datasheet:
-            type: "string"
-            pattern: "^https?://.*$"
-            description: "Link to datasheet"
-          Tolerance:
-            type: "string"
-            pattern: "^[0-9.]+%$"
-            description: "Resistance tolerance"
-          Power:
-            type: "string"
-            pattern: "^[0-9.]+W$"
-            description: "Power rating"
-        pins:
-          min_count: 2
-          max_count: 2
-          required_types:
-            - "passive"
-          naming:
-            pattern: "^[12]$"  # e.g., "1", "2"
-            description_pattern: "^Pin [12]$"  # e.g., "Pin 1", "Pin 2"
+        entries:
+          standard:
+            description: "Standard resistors"
+            reference_prefix: "R"  # Required reference prefix for resistors
+            naming:
+              pattern: "^R[0-9]+$"  # e.g., "R1", "R2"
+              description_pattern: "^[0-9.]+[kM]?[Ω]? Resistor$"  # e.g., "10k Resistor"
+            required_properties:
+              Reference:
+                type: "string"
+                pattern: "^R[0-9]+$"
+                description: "Component reference designator"
+              Description:
+                type: "string"
+                pattern: "^[0-9.]+[kM]?[Ω]? Resistor$"
+                description: "Component description"
+              Validated:
+                type: "boolean"
+                description: "Whether the component has been validated"
+              Value:
+                type: "string"
+                pattern: "^[0-9.]+[kM]?[Ω]?$"
+                description: "Resistance value with unit"
+            optional_properties:
+              Footprint:
+                type: "string"
+                pattern: "^Resistor_.*$"
+                description: "Matching footprint name"
+              Datasheet:
+                type: "string"
+                pattern: "^https?://.*$"
+                description: "Link to datasheet"
+              Tolerance:
+                type: "string"
+                pattern: "^[0-9.]+%$"
+                description: "Resistance tolerance"
+              Power:
+                type: "string"
+                pattern: "^[0-9.]+W$"
+                description: "Power rating"
+            pins:
+              min_count: 2
+              max_count: 2
+              required_types:
+                - "passive"
+              naming:
+                pattern: "^[12]$"  # e.g., "1", "2"
+                description_pattern: "^Pin [12]$"  # e.g., "Pin 1", "Pin 2"
 
       capacitors:
         description: "Capacitors"
-        reference_prefix: "C"  # Required reference prefix for capacitors
-        naming:
-          pattern: "^C[0-9]+$"
-          description_pattern: "^[0-9.]+[pnu]F Capacitor$"
-        required_properties:
-          Reference:
-            type: "string"
-            pattern: "^C[0-9]+$"
-            description: "Component reference designator"
-          Description:
-            type: "string"
-            pattern: "^[0-9.]+[pnu]F Capacitor$"
-            description: "Component description"
-          Validated:
-            type: "boolean"
-            description: "Whether the component has been validated"
-        optional_properties:
-          Value:
-            type: "string"
-            pattern: "^[0-9.]+[pnu]F$"
-            description: "Capacitance value with unit"
-          Footprint:
-            type: "string"
-            pattern: "^Capacitor_.*$"
-            description: "Matching footprint name"
-          Datasheet:
-            type: "string"
-            pattern: "^https?://.*$"
-            description: "Link to datasheet"
-          Voltage:
-            type: "string"
-            pattern: "^[0-9.]+V$"
-            description: "Voltage rating"
-        pins:
-          min_count: 2
-          max_count: 2
-          required_types:
-            - "passive"
-          naming:
-            pattern: "^[12]$"
-            description_pattern: "^Pin [12]$"
+        entries:
+          standard:
+            description: "Standard capacitors"
+            reference_prefix: "C"  # Required reference prefix for capacitors
+            naming:
+              pattern: "^C[0-9]+$"
+              description_pattern: "^[0-9.]+[pnu]F Capacitor$"
+            required_properties:
+              Reference:
+                type: "string"
+                pattern: "^C[0-9]+$"
+                description: "Component reference designator"
+              Description:
+                type: "string"
+                pattern: "^[0-9.]+[pnu]F Capacitor$"
+                description: "Component description"
+              Validated:
+                type: "boolean"
+                description: "Whether the component has been validated"
+            optional_properties:
+              Value:
+                type: "string"
+                pattern: "^[0-9.]+[pnu]F$"
+                description: "Capacitance value with unit"
+              Footprint:
+                type: "string"
+                pattern: "^Capacitor_.*$"
+                description: "Matching footprint name"
+              Datasheet:
+                type: "string"
+                pattern: "^https?://.*$"
+                description: "Link to datasheet"
+              Voltage:
+                type: "string"
+                pattern: "^[0-9.]+V$"
+                description: "Voltage rating"
+            pins:
+              min_count: 2
+              max_count: 2
+              required_types:
+                - "passive"
+              naming:
+                pattern: "^[12]$"
+                description_pattern: "^Pin [12]$"
 
   actives:
     description: "Active components"
-    categories:
+    subgroups:
       ics:
         description: "Integrated Circuits"
-        reference_prefix: "U"  # Required reference prefix for ICs
-        naming:
-          pattern: "^U[0-9]+$"
-          description_pattern: "^[A-Z0-9-]+ IC$"
-        required_properties:
-          Reference:
-            type: "string"
-            pattern: "^U[0-9]+$"
-            description: "Component reference designator"
-          Description:
-            type: "string"
-            pattern: "^[A-Z0-9-]+ IC$"
-            description: "Component description"
-          Validated:
-            type: "boolean"
-            description: "Whether the component has been validated"
-        optional_properties:
-          Value:
-            type: "string"
-            pattern: "^[A-Z0-9-]+$"
-            description: "Part number"
-          Footprint:
-            type: "string"
-            pattern: "^Package_.*$"
-            description: "Matching footprint name"
-          Datasheet:
-            type: "string"
-            pattern: "^https?://.*$"
-            description: "Link to datasheet"
-          Manufacturer:
-            type: "string"
-            description: "Component manufacturer"
-        pins:
-          min_count: 3
-          required_types:
-            - "input"
-            - "output"
-            - "power"
-            - "passive"
-          naming:
-            pattern: "^[A-Z0-9]+$"
-            description_pattern: "^Pin [A-Z0-9]+$"
+        entries:
+          standard:
+            description: "Standard ICs"
+            reference_prefix: "U"  # Required reference prefix for ICs
+            naming:
+              pattern: "^U[0-9]+$"
+              description_pattern: "^[A-Z0-9-]+ IC$"
+            required_properties:
+              Reference:
+                type: "string"
+                pattern: "^U[0-9]+$"
+                description: "Component reference designator"
+              Description:
+                type: "string"
+                pattern: "^[A-Z0-9-]+ IC$"
+                description: "Component description"
+              Validated:
+                type: "boolean"
+                description: "Whether the component has been validated"
+            optional_properties:
+              Value:
+                type: "string"
+                pattern: "^[A-Z0-9-]+$"
+                description: "Part number"
+              Footprint:
+                type: "string"
+                pattern: "^Package_.*$"
+                description: "Matching footprint name"
+              Datasheet:
+                type: "string"
+                pattern: "^https?://.*$"
+                description: "Link to datasheet"
+              Manufacturer:
+                type: "string"
+                description: "Component manufacturer"
+            pins:
+              min_count: 3
+              required_types:
+                - "input"
+                - "output"
+                - "power"
+                - "passive"
+              naming:
+                pattern: "^[A-Z0-9]+$"
+                description_pattern: "^Pin [A-Z0-9]+$"
 
 footprints:
   smd:
     description: "Surface Mount Devices"
-    categories:
+    subgroups:
       resistors:
         description: "SMD Resistors"
-        naming:
-          pattern: "^SMD_[0-9]+$"  # e.g., "SMD_0603", "SMD_1206"
-          description_pattern: "^[0-9]+ SMD Resistor$"
-        required_layers:
-          - "F.Cu"
-          - "B.Cu"
-          - "F.SilkS"
-        required_pads:
-          min_count: 2
-          max_count: 2
-          required_types:
-            - "passive"
-          naming:
-            pattern: "^[12]$"
-            description_pattern: "^Pad [12]$"
-        required_properties:
-          Reference:
-            type: "string"
-            pattern: "^R[0-9]+$"
-            description: "Component reference designator"
-          Description:
-            type: "string"
-            pattern: "^[0-9]+ SMD Resistor$"
-            description: "Component description"
-          Validated:
-            type: "boolean"
-            description: "Whether the component has been validated"
-        optional_properties:
-          Size:
-            type: "string"
-            pattern: "^[0-9]+[0-9]*$"
-            description: "Package size (e.g., 0603, 1206)"
-          Tolerance:
-            type: "string"
-            pattern: "^[0-9.]+%$"
-            description: "Placement tolerance"
+        entries:
+          standard:
+            description: "Standard SMD resistors"
+            naming:
+              pattern: "^SMD_[0-9]+$"  # e.g., "SMD_0603", "SMD_1206"
+              description_pattern: "^[0-9]+ SMD Resistor$"
+            required_layers:
+              - "F.Cu"
+              - "B.Cu"
+              - "F.SilkS"
+            required_pads:
+              min_count: 2
+              max_count: 2
+              required_types:
+                - "passive"
+              naming:
+                pattern: "^[12]$"
+                description_pattern: "^Pad [12]$"
+            required_properties:
+              Reference:
+                type: "string"
+                pattern: "^R[0-9]+$"
+                description: "Component reference designator"
+              Description:
+                type: "string"
+                pattern: "^[0-9]+ SMD Resistor$"
+                description: "Component description"
+              Validated:
+                type: "boolean"
+                description: "Whether the component has been validated"
+            optional_properties:
+              Size:
+                type: "string"
+                pattern: "^[0-9]+[0-9]*$"
+                description: "Package size (e.g., 0603, 1206)"
+              Tolerance:
+                type: "string"
+                pattern: "^[0-9.]+%$"
+                description: "Placement tolerance"
 
       capacitors:
         description: "SMD Capacitors"
-        naming:
-          pattern: "^C_[0-9]+_[0-9]+Metric$"  # e.g., "C_0603_1608Metric"
-          description_pattern: "^[0-9.]+[pnu]F SMD Capacitor$"
-        required_layers:
-          - "F.Cu"
-        required_pads:
-          min_count: 2
-          max_count: 2
-          required_types:
-            - "passive"
-          naming:
-            pattern: "^[12]$"
-            description_pattern: "^Pad [12]$"
-        required_properties:
-          Reference:
-            type: "string"
-            pattern: "^C[0-9]+$"
-            description: "Component reference designator"
-          Description:
-            type: "string"
-            pattern: "^[0-9.]+[pnu]F SMD Capacitor$"
-            description: "Component description"
-          Validated:
-            type: "boolean"
-            description: "Whether the component has been validated"
-        optional_properties:
-          Size:
-            type: "string"
-            pattern: "^[0-9]+[0-9]*$"
-            description: "Package size (e.g., 0603, 1206)"
-          Voltage:
-            type: "string"
-            pattern: "^[0-9.]+V$"
-            description: "Voltage rating"
-          Datasheet:
-            type: "string"
-            pattern: "^https?://.*$"
-            description: "Link to datasheet"
+        entries:
+          standard:
+            description: "Standard SMD capacitors"
+            naming:
+              pattern: "^C_[0-9]+_[0-9]+Metric$"  # e.g., "C_0603_1608Metric"
+              description_pattern: "^[0-9.]+[pnu]F SMD Capacitor$"
+            required_layers:
+              - "F.Cu"
+            required_pads:
+              min_count: 2
+              max_count: 2
+              required_types:
+                - "passive"
+              naming:
+                pattern: "^[12]$"
+                description_pattern: "^Pad [12]$"
+            required_properties:
+              Reference:
+                type: "string"
+                pattern: "^C[0-9]+$"
+                description: "Component reference designator"
+              Description:
+                type: "string"
+                pattern: "^[0-9.]+[pnu]F SMD Capacitor$"
+                description: "Component description"
+              Validated:
+                type: "boolean"
+                description: "Whether the component has been validated"
+            optional_properties:
+              Size:
+                type: "string"
+                pattern: "^[0-9]+[0-9]*$"
+                description: "Package size (e.g., 0603, 1206)"
+              Voltage:
+                type: "string"
+                pattern: "^[0-9.]+V$"
+                description: "Voltage rating"
+              Datasheet:
+                type: "string"
+                pattern: "^https?://.*$"
+                description: "Link to datasheet"
 
   tht:
     description: "Through Hole Technology"
-    categories:
+    subgroups:
       resistors:
         description: "THT Resistors"
-        naming:
-          pattern: "^THT_[0-9.]+mm$"
-          description_pattern: "^[0-9.]+mm THT Resistor$"
-        required_layers:
-          - "F.Cu"
-          - "B.Cu"
-          - "F.SilkS"
-          - "*.Cu"
-        required_pads:
-          min_count: 2
-          max_count: 2
-          required_types:
-            - "passive"
-          naming:
-            pattern: "^[12]$"
-            description_pattern: "^Pad [12]$"
-        required_properties:
-          Reference:
-            type: "string"
-            pattern: "^R[0-9]+$"
-            description: "Component reference designator"
-          Description:
-            type: "string"
-            pattern: "^[0-9.]+mm THT Resistor$"
-            description: "Component description"
-          Validated:
-            type: "boolean"
-            description: "Whether the component has been validated"
-        optional_properties:
-          Size:
-            type: "string"
-            pattern: "^[0-9.]+mm$"
-            description: "Lead diameter"
-          Tolerance:
-            type: "string"
-            pattern: "^[0-9.]+%$"
-            description: "Placement tolerance"
+        entries:
+          standard:
+            description: "Standard THT resistors"
+            naming:
+              pattern: "^THT_[0-9.]+mm$"
+              description_pattern: "^[0-9.]+mm THT Resistor$"
+            required_layers:
+              - "F.Cu"
+              - "B.Cu"
+              - "F.SilkS"
+              - "*.Cu"
+            required_pads:
+              min_count: 2
+              max_count: 2
+              required_types:
+                - "passive"
+              naming:
+                pattern: "^[12]$"
+                description_pattern: "^Pad [12]$"
+            required_properties:
+              Reference:
+                type: "string"
+                pattern: "^R[0-9]+$"
+                description: "Component reference designator"
+              Description:
+                type: "string"
+                pattern: "^[0-9.]+mm THT Resistor$"
+                description: "Component description"
+              Validated:
+                type: "boolean"
+                description: "Whether the component has been validated"
+            optional_properties:
+              Size:
+                type: "string"
+                pattern: "^[0-9.]+mm$"
+                description: "Lead diameter"
+              Tolerance:
+                type: "string"
+                pattern: "^[0-9.]+%$"
+                description: "Placement tolerance"
 
 models_3d:
   passives:
     description: "Passive components"
-    categories:
+    subgroups:
       capacitors:
         description: "Capacitors"
-        naming:
-          pattern: "^[A-Z0-9-]+$"  # e.g., "GRM0115C1C120JE01L"
-          description_pattern: "^[A-Z0-9-]+ Capacitor$"
-        required_properties:
-          Description:
-            type: "string"
-            pattern: "^[A-Z0-9-]+ Capacitor$"
-            description: "Component description"
-          Validated:
-            type: "boolean"
-            description: "Whether the component has been validated"
-        optional_properties:
-          Datasheet:
-            type: "string"
-            pattern: "^https?://.*$"
-            description: "Link to datasheet"
-          Manufacturer:
-            type: "string"
-            description: "Component manufacturer"
+        entries:
+          standard:
+            description: "Standard capacitors"
+            naming:
+              pattern: "^[A-Z0-9-]+$"  # e.g., "GRM0115C1C120JE01L"
+              description_pattern: "^[A-Z0-9-]+ Capacitor$"
+            required_properties:
+              Description:
+                type: "string"
+                pattern: "^[A-Z0-9-]+ Capacitor$"
+                description: "Component description"
+              Validated:
+                type: "boolean"
+                description: "Whether the component has been validated"
+            optional_properties:
+              Datasheet:
+                type: "string"
+                pattern: "^https?://.*$"
+                description: "Link to datasheet"
+              Manufacturer:
+                type: "string"
+                description: "Component manufacturer"
+
+documentation:
+  passives:
+    description: "Passive components"
+    subgroups:
+      datasheets:
+        description: "Datasheets"
+        entries:
+          standard:
+            description: "Standard datasheets"
+            required_properties:
+              Title:
+                type: "string"
+                description: "Document title"
+              File:
+                type: "string"
+                pattern: ".*\\.pdf$"
+                description: "PDF file path"
+            optional_properties:
+              Description:
+                type: "string"
+                description: "Document description"

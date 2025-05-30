@@ -6,46 +6,7 @@ import re
 from typing import Dict, List
 
 from kicad_lib_validator.models.model3d import Model3D
-from kicad_lib_validator.models.structure import ComponentCategory, ComponentType, LibraryStructure
-
-
-def validate_model3d_name(name: str, structure: LibraryStructure, category: str) -> bool:
-    """Validate a 3D model name against the structure rules for the given category."""
-    # TODO: Implement 3D model name validation logic
-    return True
-
-
-def validate_model3d_property(
-    property_name: str, value: str, structure: LibraryStructure, category: str
-) -> bool:
-    """Validate a 3D model property value against the structure rules for the given category."""
-    # TODO: Implement 3D model property validation logic
-    return True
-
-
-def _matches_category(model3d: Model3D, category: ComponentCategory) -> bool:
-    """
-    Check if a 3D model matches a category based on its properties.
-
-    Args:
-        model3d: 3D model to check
-        category: Category to match against
-
-    Returns:
-        True if the 3D model matches the category, False otherwise
-    """
-    # Check prefix if specified
-    if category.prefix:
-        if not model3d.name.startswith(category.prefix):
-            return False
-
-    # Check required properties
-    if category.required_properties:
-        for prop_name, prop_def in category.required_properties.items():
-            if not prop_def.optional and prop_name not in model3d.properties:
-                return False
-
-    return True
+from kicad_lib_validator.models.structure import ComponentEntry, ComponentGroup, LibraryStructure
 
 
 def validate_model3d(model3d: Model3D, structure: LibraryStructure) -> Dict[str, List[str]]:
@@ -59,95 +20,107 @@ def validate_model3d(model3d: Model3D, structure: LibraryStructure) -> Dict[str,
     Returns:
         Dictionary containing validation results
     """
-    results: Dict[str, List[str]] = {"errors": [], "warnings": [], "successes": []}
+    result: Dict[str, List[str]] = {"errors": [], "warnings": [], "successes": []}
 
     # Validate format
     supported_formats = ["step", "stp", "iges", "igs"]
     if model3d.format.lower() not in supported_formats:
-        results["errors"].append(f"unsupported format: {model3d.format}")
+        result["errors"].append(f"unsupported format: {model3d.format}")
 
     # Validate units
     supported_units = ["mm", "inch"]
     if model3d.units.lower() not in supported_units:
-        results["errors"].append(f"unsupported units: {model3d.units}")
+        result["errors"].append(f"unsupported units: {model3d.units}")
 
-    # Find matching category
-    if not structure.models_3d:
-        return results
+    # Require categories for lookup
+    if (
+        not model3d.categories
+        or not isinstance(model3d.categories, list)
+        or len(model3d.categories) == 0
+    ):
+        result["errors"].append("Model3D must specify a non-empty categories list for validation.")
+        return result
 
-    for type_name, component_type in structure.models_3d.items():
-        if not component_type.categories:
-            continue
+    # Traverse the nested structure using categories
+    group = structure.models_3d
+    entry = None
+    path = model3d.categories.copy()
+    while path:
+        key = path.pop(0)
+        if isinstance(group, dict):
+            if key not in group:
+                result["errors"].append(f"Unknown group: {key}")
+                return result
+            group = group[key]
+        elif isinstance(group, ComponentGroup):
+            if group.subgroups and key in group.subgroups:
+                group = group.subgroups[key]
+            elif group.entries and key in group.entries:
+                entry = group.entries[key]
+                break
+            else:
+                result["errors"].append(f"Unknown subgroup or entry: {key}")
+                return result
+        else:
+            result["errors"].append(f"Invalid group structure at: {key}")
+            return result
 
-        for category_name, category in component_type.categories.items():
-            has_errors = False
+    if entry is None:
+        # If we ended on a ComponentGroup with only one entry, use it
+        if isinstance(group, ComponentGroup) and group.entries and len(group.entries) == 1:
+            entry = next(iter(group.entries.values()))
+        else:
+            result["errors"].append(
+                "Could not resolve a ComponentEntry for the given categories path."
+            )
+            return result
 
-            # Check naming pattern first
-            if category.naming and category.naming.pattern:
-                if not re.match(category.naming.pattern, model3d.name):
-                    results["errors"].append(
-                        f"Model name '{model3d.name}' does not match pattern: {category.naming.pattern}"
+    # Validate model name
+    if entry.naming and entry.naming.pattern:
+        pattern = entry.naming.pattern
+        if isinstance(pattern, str):
+            pattern = re.compile(pattern)
+        if not pattern.match(model3d.name):
+            result["errors"].append(
+                f"Model name '{model3d.name}' does not match pattern: {entry.naming.pattern}"
+            )
+        else:
+            result["successes"].append(
+                f"Model name '{model3d.name}' matches pattern: {entry.naming.pattern}"
+            )
+
+    # Validate required properties
+    if entry.required_properties:
+        for prop_name, prop_def in entry.required_properties.items():
+            if prop_name not in model3d.properties:
+                result["errors"].append(f"Missing required property: {prop_name}")
+            elif prop_def.pattern:
+                pattern = prop_def.pattern
+                if isinstance(pattern, str):
+                    pattern = re.compile(pattern)
+                if not pattern.match(model3d.properties[prop_name]):
+                    result["errors"].append(
+                        f"Property '{prop_name}' value '{model3d.properties[prop_name]}' does not match pattern: {prop_def.pattern}"
                     )
-                    has_errors = True
-                else:
-                    results["successes"].append(
-                        f"Model name '{model3d.name}' matches pattern: {category.naming.pattern}"
-                    )
 
-            # Check required properties
-            if category.required_properties:
-                # Check for unknown properties
-                known_properties = set(category.required_properties.keys())
-                for prop_name in model3d.properties:
-                    if prop_name not in known_properties:
-                        results["warnings"].append(f"Unknown property: {prop_name}")
+    # Check for unknown properties
+    if entry.required_properties:
+        for prop_name in model3d.properties:
+            if prop_name not in entry.required_properties:
+                result["warnings"].append(f"Unknown property: {prop_name}")
 
-                for prop_name, prop_def in category.required_properties.items():
-                    if prop_name not in model3d.properties:
-                        if not prop_def.optional:
-                            results["errors"].append(f"Missing required property: {prop_name}")
-                            has_errors = True
-                    else:
-                        value = model3d.properties[prop_name]
-                        if prop_def.pattern and not re.match(prop_def.pattern, value):
-                            results["errors"].append(
-                                f"Property {prop_name} value '{value}' does not match pattern: {prop_def.pattern}"
-                            )
-                            has_errors = True
-                        else:
-                            results["successes"].append(
-                                f"Property {prop_name} value '{value}' matches pattern: {prop_def.pattern}"
-                            )
+    # Validate description pattern if present
+    if entry.naming and entry.naming.description_pattern and hasattr(model3d, "description"):
+        pattern = entry.naming.description_pattern
+        if isinstance(pattern, str):
+            pattern = re.compile(pattern)
+        if not pattern.match(getattr(model3d, "description", "")):
+            result["errors"].append(
+                f"Model description '{getattr(model3d, 'description', '')}' does not match pattern: {entry.naming.description_pattern}"
+            )
+        else:
+            result["successes"].append(
+                f"Model description '{getattr(model3d, 'description', '')}' matches pattern: {entry.naming.description_pattern}"
+            )
 
-            # If we have errors, continue to next category
-            if has_errors:
-                continue
-
-            # Check if model matches category
-            if not _matches_category(model3d, category):
-                continue
-
-            # Validate description pattern if present
-            if (
-                category.naming
-                and category.naming.description_pattern
-                and hasattr(model3d, "description")
-            ):
-                if not re.match(category.naming.description_pattern, model3d.description):
-                    results["errors"].append(
-                        f"Model description '{model3d.description}' does not match pattern: {category.naming.description_pattern}"
-                    )
-                    has_errors = True
-                else:
-                    results["successes"].append(
-                        f"Model description '{model3d.description}' matches pattern: {category.naming.description_pattern}"
-                    )
-
-            # If we found a matching category and passed all validations, add a success message
-            if not has_errors:
-                results["successes"].append(f"Model matches category {type_name}/{category_name}")
-                return results
-
-    # If no matching category was found
-    results["warnings"].append("Model does not match any defined category")
-    return results
+    return result

@@ -52,112 +52,140 @@ def get_valid_base_structure() -> Dict[str, Any]:
 
 
 def test_parse_library_structure():
-    """Test parsing a valid library structure with multiple categories."""
+    """Test parsing a valid library structure with multiple subgroups and entries."""
     yaml_content = get_valid_base_structure()
 
-    # Add multiple symbol categories
+    # Add multiple symbol subgroups and entries
     yaml_content["symbols"] = {
         "passives": {
             "description": "Passive components",
-            "categories": {
+            "subgroups": {
                 "resistors": {
                     "description": "Resistors",
-                    "reference_prefix": "R",
-                    "naming": {
-                        "pattern": "^R[0-9]+$",
-                        "description_pattern": "^[0-9.]+[kM]?[Ω]? Resistor$",
-                    },
-                    "required_properties": {
-                        "Reference": {
-                            "type": "string",
-                            "pattern": "^R[0-9]+$",
-                            "description": "Component reference designator",
-                        },
-                        "Value": {
-                            "type": "string",
-                            "pattern": "^[0-9.]+[kM]?[Ω]?$",
-                            "description": "Resistance value",
-                        },
+                    "entries": {
+                        "standard": {
+                            "description": "Standard resistors",
+                            "reference_prefix": "R",
+                            "naming": {
+                                "pattern": "^R[0-9]+$",
+                                "description_pattern": "^[0-9.]+[kM]?[Ω]? Resistor$",
+                            },
+                            "required_properties": {
+                                "Reference": {
+                                    "type": "string",
+                                    "pattern": "^R[0-9]+$",
+                                    "description": "Component reference designator",
+                                },
+                                "Value": {
+                                    "type": "string",
+                                    "pattern": "^[0-9.]+[kM]?[Ω]?$",
+                                    "description": "Resistance value",
+                                },
+                            },
+                        }
                     },
                 },
                 "capacitors": {
                     "description": "Capacitors",
-                    "reference_prefix": "C",
-                    "naming": {
-                        "pattern": "^C[0-9]+$",
-                        "description_pattern": "^[0-9.]+[pnu]F Capacitor$",
-                    },
-                    "required_properties": {
-                        "Reference": {
-                            "type": "string",
-                            "pattern": "^C[0-9]+$",
-                            "description": "Component reference designator",
-                        },
-                        "Value": {
-                            "type": "string",
-                            "pattern": "^[0-9.]+[pnu]F$",
-                            "description": "Capacitance value",
-                        },
+                    "entries": {
+                        "standard": {
+                            "description": "Standard capacitors",
+                            "reference_prefix": "C",
+                            "naming": {
+                                "pattern": "^C[0-9]+$",
+                                "description_pattern": "^[0-9.]+[pnu]F Capacitor$",
+                            },
+                            "required_properties": {
+                                "Reference": {
+                                    "type": "string",
+                                    "pattern": "^C[0-9]+$",
+                                    "description": "Component reference designator",
+                                },
+                                "Value": {
+                                    "type": "string",
+                                    "pattern": "^[0-9.]+[pnu]F$",
+                                    "description": "Capacitance value",
+                                },
+                            },
+                        }
                     },
                 },
             },
         },
         "actives": {
             "description": "Active components",
-            "categories": {
+            "subgroups": {
                 "ics": {
                     "description": "Integrated Circuits",
-                    "reference_prefix": "U",
-                    "naming": {"pattern": "^U[0-9]+$", "description_pattern": "^[A-Z0-9-]+ IC$"},
-                    "required_properties": {
-                        "Reference": {
-                            "type": "string",
-                            "pattern": "^U[0-9]+$",
-                            "description": "Component reference designator",
-                        },
-                        "Value": {
-                            "type": "string",
-                            "pattern": "^[A-Z0-9-]+$",
-                            "description": "Part number",
-                        },
+                    "entries": {
+                        "standard": {
+                            "description": "Standard ICs",
+                            "reference_prefix": "U",
+                            "naming": {
+                                "pattern": "^U[0-9]+$",
+                                "description_pattern": "^[A-Z0-9-]+ IC$",
+                            },
+                            "required_properties": {
+                                "Reference": {
+                                    "type": "string",
+                                    "pattern": "^U[0-9]+$",
+                                    "description": "Component reference designator",
+                                },
+                                "Value": {
+                                    "type": "string",
+                                    "pattern": "^[A-Z0-9-]+$",
+                                    "description": "Part number",
+                                },
+                            },
+                        }
                     },
                 }
             },
         },
     }
 
-    # Add multiple footprint categories
+    # Add multiple footprint subgroups and entries
     yaml_content["footprints"] = {
         "smd": {
             "description": "Surface Mount Devices",
-            "categories": {
+            "subgroups": {
                 "resistors": {
                     "description": "SMD Resistors",
-                    "naming": {
-                        "pattern": "^SMD_[0-9]+$",
-                        "description_pattern": "^[0-9]+ SMD Resistor$",
-                    },
-                    "required_layers": ["F.Cu", "B.Cu", "F.SilkS", "F.Mask"],
-                    "required_properties": {
-                        "Reference": {
-                            "type": "string",
-                            "pattern": "^R[0-9]+$",
-                            "description": "Component reference designator",
+                    "entries": {
+                        "standard": {
+                            "description": "Standard SMD resistors",
+                            "naming": {
+                                "pattern": "^SMD_[0-9]+$",
+                                "description_pattern": "^[0-9]+ SMD Resistor$",
+                            },
+                            "required_layers": ["F.Cu", "B.Cu", "F.SilkS", "F.Mask"],
+                            "required_properties": {
+                                "Reference": {
+                                    "type": "string",
+                                    "pattern": "^R[0-9]+$",
+                                    "description": "Component reference designator",
+                                }
+                            },
                         }
                     },
                 },
                 "capacitors": {
                     "description": "SMD Capacitors",
-                    "naming": {
-                        "pattern": "^SMD_[0-9]+$",
-                        "description_pattern": "^[0-9]+ SMD Capacitor$",
-                    },
-                    "required_layers": ["F.Cu", "B.Cu", "F.SilkS", "F.Mask"],
-                    "required_properties": {
-                        "Reference": {
-                            "type": "string",
-                            "pattern": "^C[0-9]+$",
-                            "description": "Component reference designator",
+                    "entries": {
+                        "standard": {
+                            "description": "Standard SMD capacitors",
+                            "naming": {
+                                "pattern": "^SMD_[0-9]+$",
+                                "description_pattern": "^[0-9]+ SMD Capacitor$",
+                            },
+                            "required_layers": ["F.Cu", "B.Cu", "F.SilkS", "F.Mask"],
+                            "required_properties": {
+                                "Reference": {
+                                    "type": "string",
+                                    "pattern": "^C[0-9]+$",
+                                    "description": "Component reference designator",
+                                }
+                            },
                         }
                     },
                 },
@@ -165,19 +193,24 @@ def test_parse_library_structure():
         },
         "tht": {
             "description": "Through Hole Technology",
-            "categories": {
+            "subgroups": {
                 "resistors": {
                     "description": "THT Resistors",
-                    "naming": {
-                        "pattern": "^THT_[0-9.]+mm$",
-                        "description_pattern": "^[0-9.]+mm THT Resistor$",
-                    },
-                    "required_layers": ["F.Cu", "B.Cu", "F.SilkS", "*.Cu"],
-                    "required_properties": {
-                        "Reference": {
-                            "type": "string",
-                            "pattern": "^R[0-9]+$",
-                            "description": "Component reference designator",
+                    "entries": {
+                        "standard": {
+                            "description": "Standard THT resistors",
+                            "naming": {
+                                "pattern": "^THT_[0-9.]+mm$",
+                                "description_pattern": "^[0-9.]+mm THT Resistor$",
+                            },
+                            "required_layers": ["F.Cu", "B.Cu", "F.SilkS", "*.Cu"],
+                            "required_properties": {
+                                "Reference": {
+                                    "type": "string",
+                                    "pattern": "^R[0-9]+$",
+                                    "description": "Component reference designator",
+                                }
+                            },
                         }
                     },
                 }
@@ -203,19 +236,25 @@ def test_parse_library_structure():
     assert structure.library.directories.models_3d == "3dmodels"
     assert structure.library.directories.documentation == "docs"
 
-    # Test multiple symbol categories
+    # Test multiple symbol subgroups and entries
     assert "passives" in structure.symbols
     assert "actives" in structure.symbols
-    assert "resistors" in structure.symbols["passives"].categories
-    assert "capacitors" in structure.symbols["passives"].categories
-    assert "ics" in structure.symbols["actives"].categories
+    assert "resistors" in structure.symbols["passives"].subgroups
+    assert "capacitors" in structure.symbols["passives"].subgroups
+    assert "ics" in structure.symbols["actives"].subgroups
+    assert "standard" in structure.symbols["passives"].subgroups["resistors"].entries
+    assert "standard" in structure.symbols["passives"].subgroups["capacitors"].entries
+    assert "standard" in structure.symbols["actives"].subgroups["ics"].entries
 
-    # Test multiple footprint categories
+    # Test multiple footprint subgroups and entries
     assert "smd" in structure.footprints
     assert "tht" in structure.footprints
-    assert "resistors" in structure.footprints["smd"].categories
-    assert "capacitors" in structure.footprints["smd"].categories
-    assert "resistors" in structure.footprints["tht"].categories
+    assert "resistors" in structure.footprints["smd"].subgroups
+    assert "capacitors" in structure.footprints["smd"].subgroups
+    assert "resistors" in structure.footprints["tht"].subgroups
+    assert "standard" in structure.footprints["smd"].subgroups["resistors"].entries
+    assert "standard" in structure.footprints["smd"].subgroups["capacitors"].entries
+    assert "standard" in structure.footprints["tht"].subgroups["resistors"].entries
 
 
 def test_parse_library_structure_invalid_yaml():
@@ -271,12 +310,17 @@ def test_parse_library_structure_invalid_naming_pattern():
     yaml_content["symbols"] = {
         "passives": {
             "description": "Passive components",
-            "categories": {
+            "subgroups": {
                 "resistors": {
                     "description": "Resistors",
-                    "naming": {
-                        "pattern": "[invalid pattern",  # Invalid regex
-                        "description_pattern": "^[0-9.]+[kM]?[Ω]? Resistor$",
+                    "entries": {
+                        "standard": {
+                            "description": "Standard resistors",
+                            "naming": {
+                                "pattern": "[invalid pattern",  # Invalid regex
+                                "description_pattern": "^[0-9.]+[kM]?[Ω]? Resistor$",
+                            },
+                        }
                     },
                 }
             },
@@ -293,14 +337,19 @@ def test_parse_library_structure_invalid_property_type():
     yaml_content["symbols"] = {
         "passives": {
             "description": "Passive components",
-            "categories": {
+            "subgroups": {
                 "resistors": {
                     "description": "Resistors",
-                    "required_properties": {
-                        "Value": {
-                            "type": "invalid_type",  # Invalid type
-                            "pattern": "^[0-9.]+[kM]?[Ω]?$",
-                            "description": "Resistance value",
+                    "entries": {
+                        "standard": {
+                            "description": "Standard resistors",
+                            "required_properties": {
+                                "Value": {
+                                    "type": "invalid_type",  # Invalid type
+                                    "pattern": "^[0-9.]+[kM]?[Ω]?$",
+                                    "description": "Resistance value",
+                                }
+                            },
                         }
                     },
                 }
@@ -318,15 +367,20 @@ def test_parse_library_structure_invalid_layer():
     yaml_content["footprints"] = {
         "smd": {
             "description": "Surface Mount Devices",
-            "categories": {
+            "subgroups": {
                 "resistors": {
                     "description": "SMD Resistors",
-                    "required_layers": ["Invalid.Layer"],  # Invalid layer
-                    "required_properties": {
-                        "Reference": {
-                            "type": "string",
-                            "pattern": "^R[0-9]+$",
-                            "description": "Component reference designator",
+                    "entries": {
+                        "standard": {
+                            "description": "Standard SMD resistors",
+                            "required_layers": ["Invalid.Layer"],  # Invalid layer
+                            "required_properties": {
+                                "Reference": {
+                                    "type": "string",
+                                    "pattern": "^R[0-9]+$",
+                                    "description": "Component reference designator",
+                                }
+                            },
                         }
                     },
                 }

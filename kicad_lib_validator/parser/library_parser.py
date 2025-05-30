@@ -65,61 +65,64 @@ def parse_symbol_file(
     try:
         if structure.library.directories and structure.library.directories.symbols:
             symbols_dir = (library_root / structure.library.directories.symbols).resolve()
-            rel_path = file_path.relative_to(symbols_dir)
-            categories = str(rel_path.parent).replace("\\", "/").split("/")
-            category = categories[0] if len(categories) > 0 and categories[0] else None
-            subcategory = categories[1] if len(categories) > 1 else None
-            full_library_name = library_name
-            if (
-                structure.library.naming
-                and structure.library.naming.symbols
-                and structure.library.naming.symbols.include_categories
-            ):
-                for cat in categories:
-                    if cat and structure.library.naming.symbols.category_separator:
-                        full_library_name += (
-                            structure.library.naming.symbols.category_separator + cat.capitalize()
-                        )
-            with open(file_path, "r", encoding="utf-8") as f:
-                raw_data = f.read()
-                logging.debug(f"Raw file content: {raw_data[:200]}...")  # Print first 200 chars
-                data = sexpdata.loads(raw_data)
-                logging.debug(f"Parsed data type: {type(data)}")
-                logging.debug(f"Parsed data: {data}")
-                if isinstance(data, list) and data:
-                    logging.debug(f"data[0] type: {type(data[0])}, value: {data[0]}")
-                    if str(data[0]) == "kicad_symbol_lib":
-                        for item in data[1:]:
-                            if isinstance(item, list) and item:
-                                logging.debug(f"item[0] type: {type(item[0])}, value: {item[0]}")
-                                if str(item[0]) == "symbol":
-                                    symbol_name = str(item[1])
-                                    properties = {}
-                                    for prop in item[2:]:
-                                        if (
-                                            isinstance(prop, list)
-                                            and prop
-                                            and str(prop[0]) == "property"
-                                        ):
-                                            prop_name = str(prop[1])
-                                            prop_value = str(prop[2])
-                                            properties[prop_name] = prop_value
-                                    symbols.append(
-                                        Symbol(
-                                            name=symbol_name,
-                                            library_name=full_library_name,
-                                            properties=properties,
-                                            category=category,
-                                            subcategory=subcategory,
-                                        )
-                                    )
+            try:
+                rel_path = file_path.resolve().relative_to(symbols_dir)
+                categories = str(rel_path.parent).replace("\\", "/").split("/")
+                full_library_name = library_name
+                if (
+                    structure.library.naming
+                    and structure.library.naming.symbols
+                    and structure.library.naming.symbols.include_categories
+                ):
+                    for cat in categories:
+                        if cat and structure.library.naming.symbols.category_separator:
+                            full_library_name += (
+                                structure.library.naming.symbols.category_separator
+                                + cat.capitalize()
+                            )
+                with open(file_path, "r", encoding="utf-8") as f:
+                    raw_data = f.read()
+                    logging.debug(f"Raw file content: {raw_data[:200]}...")  # Print first 200 chars
+                    data = sexpdata.loads(raw_data)
+                    logging.debug(f"Parsed data type: {type(data)}")
+                    logging.debug(f"Parsed data: {data}")
+                    if isinstance(data, list) and data:
+                        logging.debug(f"data[0] type: {type(data[0])}, value: {data[0]}")
+                        if str(data[0]) == "kicad_symbol_lib":
+                            for item in data[1:]:
+                                if isinstance(item, list) and item:
                                     logging.debug(
-                                        f"Extracted symbol: {symbol_name} with properties: {properties}"
+                                        f"item[0] type: {type(item[0])}, value: {item[0]}"
                                     )
+                                    if str(item[0]) == "symbol":
+                                        symbol_name = str(item[1])
+                                        properties = {}
+                                        for prop in item[2:]:
+                                            if (
+                                                isinstance(prop, list)
+                                                and prop
+                                                and str(prop[0]) == "property"
+                                            ):
+                                                prop_name = str(prop[1])
+                                                prop_value = str(prop[2])
+                                                properties[prop_name] = prop_value
+                                        symbols.append(
+                                            Symbol(
+                                                name=symbol_name,
+                                                library_name=full_library_name,
+                                                properties=properties,
+                                                categories=categories,
+                                            )
+                                        )
+                                        logging.debug(
+                                            f"Extracted symbol: {symbol_name} with properties: {properties}"
+                                        )
+            except ValueError as e:
+                logging.error(f"Error resolving relative path for {file_path}: {e}")
+                return symbols
     except Exception as e:
         logging.error(f"Error parsing symbol file {file_path}: {e}")
     logging.debug(f"Returning symbols from {file_path}: {symbols}")
-    print(f"[DEBUG] Returning symbols from {file_path}: {symbols}")
     return symbols
 
 

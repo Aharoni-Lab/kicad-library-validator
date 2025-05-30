@@ -2,9 +2,9 @@ import pytest
 
 from kicad_lib_validator.models.documentation import Documentation
 from kicad_lib_validator.models.structure import (
-    ComponentCategory,
+    ComponentEntry,
+    ComponentGroup,
     ComponentNaming,
-    ComponentType,
     LibraryDirectories,
     LibraryInfo,
     LibraryNaming,
@@ -35,22 +35,25 @@ def make_structure() -> LibraryStructure:
         footprints={},
         models_3d={},
         documentation={
-            "datasheets": ComponentType(
+            "datasheets": ComponentGroup(
                 description="Datasheets",
-                categories={
-                    "pdfs": ComponentCategory(
+                subgroups={
+                    "pdfs": ComponentGroup(
                         description="PDF Datasheets",
-                        prefix="DS",
-                        naming=ComponentNaming(
-                            pattern=r"^DS[0-9]+$",
-                            description_pattern=r"^[0-9]+ Datasheet$",
-                        ),
-                        required_properties={
-                            "Language": PropertyDefinition(
-                                type="string",
-                                pattern=r"^[a-z]{2}$",
-                                description="Language code",
-                            ),
+                        entries={
+                            "standard": ComponentEntry(
+                                naming=ComponentNaming(
+                                    pattern=r"^DS[0-9]+$",
+                                    description_pattern=r"^[0-9]+ Datasheet$",
+                                ),
+                                required_properties={
+                                    "Language": PropertyDefinition(
+                                        type="string",
+                                        pattern=r"^[a-z]{2}$",
+                                        description="Language code",
+                                    ),
+                                },
+                            )
                         },
                     )
                 },
@@ -67,8 +70,7 @@ def test_valid_documentation():
         format="pdf",
         file_path="/docs/DS123.pdf",
         properties={"Language": "en"},
-        category="datasheets",
-        subcategory="pdfs",
+        categories=["datasheets", "pdfs"],
     )
     result = validate_documentation(doc, structure)
     assert not result["errors"]
@@ -84,8 +86,7 @@ def test_invalid_documentation_name():
         format="pdf",
         file_path="/docs/BAD123.pdf",
         properties={"Language": "en"},
-        category="datasheets",
-        subcategory="pdfs",
+        categories=["datasheets", "pdfs"],
     )
     result = validate_documentation(doc, structure)
     assert any("does not match pattern" in e for e in result["errors"])
@@ -99,8 +100,7 @@ def test_missing_required_property():
         format="pdf",
         file_path="/docs/DS123.pdf",
         properties={},
-        category="datasheets",
-        subcategory="pdfs",
+        categories=["datasheets", "pdfs"],
     )
     result = validate_documentation(doc, structure)
     assert any("Missing required property" in e for e in result["errors"])
@@ -114,8 +114,7 @@ def test_property_value_pattern_fail():
         format="pdf",
         file_path="/docs/DS123.pdf",
         properties={"Language": "english"},
-        category="datasheets",
-        subcategory="pdfs",
+        categories=["datasheets", "pdfs"],
     )
     result = validate_documentation(doc, structure)
     assert any("does not match pattern" in e for e in result["errors"])
@@ -129,8 +128,7 @@ def test_unknown_property_warning():
         format="pdf",
         file_path="/docs/DS123.pdf",
         properties={"Language": "en", "Extra": "foo"},
-        category="datasheets",
-        subcategory="pdfs",
+        categories=["datasheets", "pdfs"],
     )
     result = validate_documentation(doc, structure)
     assert any("Unknown property" in w for w in result["warnings"])
@@ -144,8 +142,35 @@ def test_invalid_format():
         format="docx",
         file_path="/docs/DS123.docx",
         properties={"Language": "en"},
-        category="datasheets",
-        subcategory="pdfs",
+        categories=["datasheets", "pdfs"],
     )
     result = validate_documentation(doc, structure)
     assert any("unsupported format" in e for e in result["errors"])
+
+
+def test_missing_categories():
+    structure = make_structure()
+    doc = Documentation(
+        name="DS123",
+        library_name="Test",
+        format="pdf",
+        file_path="/docs/DS123.pdf",
+        properties={"Language": "en"},
+        categories=None,
+    )
+    result = validate_documentation(doc, structure)
+    assert any("must specify a non-empty categories list" in e for e in result["errors"])
+
+
+def test_invalid_category_path():
+    structure = make_structure()
+    doc = Documentation(
+        name="DS123",
+        library_name="Test",
+        format="pdf",
+        file_path="/docs/DS123.pdf",
+        properties={"Language": "en"},
+        categories=["invalid", "path"],
+    )
+    result = validate_documentation(doc, structure)
+    assert any("Unknown group" in e for e in result["errors"])

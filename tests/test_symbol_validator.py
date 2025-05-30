@@ -1,9 +1,9 @@
 import pytest
 
 from kicad_lib_validator.models.structure import (
-    ComponentCategory,
+    ComponentEntry,
+    ComponentGroup,
     ComponentNaming,
-    ComponentType,
     LibraryDirectories,
     LibraryInfo,
     LibraryNaming,
@@ -33,27 +33,30 @@ def make_structure() -> LibraryStructure:
             ),
         ),
         symbols={
-            "passives": ComponentType(
+            "passives": ComponentGroup(
                 description="Passive components",
-                categories={
-                    "resistors": ComponentCategory(
+                subgroups={
+                    "resistors": ComponentGroup(
                         description="Resistors",
-                        prefix="R",
-                        naming=ComponentNaming(
-                            pattern=r"^R[0-9]+$",
-                            description_pattern=r"^[0-9.]+[kM]?[Ω]? Resistor$",
-                        ),
-                        required_properties={
-                            "Reference": PropertyDefinition(
-                                type="string",
-                                pattern=r"^R[0-9]+$",
-                                description="Component reference designator",
-                            ),
-                            "Value": PropertyDefinition(
-                                type="string",
-                                pattern=r"^[0-9.]+[kM]?[Ω]?$",
-                                description="Resistance value",
-                            ),
+                        entries={
+                            "standard": ComponentEntry(
+                                naming=ComponentNaming(
+                                    pattern=r"^R[0-9]+$",
+                                    description_pattern=r"^[0-9.]+[kM]?[Ω]? Resistor$",
+                                ),
+                                required_properties={
+                                    "Reference": PropertyDefinition(
+                                        type="string",
+                                        pattern=r"^R[0-9]+$",
+                                        description="Component reference designator",
+                                    ),
+                                    "Value": PropertyDefinition(
+                                        type="string",
+                                        pattern=r"^[0-9.]+[kM]?[Ω]?$",
+                                        description="Resistance value",
+                                    ),
+                                },
+                            )
                         },
                     )
                 },
@@ -71,8 +74,7 @@ def test_valid_symbol():
         name="R10",
         library_name="Test",
         properties={"Reference": "R10", "Value": "10k"},
-        category="passives",
-        subcategory="resistors",
+        categories=["passives", "resistors"],
     )
     result = validate_symbol(symbol, structure)
     assert not result["errors"]
@@ -86,8 +88,7 @@ def test_invalid_symbol_name():
         name="X10",
         library_name="Test",
         properties={"Reference": "R10", "Value": "10k"},
-        category="passives",
-        subcategory="resistors",
+        categories=["passives", "resistors"],
     )
     result = validate_symbol(symbol, structure)
     assert any("does not match pattern" in e for e in result["errors"])
@@ -99,8 +100,7 @@ def test_missing_required_property():
         name="R10",
         library_name="Test",
         properties={"Reference": "R10"},  # Missing Value
-        category="passives",
-        subcategory="resistors",
+        categories=["passives", "resistors"],
     )
     result = validate_symbol(symbol, structure)
     assert any("Missing required property" in e for e in result["errors"])
@@ -112,8 +112,7 @@ def test_property_value_pattern_fail():
         name="R10",
         library_name="Test",
         properties={"Reference": "R10", "Value": "badvalue"},
-        category="passives",
-        subcategory="resistors",
+        categories=["passives", "resistors"],
     )
     result = validate_symbol(symbol, structure)
     assert any("does not match pattern" in e for e in result["errors"])
@@ -125,8 +124,7 @@ def test_unknown_property_warning():
         name="R10",
         library_name="Test",
         properties={"Reference": "R10", "Value": "10k", "Extra": "foo"},
-        category="passives",
-        subcategory="resistors",
+        categories=["passives", "resistors"],
     )
     result = validate_symbol(symbol, structure)
     assert any("Unknown property" in w for w in result["warnings"])
@@ -138,8 +136,7 @@ def test_unrecognized_reference_prefix():
         name="Q1",
         library_name="Test",
         properties={"Reference": "Q1", "Value": "NPN"},
-        category="passives",
-        subcategory="resistors",
+        categories=["passives", "resistors"],
     )
     result = validate_symbol(symbol, structure)
     assert any("does not match pattern" in e for e in result["errors"])

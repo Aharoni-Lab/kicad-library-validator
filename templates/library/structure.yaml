@@ -16,105 +16,304 @@ library:
     tables: "tables"
   naming:
     symbols:
+      prefix: true
+      separator: "_"
+      case: "upper"
       include_categories: true
       category_separator: "_"
-      pattern: "^[A-Z][A-Za-z0-9_]+$"
     footprints:
+      prefix: true
+      separator: "_"
+      case: "upper"
       include_categories: true
       category_separator: "_"
-      pattern: "^[A-Z][A-Za-z0-9_]+$"
     models_3d:
-      include_categories: true
-      category_separator: "_"
-      pattern: "^[A-Z][A-Za-z0-9_]+$"
-    documentation:
-      include_categories: true
+      prefix: false
+      separator: "_"
+      case: "lower"
+      include_categories: false
       category_separator: "_"
 
 symbols:
-  actives:
-    description: "Active components"
-    categories:
-      ics:
-        description: "Integrated Circuits"
-        required_properties:
-          value:
-            type: "string"
-            pattern: "^[A-Z0-9-]+$"
-          manufacturer:
-            type: "string"
-          datasheet:
-            type: "string"
-            pattern: "^https?://.+$"
-      transistors:
-        description: "Transistors and other active components"
-        required_properties:
-          value:
-            type: "string"
-            pattern: "^[A-Z0-9-]+$"
-          manufacturer:
-            type: "string"
-          datasheet:
-            type: "string"
-            pattern: "^https?://.+$"
-  passives:
-    description: "Passive components"
-    categories:
-      capacitors:
-        description: "Capacitors"
-        required_properties:
-          value:
-            type: "string"
-            pattern: "^[0-9.]+[pPnNuUmMkK]?F$"
-          voltage:
-            type: "string"
-            pattern: "^[0-9.]+V$"
-          tolerance:
-            type: "string"
-            pattern: "^[0-9.]+%$"
-      resistors:
-        description: "Resistors"
-        required_properties:
-          value:
-            type: "string"
-            pattern: "^[0-9.]+[mMkKR]?$"
-          tolerance:
-            type: "string"
-            pattern: "^[0-9.]+%$"
-          power:
-            type: "string"
-            pattern: "^[0-9.]+W$"
+  Power:
+    subgroups:
+      Monitor:
+        entries:
+          Current:
+            naming:
+              pattern: "^[A-Z0-9-]+$"
+              description_pattern: "^[A-Z0-9-]+ Current Monitor$"
+            required_properties:
+              Reference:
+                type: "string"
+                pattern: "^U[0-9]+$"
+                description: "Component reference designator"
+              Description:
+                type: "string"
+                pattern: "^[A-Z0-9-]+ Current Monitor$"
+                description: "Component description"
+              Validated:
+                type: "boolean"
+                description: "Whether the component has been validated"
+            pins:
+              min_count: 3
+              required_types:
+                - "input"
+                - "output"
+                - "power"
+  Passive:
+    subgroups:
+      Capacitor:
+        subgroups:
+          Murata:
+            subgroups:
+              GRM:
+                entries:
+                  GRM188R71C104KA01:
+                    naming:
+                      pattern: "^[A-Z0-9-]+$"
+                      description_pattern: "^[A-Z0-9-]+ Capacitor$"
+                    required_properties:
+                      Reference:
+                        type: "string"
+                        pattern: "^C[0-9]+$"
+                        description: "Component reference designator"
+                      Description:
+                        type: "string"
+                        pattern: "^[A-Z0-9-]+ Capacitor$"
+                        description: "Component description"
+                      Value:
+                        type: "string"
+                        pattern: "^[0-9.]+[pPnNuUmMkK]?F$"
+                        description: "Capacitance value"
+                      Voltage:
+                        type: "string"
+                        pattern: "^[0-9.]+V$"
+                        description: "Voltage rating"
+                      Validated:
+                        type: "boolean"
+                        description: "Whether the component has been validated"
+                    pins:
+                      min_count: 2
+                      max_count: 2
+                      required_types:
+                        - "passive"
+          TDK:
+            subgroups:
+              C2012:
+                entries:
+                  C2012X7R1V475K125AC:
+                    naming:
+                      pattern: "^[A-Z0-9-]+$"
+                      description_pattern: "^[A-Z0-9-]+ Capacitor$"
+                    required_properties:
+                      Reference:
+                        type: "string"
+                        pattern: "^C[0-9]+$"
+                        description: "Component reference designator"
+                      Description:
+                        type: "string"
+                        pattern: "^[A-Z0-9-]+ Capacitor$"
+                        description: "Component description"
+                      Value:
+                        type: "string"
+                        pattern: "^[0-9.]+[pPnNuUmMkK]?F$"
+                        description: "Capacitance value"
+                      Voltage:
+                        type: "string"
+                        pattern: "^[0-9.]+V$"
+                        description: "Voltage rating"
+                      Validated:
+                        type: "boolean"
+                        description: "Whether the component has been validated"
+                    pins:
+                      min_count: 2
+                      max_count: 2
+                      required_types:
+                        - "passive"
+      Resistor:
+        subgroups:
+          Vishay:
+            subgroups:
+              CRCW:
+                entries:
+                  CRCW060310K0FKEA:
+                    naming:
+                      pattern: "^[A-Z0-9-]+$"
+                      description_pattern: "^[A-Z0-9-]+ Resistor$"
+                    required_properties:
+                      Reference:
+                        type: "string"
+                        pattern: "^R[0-9]+$"
+                        description: "Component reference designator"
+                      Description:
+                        type: "string"
+                        pattern: "^[A-Z0-9-]+ Resistor$"
+                        description: "Component description"
+                      Value:
+                        type: "string"
+                        pattern: "^[0-9.]+[mMkKR]?$"
+                        description: "Resistance value"
+                      Tolerance:
+                        type: "string"
+                        pattern: "^[0-9.]+%$"
+                        description: "Resistance tolerance"
+                      Power:
+                        type: "string"
+                        pattern: "^[0-9.]+W$"
+                        description: "Power rating"
+                      Validated:
+                        type: "boolean"
+                        description: "Whether the component has been validated"
+                    pins:
+                      min_count: 2
+                      max_count: 2
+                      required_types:
+                        - "passive"
+  Sensor:
+    subgroups:
+      Temperature:
+        entries:
+          I2C:
+            naming:
+              pattern: "^[A-Z0-9-]+$"
+              description_pattern: "^[A-Z0-9-]+ Temperature Sensor$"
+            required_properties:
+              Reference:
+                type: "string"
+                pattern: "^U[0-9]+$"
+                description: "Component reference designator"
+              Description:
+                type: "string"
+                pattern: "^[A-Z0-9-]+ Temperature Sensor$"
+                description: "Component description"
+              Validated:
+                type: "boolean"
+                description: "Whether the component has been validated"
+            pins:
+              min_count: 4
+              required_types:
+                - "input"
+                - "output"
+                - "power"
+                - "bidirectional"
+  MCU:
+    subgroups:
+      Microchip:
+        entries:
+          PIC32:
+            naming:
+              pattern: "^[A-Z0-9-]+$"
+              description_pattern: "^[A-Z0-9-]+ MCU$"
+            required_properties:
+              Reference:
+                type: "string"
+                pattern: "^U[0-9]+$"
+                description: "Component reference designator"
+              Description:
+                type: "string"
+                pattern: "^[A-Z0-9-]+ MCU$"
+                description: "Component description"
+              Validated:
+                type: "boolean"
+                description: "Whether the component has been validated"
+            pins:
+              min_count: 8
+              required_types:
+                - "input"
+                - "output"
+                - "bidirectional"
+                - "power"
 
 footprints:
-  smd:
-    description: "Surface Mount Devices"
-    categories:
-      capacitors:
-        description: "Surface mount capacitors"
-        required_properties:
-          package:
-            type: "string"
-          value:
-            type: "string"
-      resistors:
-        description: "Surface mount resistors"
-        required_properties:
-          package:
-            type: "string"
-          value:
-            type: "string"
+  Conn:
+    subgroups:
+      USB:
+        entries:
+          SMD:
+            naming:
+              pattern: "^[A-Z0-9-]+$"
+              description_pattern: "^[A-Z0-9-]+ USB Connector$"
+            required_layers:
+              - "F.Cu"
+              - "B.Cu"
+              - "F.SilkS"
+            required_pads:
+              min_count: 4
+              required_types:
+                - "smd"
+              naming:
+                pattern: "^[0-9]+$"
+                description_pattern: "^Pad [0-9]+$"
+            required_properties:
+              Reference:
+                type: "string"
+                pattern: "^J[0-9]+$"
+                description: "Component reference designator"
+              Description:
+                type: "string"
+                pattern: "^[A-Z0-9-]+ USB Connector$"
+                description: "Component description"
+              Validated:
+                type: "boolean"
+                description: "Whether the component has been validated"
+  Capacitor:
+    subgroups:
+      SMD:
+        subgroups:
+          Murata:
+            subgroups:
+              GRM:
+                entries:
+                  GRM188R71C104KA01:
+                    naming:
+                      pattern: "^[A-Z0-9-]+$"
+                      description_pattern: "^[A-Z0-9-]+ Capacitor$"
+                    required_layers:
+                      - "F.Cu"
+                      - "B.Cu"
+                      - "F.SilkS"
+                    required_pads:
+                      min_count: 2
+                      required_types:
+                        - "smd"
+                      naming:
+                        pattern: "^[12]$"
+                        description_pattern: "^Pad [12]$"
+                    required_properties:
+                      Reference:
+                        type: "string"
+                        pattern: "^C[0-9]+$"
+                        description: "Component reference designator"
+                      Description:
+                        type: "string"
+                        pattern: "^[A-Z0-9-]+ Capacitor$"
+                        description: "Component description"
+                      Validated:
+                        type: "boolean"
+                        description: "Whether the component has been validated"
 
 models_3d:
-  passives:
-    description: "Passive components"
-    categories:
-      capacitors:
-        description: "Capacitors"
-        required_properties:
-          value:
-            type: "string"
-          package:
-            type: "string"
+  Capacitor:
+    subgroups:
+      SMD:
+        subgroups:
+          Murata:
+            subgroups:
+              GRM:
+                entries:
+                  GRM188R71C104KA01:
+                    naming:
+                      pattern: "^[A-Z0-9-]+$"
+                      description_pattern: "^[A-Z0-9-]+ Capacitor$"
+                    required_properties:
+                      Description:
+                        type: "string"
+                        pattern: "^[A-Z0-9-]+ Capacitor$"
+                        description: "Component description"
+                      Validated:
+                        type: "boolean"
+                        description: "Whether the component has been validated"
 
 documentation:
   passives:

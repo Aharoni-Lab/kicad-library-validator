@@ -189,24 +189,14 @@ class ComponentNaming(BaseModel):
         return v
 
 
-class ComponentCategory(BaseModel):
-    """Definition of a component category."""
+class ComponentEntry(BaseModel):
+    """Definition of a component entry with its rules and requirements."""
 
-    description: Optional[str] = ""
-    prefix: Optional[str] = None
     naming: Optional[ComponentNaming] = None
     required_properties: Optional[Dict[str, PropertyDefinition]] = None
     pins: Optional[PinRequirements] = None
     required_layers: Optional[List[str]] = None
     required_pads: Optional[PinRequirements] = None
-
-    @field_validator("prefix")
-    @classmethod
-    def validate_prefix(cls, v: Optional[str]) -> Optional[str]:
-        """Validate component prefix if provided."""
-        if v is not None and not re.match(r"^[A-Za-z0-9]+$", v):
-            raise ValueError("Component prefix must contain only alphanumeric characters")
-        return v
 
     @field_validator("required_layers")
     @classmethod
@@ -232,21 +222,21 @@ class ComponentCategory(BaseModel):
         return v
 
 
-class ComponentType(BaseModel):
-    """Definition of a component type (e.g., passive, active)."""
+class ComponentGroup(BaseModel):
+    """A group of components that can contain either entries or subgroups."""
 
-    description: Optional[str] = ""
-    prefix: Optional[str] = None
-    categories: Optional[Dict[str, ComponentCategory]] = Field(default_factory=lambda: {})
-    naming: Optional[ComponentNaming] = None
-    required_properties: Optional[Dict[str, PropertyDefinition]] = None
+    entries: Optional[Dict[str, ComponentEntry]] = None
+    subgroups: Optional[Dict[str, "ComponentGroup"]] = None
 
-    @field_validator("prefix")
+    @field_validator("entries", "subgroups")
     @classmethod
-    def validate_prefix(cls, v: Optional[str]) -> Optional[str]:
-        """Validate component type prefix if provided."""
-        if v is not None and not re.match(r"^[A-Za-z0-9]+$", v):
-            raise ValueError("Component type prefix must contain only alphanumeric characters")
+    def validate_not_both_empty(cls, v: Optional[Dict], info: Any) -> Optional[Dict]:
+        """Validate that at least one of entries or subgroups is provided."""
+        if (
+            v is None
+            and info.data.get("subgroups" if info.field_name == "entries" else "entries") is None
+        ):
+            raise ValueError("Component group must have either entries or subgroups")
         return v
 
 
@@ -256,10 +246,10 @@ class LibraryStructure(BaseModel):
     version: str = "1.0"
     description: Optional[str] = ""
     library: LibraryInfo
-    symbols: Optional[Dict[str, ComponentType]] = Field(default_factory=lambda: {})
-    footprints: Optional[Dict[str, ComponentType]] = Field(default_factory=lambda: {})
-    models_3d: Optional[Dict[str, ComponentType]] = Field(default_factory=lambda: {})
-    documentation: Optional[Dict[str, ComponentType]] = Field(default_factory=lambda: {})
+    symbols: Optional[Dict[str, ComponentGroup]] = Field(default_factory=lambda: {})
+    footprints: Optional[Dict[str, ComponentGroup]] = Field(default_factory=lambda: {})
+    models_3d: Optional[Dict[str, ComponentGroup]] = Field(default_factory=lambda: {})
+    documentation: Optional[Dict[str, ComponentGroup]] = Field(default_factory=lambda: {})
 
     @field_validator("version")
     @classmethod

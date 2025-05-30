@@ -4,9 +4,9 @@ from .footprint import Footprint, Pad
 from .library import KiCadLibrary
 from .model3d import Model3D
 from .structure import (
-    ComponentCategory,
+    ComponentEntry,
+    ComponentGroup,
     ComponentNaming,
-    ComponentType,
     LibraryDirectories,
     LibraryInfo,
     LibraryNaming,
@@ -31,8 +31,8 @@ __all__ = [
     "LibraryInfo",
     "LibraryDirectories",
     "LibraryNaming",
-    "ComponentType",
-    "ComponentCategory",
+    "ComponentGroup",
+    "ComponentEntry",
     "ComponentNaming",
     "PropertyDefinition",
     "PinRequirements",
