@@ -37,6 +37,14 @@ def create_component_directories(
         else:
             logger.info(f"Creating directory: {current_dir}")
             current_dir.mkdir(parents=True, exist_ok=True)
+            # Add README.md to ensure directory is tracked by git
+            readme_path = current_dir / "README.md"
+            readme_content = f"# {current_path[-1]}\n\nThis directory contains {current_path[-1]} components."
+            if dry_run:
+                logger.info(f"Would create README.md: {readme_path}")
+            else:
+                logger.info(f"Creating README.md: {readme_path}")
+                readme_path.write_text(readme_content)
 
     # Process entries: create a subdirectory for each entry
     if group.entries:
@@ -48,6 +56,14 @@ def create_component_directories(
                 else:
                     logger.info(f"Creating entry directory: {entry_dir}")
                     entry_dir.mkdir(parents=True, exist_ok=True)
+                    # Add README.md to ensure directory is tracked by git
+                    readme_path = entry_dir / "README.md"
+                    readme_content = f"# {entry_name}\n\nThis directory contains {entry_name} components."
+                    if dry_run:
+                        logger.info(f"Would create README.md: {readme_path}")
+                    else:
+                        logger.info(f"Creating README.md: {readme_path}")
+                        readme_path.write_text(readme_content)
             # For symbols, create .kicad_sym file in the final entry directory
             if is_symbol:
                 sym_file = entry_dir / f"{entry_name}.kicad_sym"
@@ -68,6 +84,14 @@ def create_component_directories(
                     else:
                         logger.info(f"Renaming directory to: {pretty_dir}")
                         entry_dir.rename(pretty_dir)
+                        # Add README.md to ensure directory is tracked by git
+                        readme_path = pretty_dir / "README.md"
+                        readme_content = f"# {entry_name}\n\nThis directory contains {entry_name} footprint components."
+                        if dry_run:
+                            logger.info(f"Would create README.md: {readme_path}")
+                        else:
+                            logger.info(f"Creating README.md: {readme_path}")
+                            readme_path.write_text(readme_content)
 
     # Process subgroups
     if group.subgroups:
