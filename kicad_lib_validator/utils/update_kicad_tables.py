@@ -293,16 +293,12 @@ def update_kicad_tables(
             tables_dir.mkdir(parents=True, exist_ok=True)
             logger.info(f"Created/verified tables directory: {tables_dir}")
 
-    # Determine output directory for tables
-    if output_dir is not None:
-        output_dir = Path(output_dir)
-        output_dir.mkdir(parents=True, exist_ok=True)
-        kicad_config = output_dir
-    else:
-        kicad_config = get_kicad_config_path()
-        if not kicad_config.exists():
-            logger.error(f"KiCad configuration directory not found: {kicad_config}")
-            return
+    # Track changes for summary
+    changes = {
+        "symbol_libs": [],
+        "footprint_libs": [],
+        "modified_files": []
+    }
 
     # Update symbol library table
     sym_lib_table = kicad_config / "sym-lib-table"
@@ -334,6 +330,7 @@ def update_kicad_tables(
                         }
                         existing_sym_libs[lib_name] = lib_config
                         library_sym_libs[lib_name] = lib_config
+                        changes["symbol_libs"].append(lib_name)
 
     if not dry_run:
         # Write to KiCad config
@@ -351,6 +348,7 @@ def update_kicad_tables(
                 is_symbol_table=True,
                 prefix=structure.library.prefix,
             )
+            changes["modified_files"].append(str(library_sym_table.relative_to(library_root)))
 
     # Update footprint library table
     fp_lib_table = kicad_config / "fp-lib-table"
@@ -382,6 +380,7 @@ def update_kicad_tables(
                             }
                             existing_fp_libs[lib_name] = lib_config
                             library_fp_libs[lib_name] = lib_config
+                            changes["footprint_libs"].append(lib_name)
 
     if not dry_run:
         # Write to KiCad config
@@ -397,13 +396,33 @@ def update_kicad_tables(
                 is_symbol_table=False,
                 prefix=structure.library.prefix,
             )
+            changes["modified_files"].append(str(library_fp_table.relative_to(library_root)))
             # Generate and write instructions
             instructions = generate_instructions_markdown(
                 structure, library_root, library_sym_libs, library_fp_libs
             )
             instructions_file = library_root / structure.library.directories.tables / "README.md"
             instructions_file.write_text(instructions, encoding="utf-8")
+            changes["modified_files"].append(str(instructions_file.relative_to(library_root)))
             logger.info(f"Generated instructions in {instructions_file}")
+
+    # Print summary of changes
+    if changes["symbol_libs"] or changes["footprint_libs"]:
+        logger.info("\nSummary of Changes:")
+        if changes["symbol_libs"]:
+            logger.info("\nAdded Symbol Libraries:")
+            for lib in changes["symbol_libs"]:
+                logger.info(f"- {lib}")
+        if changes["footprint_libs"]:
+            logger.info("\nAdded Footprint Libraries:")
+            for lib in changes["footprint_libs"]:
+                logger.info(f"- {lib}")
+        if changes["modified_files"]:
+            logger.info("\nModified Files:")
+            for file in changes["modified_files"]:
+                logger.info(f"- {file}")
+    else:
+        logger.info("\nNo changes were made to the library tables.")
 
 
 def main() -> None:
