@@ -77,9 +77,8 @@ def validate_model3d(model3d: Model3D, structure: LibraryStructure) -> Dict[str,
 
     # Validate model name
     if entry.naming and entry.naming.pattern:
-        pattern = entry.naming.pattern
-        if isinstance(pattern, str):
-            pattern = re.compile(pattern)
+        pattern_str = entry.naming.pattern
+        pattern = re.compile(pattern_str) if isinstance(pattern_str, str) else pattern_str
         if not pattern.match(model3d.name):
             result["errors"].append(
                 f"Model name '{model3d.name}' does not match pattern: {entry.naming.pattern}"
@@ -95,10 +94,13 @@ def validate_model3d(model3d: Model3D, structure: LibraryStructure) -> Dict[str,
             if prop_name not in model3d.properties:
                 result["errors"].append(f"Missing required property: {prop_name}")
             elif prop_def.pattern:
-                pattern = prop_def.pattern
-                if isinstance(pattern, str):
-                    pattern = re.compile(pattern)
-                if not pattern.match(model3d.properties[prop_name]):
+                prop_pattern_str = prop_def.pattern
+                prop_pattern = (
+                    re.compile(prop_pattern_str)
+                    if isinstance(prop_pattern_str, str)
+                    else prop_pattern_str
+                )
+                if not prop_pattern.match(model3d.properties[prop_name]):
                     result["errors"].append(
                         f"Property '{prop_name}' value '{model3d.properties[prop_name]}' does not match pattern: {prop_def.pattern}"
                     )
@@ -111,10 +113,11 @@ def validate_model3d(model3d: Model3D, structure: LibraryStructure) -> Dict[str,
 
     # Validate description pattern if present
     if entry.naming and entry.naming.description_pattern and hasattr(model3d, "description"):
-        pattern = entry.naming.description_pattern
-        if isinstance(pattern, str):
-            pattern = re.compile(pattern)
-        if not pattern.match(getattr(model3d, "description", "")):
+        desc_pattern_str = entry.naming.description_pattern
+        desc_pattern = (
+            re.compile(desc_pattern_str) if isinstance(desc_pattern_str, str) else desc_pattern_str
+        )
+        if not desc_pattern.match(getattr(model3d, "description", "")):
             result["errors"].append(
                 f"Model description '{getattr(model3d, 'description', '')}' does not match pattern: {entry.naming.description_pattern}"
             )

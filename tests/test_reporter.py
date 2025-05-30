@@ -24,7 +24,7 @@ def test_structure_file(test_data_dir) -> Path:
     return test_data_dir / "test_library_structure.yaml"
 
 
-def test_reporter_initialization(test_data_dir, test_structure_file):
+def test_reporter_initialization(test_data_dir, test_structure_file) -> None:
     """Test reporter initialization."""
     structure = parse_library_structure(test_structure_file)
     reporter = LibraryReporter(test_data_dir, structure)
@@ -32,7 +32,7 @@ def test_reporter_initialization(test_data_dir, test_structure_file):
     assert reporter.structure == structure
 
 
-def test_generate_report(test_data_dir, test_structure_file, tmp_path):
+def test_generate_report(test_data_dir, test_structure_file, tmp_path) -> None:
     """Test report generation."""
     # First validate and parse the library
     validator = KiCadLibraryValidator(test_data_dir, test_structure_file)

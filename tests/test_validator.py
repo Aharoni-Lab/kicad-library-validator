@@ -21,7 +21,7 @@ def test_structure_file(test_data_dir) -> Path:
     return test_data_dir / "test_library_structure.yaml"
 
 
-def test_validator_initialization(test_data_dir, test_structure_file):
+def test_validator_initialization(test_data_dir, test_structure_file) -> None:
     """Test validator initialization."""
     validator = KiCadLibraryValidator(test_data_dir, test_structure_file)
     assert validator.library_path == test_data_dir
@@ -30,7 +30,7 @@ def test_validator_initialization(test_data_dir, test_structure_file):
     assert isinstance(validator.result, ValidationResult)
 
 
-def test_validation_result():
+def test_validation_result() -> None:
     """Test ValidationResult class."""
     result = ValidationResult()
 
@@ -50,7 +50,7 @@ def test_validation_result():
     assert not result.has_errors
 
 
-def test_validate_directory_structure(test_data_dir, test_structure_file, tmp_path):
+def test_validate_directory_structure(test_data_dir, test_structure_file, tmp_path) -> None:
     """Test directory structure validation."""
     # Test with missing directories
     validator = KiCadLibraryValidator(tmp_path, test_structure_file)
@@ -67,7 +67,7 @@ def test_validate_directory_structure(test_data_dir, test_structure_file, tmp_pa
     assert not any("directory not found" in error for error in result.errors)
 
 
-def test_validate_with_invalid_structure_file(test_data_dir, tmp_path):
+def test_validate_with_invalid_structure_file(test_data_dir, tmp_path) -> None:
     """Test validation with invalid structure file."""
     invalid_yaml = tmp_path / "invalid.yaml"
     invalid_yaml.write_text("invalid: yaml: content: [")
@@ -78,7 +78,7 @@ def test_validate_with_invalid_structure_file(test_data_dir, tmp_path):
     assert any("Failed to parse structure file" in error for error in result.errors)
 
 
-def test_validate_with_missing_structure_file(test_data_dir):
+def test_validate_with_missing_structure_file(test_data_dir) -> None:
     """Test validation with missing structure file."""
     validator = KiCadLibraryValidator(test_data_dir)
     result = validator.validate()

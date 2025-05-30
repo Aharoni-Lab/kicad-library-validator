@@ -68,7 +68,7 @@ def make_structure() -> LibraryStructure:
     )
 
 
-def test_valid_symbol():
+def test_valid_symbol() -> None:
     structure = make_structure()
     symbol = Symbol(
         name="R10",
@@ -82,7 +82,7 @@ def test_valid_symbol():
     assert any("matches pattern" in s for s in result["successes"])
 
 
-def test_invalid_symbol_name():
+def test_invalid_symbol_name() -> None:
     structure = make_structure()
     symbol = Symbol(
         name="X10",
@@ -94,7 +94,7 @@ def test_invalid_symbol_name():
     assert any("does not match pattern" in e for e in result["errors"])
 
 
-def test_missing_required_property():
+def test_missing_required_property() -> None:
     structure = make_structure()
     symbol = Symbol(
         name="R10",
@@ -106,7 +106,7 @@ def test_missing_required_property():
     assert any("Missing required property" in e for e in result["errors"])
 
 
-def test_property_value_pattern_fail():
+def test_property_value_pattern_fail() -> None:
     structure = make_structure()
     symbol = Symbol(
         name="R10",
@@ -118,7 +118,7 @@ def test_property_value_pattern_fail():
     assert any("does not match pattern" in e for e in result["errors"])
 
 
-def test_unknown_property_warning():
+def test_unknown_property_warning() -> None:
     structure = make_structure()
     symbol = Symbol(
         name="R10",
@@ -130,7 +130,7 @@ def test_unknown_property_warning():
     assert any("Unknown property" in w for w in result["warnings"])
 
 
-def test_unrecognized_reference_prefix():
+def test_unrecognized_reference_prefix() -> None:
     structure = make_structure()
     symbol = Symbol(
         name="Q1",

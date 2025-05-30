@@ -4,9 +4,10 @@
 import subprocess
 import sys
 from pathlib import Path
+from typing import List
 
 
-def run_command(command: list[str]) -> bool:
+def run_command(command: List[str]) -> bool:
     """Run a command and return True if successful."""
     try:
         subprocess.run(command, check=True, capture_output=True, text=True)

@@ -62,7 +62,7 @@ def make_structure() -> LibraryStructure:
     )
 
 
-def test_valid_model3d():
+def test_valid_model3d() -> None:
     structure = make_structure()
     model = Model3D(
         name="MNT123",
@@ -79,7 +79,7 @@ def test_valid_model3d():
     assert any("matches pattern" in s for s in result["successes"])
 
 
-def test_invalid_model3d_name():
+def test_invalid_model3d_name() -> None:
     structure = make_structure()
     model = Model3D(
         name="BAD123",
@@ -94,7 +94,7 @@ def test_invalid_model3d_name():
     assert any("does not match pattern" in e for e in result["errors"])
 
 
-def test_missing_required_property():
+def test_missing_required_property() -> None:
     structure = make_structure()
     model = Model3D(
         name="MNT123",
@@ -109,7 +109,7 @@ def test_missing_required_property():
     assert any("Missing required property" in e for e in result["errors"])
 
 
-def test_property_value_pattern_fail():
+def test_property_value_pattern_fail() -> None:
     structure = make_structure()
     model = Model3D(
         name="MNT123",
@@ -124,7 +124,7 @@ def test_property_value_pattern_fail():
     assert any("does not match pattern" in e for e in result["errors"])
 
 
-def test_unknown_property_warning():
+def test_unknown_property_warning() -> None:
     structure = make_structure()
     model = Model3D(
         name="MNT123",
@@ -139,7 +139,7 @@ def test_unknown_property_warning():
     assert any("Unknown property" in w for w in result["warnings"])
 
 
-def test_invalid_format():
+def test_invalid_format() -> None:
     structure = make_structure()
     model = Model3D(
         name="MNT123",
@@ -154,7 +154,7 @@ def test_invalid_format():
     assert any("unsupported format" in e for e in result["errors"])
 
 
-def test_invalid_units():
+def test_invalid_units() -> None:
     structure = make_structure()
     model = Model3D(
         name="MNT123",

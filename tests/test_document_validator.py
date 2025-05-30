@@ -62,7 +62,7 @@ def make_structure() -> LibraryStructure:
     )
 
 
-def test_valid_documentation():
+def test_valid_documentation() -> None:
     structure = make_structure()
     doc = Documentation(
         name="DS123",
@@ -78,7 +78,7 @@ def test_valid_documentation():
     assert any("matches pattern" in s for s in result["successes"])
 
 
-def test_invalid_documentation_name():
+def test_invalid_documentation_name() -> None:
     structure = make_structure()
     doc = Documentation(
         name="BAD123",
@@ -92,7 +92,7 @@ def test_invalid_documentation_name():
     assert any("does not match pattern" in e for e in result["errors"])
 
 
-def test_missing_required_property():
+def test_missing_required_property() -> None:
     structure = make_structure()
     doc = Documentation(
         name="DS123",
@@ -106,7 +106,7 @@ def test_missing_required_property():
     assert any("Missing required property" in e for e in result["errors"])
 
 
-def test_property_value_pattern_fail():
+def test_property_value_pattern_fail() -> None:
     structure = make_structure()
     doc = Documentation(
         name="DS123",
@@ -120,7 +120,7 @@ def test_property_value_pattern_fail():
     assert any("does not match pattern" in e for e in result["errors"])
 
 
-def test_unknown_property_warning():
+def test_unknown_property_warning() -> None:
     structure = make_structure()
     doc = Documentation(
         name="DS123",
@@ -134,7 +134,7 @@ def test_unknown_property_warning():
     assert any("Unknown property" in w for w in result["warnings"])
 
 
-def test_invalid_format():
+def test_invalid_format() -> None:
     structure = make_structure()
     doc = Documentation(
         name="DS123",
@@ -148,7 +148,7 @@ def test_invalid_format():
     assert any("unsupported format" in e for e in result["errors"])
 
 
-def test_missing_categories():
+def test_missing_categories() -> None:
     structure = make_structure()
     doc = Documentation(
         name="DS123",
@@ -162,7 +162,7 @@ def test_missing_categories():
     assert any("must specify a non-empty categories list" in e for e in result["errors"])
 
 
-def test_invalid_category_path():
+def test_invalid_category_path() -> None:
     structure = make_structure()
     doc = Documentation(
         name="DS123",

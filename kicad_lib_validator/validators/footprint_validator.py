@@ -83,9 +83,8 @@ def validate_footprint(footprint: Footprint, structure: LibraryStructure) -> Dic
 
     # Validate footprint name
     if entry.naming and entry.naming.pattern:
-        pattern = entry.naming.pattern
-        if isinstance(pattern, str):
-            pattern = re.compile(pattern)
+        pattern_str = entry.naming.pattern
+        pattern = re.compile(pattern_str) if isinstance(pattern_str, str) else pattern_str
         if not pattern.match(footprint.name):
             result["errors"].append(
                 f"Footprint name '{footprint.name}' does not match pattern: {entry.naming.pattern}"
@@ -101,10 +100,13 @@ def validate_footprint(footprint: Footprint, structure: LibraryStructure) -> Dic
             if prop_name not in footprint.properties:
                 result["errors"].append(f"Missing required property: {prop_name}")
             elif prop_def.pattern:
-                pattern = prop_def.pattern
-                if isinstance(pattern, str):
-                    pattern = re.compile(pattern)
-                if not pattern.match(footprint.properties[prop_name]):
+                prop_pattern_str = prop_def.pattern
+                prop_pattern = (
+                    re.compile(prop_pattern_str)
+                    if isinstance(prop_pattern_str, str)
+                    else prop_pattern_str
+                )
+                if not prop_pattern.match(footprint.properties[prop_name]):
                     result["errors"].append(
                         f"Property '{prop_name}' value '{footprint.properties[prop_name]}' does not match pattern: {prop_def.pattern}"
                     )
@@ -146,10 +148,11 @@ def validate_footprint(footprint: Footprint, structure: LibraryStructure) -> Dic
 
     # Validate description pattern if present
     if entry.naming and entry.naming.description_pattern and hasattr(footprint, "description"):
-        pattern = entry.naming.description_pattern
-        if isinstance(pattern, str):
-            pattern = re.compile(pattern)
-        if not pattern.match(getattr(footprint, "description", "")):
+        desc_pattern_str = entry.naming.description_pattern
+        desc_pattern = (
+            re.compile(desc_pattern_str) if isinstance(desc_pattern_str, str) else desc_pattern_str
+        )
+        if not desc_pattern.match(getattr(footprint, "description", "")):
             result["errors"].append(
                 f"Footprint description '{getattr(footprint, 'description', '')}' does not match pattern: {entry.naming.description_pattern}"
             )

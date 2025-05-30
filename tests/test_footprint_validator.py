@@ -63,7 +63,7 @@ def make_structure() -> LibraryStructure:
     )
 
 
-def test_valid_footprint():
+def test_valid_footprint() -> None:
     structure = make_structure()
     footprint = Footprint(
         name="SMD1234",
@@ -79,7 +79,7 @@ def test_valid_footprint():
     assert any("contains all required layers" in s for s in result["successes"])
 
 
-def test_invalid_footprint_name():
+def test_invalid_footprint_name() -> None:
     structure = make_structure()
     footprint = Footprint(
         name="THT1234",
@@ -92,7 +92,7 @@ def test_invalid_footprint_name():
     assert any("does not match pattern" in e for e in result["errors"])
 
 
-def test_missing_required_property():
+def test_missing_required_property() -> None:
     structure = make_structure()
     footprint = Footprint(
         name="SMD1234",
@@ -105,7 +105,7 @@ def test_missing_required_property():
     assert any("Missing required property" in e for e in result["errors"])
 
 
-def test_property_value_pattern_fail():
+def test_property_value_pattern_fail() -> None:
     structure = make_structure()
     footprint = Footprint(
         name="SMD1234",
@@ -118,7 +118,7 @@ def test_property_value_pattern_fail():
     assert any("does not match pattern" in e for e in result["errors"])
 
 
-def test_unknown_property_warning():
+def test_unknown_property_warning() -> None:
     structure = make_structure()
     footprint = Footprint(
         name="SMD1234",
@@ -131,7 +131,7 @@ def test_unknown_property_warning():
     assert any("Unknown property" in w for w in result["warnings"])
 
 
-def test_missing_required_layer():
+def test_missing_required_layer() -> None:
     structure = make_structure()
     footprint = Footprint(
         name="SMD1234",

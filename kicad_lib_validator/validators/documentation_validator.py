@@ -2,7 +2,7 @@ import re
 from typing import Dict, List
 
 from kicad_lib_validator.models.documentation import Documentation
-from kicad_lib_validator.models.structure import ComponentCategory, LibraryStructure
+from kicad_lib_validator.models.structure import ComponentEntry, LibraryStructure
 
 
 def validate_documentation(doc: Documentation, structure: LibraryStructure) -> Dict[str, List[str]]:
@@ -18,75 +18,74 @@ def validate_documentation(doc: Documentation, structure: LibraryStructure) -> D
     """
     results: Dict[str, List[str]] = {"errors": [], "warnings": [], "successes": []}
 
-    # Find matching category
+    # Find matching entry
     if not structure.documentation:
         return results
 
-    for type_name, component_type in structure.documentation.items():
-        if not component_type.categories:
-            continue
+    for group_name, group in structure.documentation.items():
+        if hasattr(group, "entries") and group.entries:
+            for entry_name, entry in group.entries.items():
+                if not _matches_entry(doc, entry):
+                    continue
 
-        for category_name, category in component_type.categories.items():
-            # Check if documentation matches category
-            if not _matches_category(doc, category):
-                continue
+                # Validate required properties
+                if entry.required_properties:
+                    for prop_name, prop_def in entry.required_properties.items():
+                        if prop_name not in doc.properties:
+                            if not getattr(prop_def, "optional", False):
+                                results["errors"].append(f"Missing required property: {prop_name}")
+                        else:
+                            value = doc.properties[prop_name]
+                            if prop_def.pattern and not re.match(prop_def.pattern, value):
+                                results["errors"].append(
+                                    f"Property {prop_name} value '{value}' does not match pattern: {prop_def.pattern}"
+                                )
 
-            # Validate required properties
-            if category.required_properties:
-                for prop_name, prop_def in category.required_properties.items():
-                    if prop_name not in doc.properties:
-                        if not prop_def.optional:
-                            results["errors"].append(f"Missing required property: {prop_name}")
-                    else:
-                        value = doc.properties[prop_name]
-                        if prop_def.pattern and not re.match(prop_def.pattern, value):
+                # Validate naming
+                if entry.naming:
+                    if entry.naming.pattern and not re.match(entry.naming.pattern, doc.name):
+                        results["errors"].append(
+                            f"Documentation name '{doc.name}' does not match pattern: {entry.naming.pattern}"
+                        )
+                    if entry.naming.description_pattern and hasattr(doc, "description"):
+                        if not re.match(
+                            entry.naming.description_pattern, getattr(doc, "description", "")
+                        ):
                             results["errors"].append(
-                                f"Property {prop_name} value '{value}' does not match pattern: {prop_def.pattern}"
+                                f"Documentation description '{getattr(doc, 'description', '')}' does not match pattern: {entry.naming.description_pattern}"
                             )
 
-            # Validate naming
-            if category.naming:
-                if category.naming.pattern and not re.match(category.naming.pattern, doc.name):
-                    results["errors"].append(
-                        f"Documentation name '{doc.name}' does not match pattern: {category.naming.pattern}"
-                    )
-                if category.naming.description_pattern and hasattr(doc, "description"):
-                    if not re.match(category.naming.description_pattern, doc.description):
-                        results["errors"].append(
-                            f"Documentation description '{doc.description}' does not match pattern: {category.naming.description_pattern}"
-                        )
+                # If we found a matching entry and passed all validations, add a success message
+                results["successes"].append(
+                    f"Documentation matches entry {group_name}/{entry_name}"
+                )
+                return results
 
-            # If we found a matching category and passed all validations, add a success message
-            results["successes"].append(
-                f"Documentation matches category {type_name}/{category_name}"
-            )
-            return results
-
-    # If no matching category was found
-    results["warnings"].append("Documentation does not match any defined category")
+    # If no matching entry was found
+    results["warnings"].append("Documentation does not match any defined entry")
     return results
 
 
-def _matches_category(doc: Documentation, category: ComponentCategory) -> bool:
+def _matches_entry(doc: Documentation, entry: ComponentEntry) -> bool:
     """
-    Check if documentation matches a category based on its properties.
+    Check if documentation matches an entry based on its properties.
 
     Args:
         doc: Documentation to check
-        category: Category to match against
+        entry: Entry to match against
 
     Returns:
-        True if the documentation matches the category, False otherwise
+        True if the documentation matches the entry, False otherwise
     """
     # Check prefix if specified
-    if category.prefix:
-        if not doc.name.startswith(category.prefix):
+    if entry.naming and entry.naming.pattern:
+        if not re.match(entry.naming.pattern, doc.name):
             return False
 
     # Check required properties
-    if category.required_properties:
-        for prop_name, prop_def in category.required_properties.items():
-            if not prop_def.optional and prop_name not in doc.properties:
+    if entry.required_properties:
+        for prop_name, prop_def in entry.required_properties.items():
+            if not getattr(prop_def, "optional", False) and prop_name not in doc.properties:
                 return False
 
     return True

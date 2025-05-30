@@ -51,7 +51,7 @@ def get_valid_base_structure() -> Dict[str, Any]:
     }
 
 
-def test_parse_library_structure():
+def test_parse_library_structure() -> None:
     """Test parsing a valid library structure with multiple subgroups and entries."""
     yaml_content = get_valid_base_structure()
 
@@ -257,7 +257,7 @@ def test_parse_library_structure():
     assert "standard" in structure.footprints["tht"].subgroups["resistors"].entries
 
 
-def test_parse_library_structure_invalid_yaml():
+def test_parse_library_structure_invalid_yaml() -> None:
     """Test parsing invalid YAML."""
     invalid_yaml = {"invalid": "yaml: content: ["}
 
@@ -265,7 +265,7 @@ def test_parse_library_structure_invalid_yaml():
         parse_library_structure_from_yaml(invalid_yaml)
 
 
-def test_parse_library_structure_missing_required_fields():
+def test_parse_library_structure_missing_required_fields() -> None:
     """Test parsing YAML with missing required fields."""
     invalid_yaml = {
         "version": "1.0",
@@ -277,7 +277,7 @@ def test_parse_library_structure_missing_required_fields():
         parse_library_structure_from_yaml(invalid_yaml)
 
 
-def test_parse_library_structure_invalid_version():
+def test_parse_library_structure_invalid_version() -> None:
     """Test parsing YAML with invalid version format."""
     yaml_content = get_valid_base_structure()
     yaml_content["version"] = "invalid"
@@ -286,7 +286,7 @@ def test_parse_library_structure_invalid_version():
         parse_library_structure_from_yaml(yaml_content)
 
 
-def test_parse_library_structure_invalid_maintainer():
+def test_parse_library_structure_invalid_maintainer() -> None:
     """Test parsing YAML with invalid maintainer format."""
     yaml_content = get_valid_base_structure()
     yaml_content["library"]["maintainer"] = "invalid-email"
@@ -295,7 +295,7 @@ def test_parse_library_structure_invalid_maintainer():
         parse_library_structure_from_yaml(yaml_content)
 
 
-def test_parse_library_structure_invalid_directory_name():
+def test_parse_library_structure_invalid_directory_name() -> None:
     """Test parsing YAML with invalid directory name."""
     yaml_content = get_valid_base_structure()
     yaml_content["library"]["directories"]["symbols"] = "invalid/directory"
@@ -304,7 +304,7 @@ def test_parse_library_structure_invalid_directory_name():
         parse_library_structure_from_yaml(yaml_content)
 
 
-def test_parse_library_structure_invalid_naming_pattern():
+def test_parse_library_structure_invalid_naming_pattern() -> None:
     """Test parsing YAML with invalid naming pattern."""
     yaml_content = get_valid_base_structure()
     yaml_content["symbols"] = {
@@ -331,7 +331,7 @@ def test_parse_library_structure_invalid_naming_pattern():
         parse_library_structure_from_yaml(yaml_content)
 
 
-def test_parse_library_structure_invalid_property_type():
+def test_parse_library_structure_invalid_property_type() -> None:
     """Test parsing YAML with invalid property type."""
     yaml_content = get_valid_base_structure()
     yaml_content["symbols"] = {
@@ -361,7 +361,7 @@ def test_parse_library_structure_invalid_property_type():
         parse_library_structure_from_yaml(yaml_content)
 
 
-def test_parse_library_structure_invalid_layer():
+def test_parse_library_structure_invalid_layer() -> None:
     """Test parsing YAML with invalid layer name."""
     yaml_content = get_valid_base_structure()
     yaml_content["footprints"] = {
@@ -392,7 +392,7 @@ def test_parse_library_structure_invalid_layer():
         parse_library_structure_from_yaml(yaml_content)
 
 
-def test_parse_library_structure_tables_directory():
+def test_parse_library_structure_tables_directory() -> None:
     """Test parsing library structure with tables directory."""
     yaml_content = get_valid_base_structure()
 

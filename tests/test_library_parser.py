@@ -12,21 +12,21 @@ from kicad_lib_validator.parser.structure_parser import parse_library_structure
 
 
 @pytest.fixture
-def test_data_dir():
+def test_data_dir() -> None:
     return Path(__file__).parent / "test_kicad_lib"
 
 
 @pytest.fixture
-def test_structure_file():
+def test_structure_file() -> None:
     return Path(__file__).parent / "test_kicad_lib" / "test_library_structure.yaml"
 
 
 @pytest.fixture
-def test_structure(test_structure_file):
+def test_structure(test_structure_file) -> None:
     return parse_library_structure(test_structure_file)
 
 
-def test_parse_library(test_data_dir, test_structure):
+def test_parse_library(test_data_dir, test_structure) -> None:
     """Test parsing the library structure and contents."""
     library = parse_library(test_data_dir, test_structure)
     assert isinstance(library, KiCadLibrary)
@@ -36,7 +36,7 @@ def test_parse_library(test_data_dir, test_structure):
     assert len(library.documentation_libraries) > 0
 
 
-def test_parse_symbols(test_data_dir, test_structure):
+def test_parse_symbols(test_data_dir, test_structure) -> None:
     """Test parsing symbols from the library."""
     library = parse_library(test_data_dir, test_structure)
     assert any(len(lib.symbols) > 0 for lib in library.symbol_libraries.values())
@@ -47,7 +47,7 @@ def test_parse_symbols(test_data_dir, test_structure):
     )
 
 
-def test_parse_footprints(test_data_dir, test_structure):
+def test_parse_footprints(test_data_dir, test_structure) -> None:
     """Test parsing footprints from the library."""
     library = parse_library(test_data_dir, test_structure)
     assert any(len(lib.footprints) > 0 for lib in library.footprint_libraries.values())
@@ -58,7 +58,7 @@ def test_parse_footprints(test_data_dir, test_structure):
     )
 
 
-def test_parse_models_3d(test_data_dir, test_structure):
+def test_parse_models_3d(test_data_dir, test_structure) -> None:
     """Test parsing 3D models from the library."""
     library = parse_library(test_data_dir, test_structure)
     assert any(len(lib.models) > 0 for lib in library.model3d_libraries.values())
@@ -69,7 +69,7 @@ def test_parse_models_3d(test_data_dir, test_structure):
     )
 
 
-def test_parse_documentation(test_data_dir, test_structure):
+def test_parse_documentation(test_data_dir, test_structure) -> None:
     """Test parsing documentation from the library."""
     library = parse_library(test_data_dir, test_structure)
     assert any(len(lib.docs) > 0 for lib in library.documentation_libraries.values())
@@ -80,7 +80,7 @@ def test_parse_documentation(test_data_dir, test_structure):
     )
 
 
-def test_structure_subgroups_and_entries(test_structure):
+def test_structure_subgroups_and_entries(test_structure) -> None:
     """Test that the structure contains the expected subgroups and entries."""
     # Symbols
     assert "passives" in test_structure.symbols
