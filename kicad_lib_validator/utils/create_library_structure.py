@@ -136,7 +136,7 @@ def create_directory_structure(
         structure.library.directories.model_dump() if structure.library.directories else {}
     )
 
-    # Create main directories
+    # Create main directories and their READMEs
     for dir_type, dir_name in directories.items():
         dir_path = library_root / dir_name
         if not dir_path.exists():
@@ -145,6 +145,17 @@ def create_directory_structure(
             else:
                 logger.info(f"Creating directory: {dir_path}")
                 dir_path.mkdir(parents=True, exist_ok=True)
+        
+        # Add README.md to 3dmodels and docs directories
+        if dir_type in ["models_3d", "documentation"]:
+            readme_path = dir_path / "README.md"
+            if not readme_path.exists():
+                readme_content = f"# {dir_name}\n\nThis directory contains {dir_name} for the KiCad library."
+                if dry_run:
+                    logger.info(f"Would create README.md: {readme_path}")
+                else:
+                    logger.info(f"Creating README.md: {readme_path}")
+                    readme_path.write_text(readme_content)
 
     # Create component directories for each type
     dir_type_to_field = {
