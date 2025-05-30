@@ -209,11 +209,7 @@ def generate_library_tables(
     logger.info(f"Created/verified tables directory: {tables_dir}")
 
     # Track changes for summary
-    changes = {
-        "symbol_libs": [],
-        "footprint_libs": [],
-        "modified_files": []
-    }
+    changes = {"symbol_libs": [], "footprint_libs": [], "modified_files": []}
 
     # Initialize library dictionaries
     library_sym_libs: Dict[str, Dict[str, str]] = {}
@@ -341,4 +337,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main() 
+    main()

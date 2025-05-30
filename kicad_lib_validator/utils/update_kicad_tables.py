@@ -150,11 +150,7 @@ def update_kicad_tables(
         )
 
     # Track changes for summary
-    changes = {
-        "symbol_libs": [],
-        "footprint_libs": [],
-        "modified_files": []
-    }
+    changes = {"symbol_libs": [], "footprint_libs": [], "modified_files": []}
 
     # Update symbol library table
     sym_lib_table = kicad_config / "sym-lib-table"
