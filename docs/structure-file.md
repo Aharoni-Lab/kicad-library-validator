@@ -2,14 +2,8 @@
 
 The structure file is a YAML document that defines the rules and organization for your KiCad library. The validator uses this file to check naming conventions, required properties, directory layout, and more.
 
-## Main Sections
-- **library:** General info, directory paths, and naming conventions.
-- **symbols:** Deeply nested rules for symbol categories, subgroups, entries, naming, and required properties.
-- **footprints:** Deeply nested rules for footprint categories, subgroups, entries, naming, required layers, pads, and properties.
-- **models_3d:** Deeply nested rules for 3D model categories, subgroups, entries, and naming.
-- **documentation:** Top-level categories (e.g., passives, actives), each with their own documentation categories and required properties.
+## Basic Structure
 
-## Example
 ```yaml
 version: "1.0"
 description: "KiCad library for [Lab Name]"
@@ -46,120 +40,151 @@ library:
       case: "lower"
       include_categories: false
       category_separator: "_"
+```
 
+## Component Organization
+
+The structure file uses a hierarchical organization with `subgroups` and `entries`:
+
+### Subgroups
+- Used to create nested categories (e.g., manufacturer, series, type)
+- Can contain other subgroups or entries
+- Must have a description
+- Example:
+```yaml
 symbols:
-  Passive:
-    subgroups:
-      Capacitor:
-        subgroups:
-          Murata:
-            subgroups:
-              GRM:
-                entries:
-                  GRM188R71C104KA01:
-                    naming:
-                      pattern: "^[A-Z0-9-]+$"
-                      description_pattern: "^[A-Z0-9-]+ Capacitor$"
-                    required_properties:
-                      Reference:
-                        type: "string"
-                        pattern: "^C[0-9]+$"
-                        description: "Component reference designator"
-                      Value:
-                        type: "string"
-                        pattern: "^[0-9.]+[pPnNuUmMkK]?F$"
-                        description: "Capacitance value"
-                      Voltage:
-                        type: "string"
-                        pattern: "^[0-9.]+V$"
-                        description: "Voltage rating"
-                      Validated:
-                        type: "boolean"
-                        description: "Whether the component has been validated"
-                    pins:
-                      min_count: 2
-                      max_count: 2
-                      required_types:
-                        - "passive"
-
-footprints:
-  Capacitor:
-    subgroups:
-      SMD:
-        subgroups:
-          Murata:
-            subgroups:
-              GRM:
-                entries:
-                  GRM188R71C104KA01:
-                    naming:
-                      pattern: "^[A-Z0-9-]+$"
-                      description_pattern: "^[A-Z0-9-]+ Capacitor$"
-                    required_layers:
-                      - "F.Cu"
-                      - "B.Cu"
-                      - "F.SilkS"
-                    required_pads:
-                      min_count: 2
-                      required_types:
-                        - "smd"
-                      naming:
-                        pattern: "^[12]$"
-                        description_pattern: "^Pad [12]$"
-                    required_properties:
-                      Reference:
-                        type: "string"
-                        pattern: "^C[0-9]+$"
-                        description: "Component reference designator"
-                      Validated:
-                        type: "boolean"
-                        description: "Whether the component has been validated"
-
-models_3d:
-  Capacitor:
-    subgroups:
-      SMD:
-        subgroups:
-          Murata:
-            subgroups:
-              GRM:
-                entries:
-                  GRM188R71C104KA01:
-                    naming:
-                      pattern: "^[A-Z0-9-]+$"
-                      description_pattern: "^[A-Z0-9-]+ Capacitor$"
-                    required_properties:
-                      Description:
-                        type: "string"
-                        pattern: "^[A-Z0-9-]+ Capacitor$"
-                        description: "Component description"
-                      Validated:
-                        type: "boolean"
-                        description: "Whether the component has been validated"
-
-documentation:
-  passives:
+  passives:  # Top-level group
     description: "Passive components"
-    categories:
-      datasheets:
-        description: "Component datasheets"
-        required_properties:
-          title:
-            type: "string"
-          url:
-            type: "string"
-            pattern: "^https?://.+$"
+    subgroups:
+      resistors:  # Nested group
+        description: "Resistors"
+        subgroups:
+          smd:  # Further nesting
+            description: "SMD Resistors"
+```
 
-## Understanding Subgroups and Entries
-- **subgroups:** Used to create nested categories (e.g., manufacturer, series, type).
-- **entries:** The actual component definitions, each with its own naming and property rules.
-- You can nest as many levels of `subgroups` as needed for your organization.
-- Each `entry` can define its own `naming`, `required_properties`, and other requirements (like `pins` for symbols, `required_layers` for footprints).
+### Entries
+- Define the actual component rules and requirements
+- Must be under a subgroup
+- Can contain naming rules, required properties, and other constraints
+- Example:
+```yaml
+symbols:
+  passives:
+    subgroups:
+      resistors:
+        entries:
+          standard:
+            description: "Standard resistors"
+            naming:
+              pattern: "^R[0-9]+$"
+              description_pattern: "^[0-9.]+[kM]?[Ω]? Resistor$"
+```
 
-## Customization
-- **Add or remove subgroups/entries** as needed for your library.
-- **Adjust patterns** to match your naming conventions.
-- **Specify required and optional properties** for each component type.
-- **Use the `documentation` section** to define rules for datasheets and other docs, organized by top-level categories.
+## Available Rules and Constraints
+
+### Naming Rules
+```yaml
+naming:
+  pattern: "^[A-Z0-9-]+$"  # Regex pattern for component names
+  description_pattern: "^[A-Z0-9-]+ Component$"  # Regex pattern for descriptions
+```
+
+### Property Rules
+```yaml
+required_properties:
+  Reference:
+    type: "string"  # string, number, boolean, url, email
+    pattern: "^R[0-9]+$"  # Optional regex pattern
+    description: "Component reference designator"
+  Validated:
+    type: "string"
+    pattern: "^(Yes|No)$"  # For boolean-like properties
+    description: "Whether the component has been validated"
+```
+
+### Pin Rules (for Symbols)
+```yaml
+pins:
+  min_count: 2
+  max_count: 2
+  required_types:
+    - "passive"
+    - "power"
+    - "input"
+    - "output"
+  naming:
+    pattern: "^[12]$"
+    description_pattern: "^Pin [12]$"
+```
+
+### Layer Rules (for Footprints)
+```yaml
+required_layers:
+  - "F.Cu"
+  - "B.Cu"
+  - "F.SilkS"
+  - "B.SilkS"
+  - "F.Mask"
+  - "B.Mask"
+  - "F.Paste"
+  - "B.Paste"
+  - "F.CrtYd"
+  - "B.CrtYd"
+  - "*.Cu"
+```
+
+### Pad Rules (for Footprints)
+```yaml
+required_pads:
+  min_count: 2
+  max_count: 2
+  required_types:
+    - "smd"
+    - "thru_hole"
+  naming:
+    pattern: "^[12]$"
+    description_pattern: "^Pad [12]$"
+```
+
+## Property Types and Patterns
+
+### String Properties
+- Use regex patterns to validate format
+- Example: `pattern: "^[A-Z0-9-]+$"`
+
+### Boolean Properties
+- Use string type with specific pattern
+- Example: `pattern: "^(Yes|No)$"`
+
+### URL Properties
+- Use string type with URL pattern
+- Example: `pattern: "^https?://.+$"`
+
+### Number Properties
+- Use string type with number pattern
+- Example: `pattern: "^[0-9.]+[kM]?[Ω]?$"`
+
+## Best Practices
+
+1. **Organization**
+   - Use meaningful group names
+   - Keep hierarchy depth reasonable (3-4 levels max)
+   - Use consistent naming across groups
+
+2. **Validation Rules**
+   - Make patterns specific but not overly restrictive
+   - Include clear descriptions for all properties
+   - Use consistent patterns across similar components
+
+3. **Documentation**
+   - Add descriptions to all groups and entries
+   - Document any special requirements or exceptions
+   - Keep property descriptions clear and concise
+
+4. **Maintenance**
+   - Review and update patterns as needed
+   - Keep property requirements up to date
+   - Document any changes to the structure
 
 See the template in `templates/library/structure.yaml` for a full example. 
