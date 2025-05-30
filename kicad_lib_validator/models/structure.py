@@ -64,8 +64,8 @@ class LibraryInfo(BaseModel):
     @classmethod
     def validate_prefix(cls, v: str) -> str:
         """Validate library prefix."""
-        if not re.match(r"^[A-Za-z0-9]+$", v):
-            raise ValueError("Library prefix must contain only alphanumeric characters")
+        if not re.match(r"^[A-Za-z0-9.]+$", v):
+            raise ValueError("Library prefix must contain only alphanumeric characters and periods")
         return v
 
     @field_validator("maintainer")
