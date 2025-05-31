@@ -97,25 +97,67 @@ def parse_symbol_file(
                                     if str(item[0]) == "symbol":
                                         symbol_name = str(item[1])
                                         properties = {}
-                                        for prop in item[2:]:
-                                            if (
-                                                isinstance(prop, list)
-                                                and prop
-                                                and str(prop[0]) == "property"
-                                            ):
-                                                prop_name = str(prop[1])
-                                                prop_value = str(prop[2])
-                                                properties[prop_name] = prop_value
+                                        pins = []
+                                        # Find the symbol definition that contains pins (usually ends with _1_1)
+                                        for subitem in item[2:]:
+                                            if isinstance(subitem, list) and subitem:
+                                                if str(subitem[0]) == "symbol" and str(subitem[1]).endswith("_1_1"):
+                                                    # Extract pins from this symbol definition
+                                                    for pin_item in subitem[2:]:
+                                                        if isinstance(pin_item, list) and pin_item and str(pin_item[0]) == "pin":
+                                                            pin_type = str(pin_item[1])
+                                                            pin_name = None
+                                                            pin_number = None
+                                                            pin_position = None
+                                                            pin_length = None
+                                                            pin_orientation = None
+                                                            pin_effects = {}
+                                                            
+                                                            for pin_prop in pin_item[2:]:
+                                                                if isinstance(pin_prop, list) and pin_prop:
+                                                                    if str(pin_prop[0]) == "name":
+                                                                        pin_name = str(pin_prop[1])
+                                                                    elif str(pin_prop[0]) == "number":
+                                                                        pin_number = str(pin_prop[1])
+                                                                    elif str(pin_prop[0]) == "at":
+                                                                        # at has format (x y angle)
+                                                                        pin_position = {"x": float(pin_prop[1]), "y": float(pin_prop[2])}
+                                                                        pin_orientation = float(pin_prop[3]) if len(pin_prop) > 3 else None
+                                                                    elif str(pin_prop[0]) == "length":
+                                                                        pin_length = float(pin_prop[1])
+                                                                    elif str(pin_prop[0]) == "effects":
+                                                                        for effect in pin_prop[1:]:
+                                                                            if isinstance(effect, list) and effect:
+                                                                                pin_effects[str(effect[0])] = effect[1:]
+                                                            
+                                                            if pin_name is not None and pin_number is not None and pin_position is not None and pin_length is not None:
+                                                                from kicad_lib_validator.models.symbol import Pin
+                                                                from kicad_lib_validator.models.base import Position
+                                                                
+                                                                pins.append(Pin(
+                                                                    name=pin_name,
+                                                                    number=pin_number,
+                                                                    type=pin_type,
+                                                                    position=Position(**pin_position),
+                                                                    length=pin_length,
+                                                                    orientation=pin_orientation,
+                                                                    effects=pin_effects
+                                                                ))
+                                                elif str(subitem[0]) == "property":
+                                                    prop_name = str(subitem[1])
+                                                    prop_value = str(subitem[2])
+                                                    properties[prop_name] = prop_value
                                         symbols.append(
                                             Symbol(
                                                 name=symbol_name,
                                                 library_name=full_library_name,
                                                 properties=properties,
                                                 categories=categories,
+                                                pins=pins
                                             )
                                         )
                                         logging.debug(
-                                            f"Extracted symbol: {symbol_name} with properties: {properties}"
+                                            f"Extracted symbol: {symbol_name} with properties: {properties} and pins: {pins}"
                                         )
             except ValueError as e:
                 logging.error(f"Error resolving relative path for {file_path}: {e}")
