@@ -18,31 +18,46 @@ def _find_matching_entry(symbol: Symbol, structure: LibraryStructure) -> Optiona
     """Find the matching component entry in the structure for a symbol."""
     if not structure.symbols:
         return None
-
+    
     # Get the library name from the symbol
     library_name = symbol.library_name
     if not library_name or library_name not in structure.symbols:
         return None
-
+    
     # Get the component group for this library
     component_group = structure.symbols[library_name]
-
+    
+    def check_entry_categories(entry_categories: List[str], symbol_categories: List[str]) -> bool:
+        """Check if symbol categories match the entry categories hierarchy."""
+        # If entry has no categories, it matches any symbol
+        if not entry_categories:
+            return True
+        
+        # If symbol has no categories, it only matches entries with no categories
+        if not symbol_categories:
+            return not entry_categories
+        
+        # Check if symbol categories start with the entry categories
+        # This allows for hierarchical matching (e.g., "passive/capacitor" matches "passive")
+        return all(
+            symbol_cat == entry_cat 
+            for symbol_cat, entry_cat in zip(symbol_categories, entry_categories)
+        )
+    
     # Check entries in this group
     if component_group.entries:
         for entry_name, entry in component_group.entries.items():
-            if entry.categories and symbol.categories:
-                if all(cat in symbol.categories for cat in entry.categories):
-                    return entry
-
+            if check_entry_categories(entry.categories, symbol.categories):
+                return entry
+    
     # Check subgroups recursively
     if component_group.subgroups:
         for subgroup in component_group.subgroups.values():
             if subgroup.entries:
                 for entry_name, entry in subgroup.entries.items():
-                    if entry.categories and symbol.categories:
-                        if all(cat in symbol.categories for cat in entry.categories):
-                            return entry
-
+                    if check_entry_categories(entry.categories, symbol.categories):
+                        return entry
+    
     return None
 
 

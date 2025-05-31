@@ -30,45 +30,46 @@ def _find_matching_entry(
     """Find the matching component entry in the structure for a footprint."""
     if not structure.footprints:
         return None
-
+    
     # Get the library name from the footprint
     library_name = footprint.library_name
     if not library_name or library_name not in structure.footprints:
         return None
-
+    
     # Get the component group for this library
     component_group = structure.footprints[library_name]
-
+    
+    def check_entry_categories(entry_categories: List[str], footprint_categories: List[str]) -> bool:
+        """Check if footprint categories match the entry categories hierarchy."""
+        # If entry has no categories, it matches any footprint
+        if not entry_categories:
+            return True
+        
+        # If footprint has no categories, it only matches entries with no categories
+        if not footprint_categories:
+            return not entry_categories
+        
+        # Check if footprint categories start with the entry categories
+        # This allows for hierarchical matching (e.g., "passive/capacitor" matches "passive")
+        return all(
+            footprint_cat == entry_cat 
+            for footprint_cat, entry_cat in zip(footprint_categories, entry_categories)
+        )
+    
     # Check entries in this group
     if component_group.entries:
         for entry_name, entry in component_group.entries.items():
-            if entry.categories:
-                if entry.categories[0] == footprint.category and (
-                    len(entry.categories) == 1
-                    or (
-                        footprint.subcategory
-                        and len(entry.categories) > 1
-                        and entry.categories[1] == footprint.subcategory
-                    )
-                ):
-                    return entry
-
+            if check_entry_categories(entry.categories, [footprint.category, footprint.subcategory]):
+                return entry
+    
     # Check subgroups recursively
     if component_group.subgroups:
         for subgroup in component_group.subgroups.values():
             if subgroup.entries:
                 for entry_name, entry in subgroup.entries.items():
-                    if entry.categories:
-                        if entry.categories[0] == footprint.category and (
-                            len(entry.categories) == 1
-                            or (
-                                footprint.subcategory
-                                and len(entry.categories) > 1
-                                and entry.categories[1] == footprint.subcategory
-                            )
-                        ):
-                            return entry
-
+                    if check_entry_categories(entry.categories, [footprint.category, footprint.subcategory]):
+                        return entry
+    
     return None
 
 
