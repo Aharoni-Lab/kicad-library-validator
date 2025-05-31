@@ -97,7 +97,7 @@ class LibraryInfo(BaseModel):
 class PropertyDefinition(BaseModel):
     """Definition of a property with its requirements."""
 
-    description: str
+    description: Optional[str] = None
     required: bool = True
     pattern: Optional[str] = None
     ki_field_name: Optional[str] = (
