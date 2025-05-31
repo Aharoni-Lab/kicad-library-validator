@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from kicad_lib_validator.validator import KiCadLibraryValidator
 from kicad_lib_validator.models.validation import ValidationResult
+from kicad_lib_validator.validator import KiCadLibraryValidator
 
 
 @pytest.fixture

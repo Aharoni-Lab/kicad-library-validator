@@ -16,15 +16,33 @@ from kicad_lib_validator.models.validation import ValidationResult
 
 def _find_matching_entry(symbol: Symbol, structure: LibraryStructure) -> Optional[ComponentEntry]:
     """Find the matching component entry in the structure for a symbol."""
-    if not structure.components:
+    if not structure.symbols:
         return None
-    for entry in structure.components:
-        # Ensure entry is a ComponentEntry
-        if not isinstance(entry, ComponentEntry):
-            continue
-        if entry.categories and symbol.categories:
-            if all(cat in symbol.categories for cat in entry.categories):
-                return entry
+
+    # Get the library name from the symbol
+    library_name = symbol.library_name
+    if not library_name or library_name not in structure.symbols:
+        return None
+
+    # Get the component group for this library
+    component_group = structure.symbols[library_name]
+
+    # Check entries in this group
+    if component_group.entries:
+        for entry_name, entry in component_group.entries.items():
+            if entry.categories and symbol.categories:
+                if all(cat in symbol.categories for cat in entry.categories):
+                    return entry
+
+    # Check subgroups recursively
+    if component_group.subgroups:
+        for subgroup in component_group.subgroups.values():
+            if subgroup.entries:
+                for entry_name, entry in subgroup.entries.items():
+                    if entry.categories and symbol.categories:
+                        if all(cat in symbol.categories for cat in entry.categories):
+                            return entry
+
     return None
 
 

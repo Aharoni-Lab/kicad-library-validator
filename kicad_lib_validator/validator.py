@@ -14,6 +14,7 @@ from kicad_lib_validator.models import (
     Model3D,
     Symbol,
 )
+from kicad_lib_validator.models.validation import ValidationResult
 from kicad_lib_validator.parser.library_parser import (
     _find_documentation,
     _find_footprints,
@@ -25,7 +26,6 @@ from kicad_lib_validator.validators.document_validator import validate_documenta
 from kicad_lib_validator.validators.footprint_validator import validate_footprint
 from kicad_lib_validator.validators.model3d_validator import validate_model3d
 from kicad_lib_validator.validators.symbol_validator import validate_symbol
-from kicad_lib_validator.models.validation import ValidationResult
 
 
 class KiCadLibraryValidator:
@@ -113,11 +113,15 @@ class KiCadLibraryValidator:
         for symbol in symbols:
             results = validate_symbol(symbol, self.structure)
             # Convert ValidationResult to dict if needed
-            if hasattr(results, 'errors') and hasattr(results, 'warnings') and hasattr(results, 'successes'):
+            if (
+                hasattr(results, "errors")
+                and hasattr(results, "warnings")
+                and hasattr(results, "successes")
+            ):
                 results_dict = {
-                    'errors': list(getattr(results, 'errors', [])),
-                    'warnings': list(getattr(results, 'warnings', [])),
-                    'successes': list(getattr(results, 'successes', [])),
+                    "errors": list(getattr(results, "errors", [])),
+                    "warnings": list(getattr(results, "warnings", [])),
+                    "successes": list(getattr(results, "successes", [])),
                 }
             else:
                 results_dict = results
@@ -134,11 +138,15 @@ class KiCadLibraryValidator:
         footprints = _find_footprints(self.library_path, self.structure)
         for footprint in footprints:
             results = validate_footprint(footprint, self.structure)
-            if hasattr(results, 'errors') and hasattr(results, 'warnings') and hasattr(results, 'successes'):
+            if (
+                hasattr(results, "errors")
+                and hasattr(results, "warnings")
+                and hasattr(results, "successes")
+            ):
                 results_dict = {
-                    'errors': list(getattr(results, 'errors', [])),
-                    'warnings': list(getattr(results, 'warnings', [])),
-                    'successes': list(getattr(results, 'successes', [])),
+                    "errors": list(getattr(results, "errors", [])),
+                    "warnings": list(getattr(results, "warnings", [])),
+                    "successes": list(getattr(results, "successes", [])),
                 }
             else:
                 results_dict = results

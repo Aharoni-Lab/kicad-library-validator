@@ -28,22 +28,47 @@ def _find_matching_entry(
     footprint: Footprint, structure: LibraryStructure
 ) -> Optional[ComponentEntry]:
     """Find the matching component entry in the structure for a footprint."""
-    if not structure.components:
+    if not structure.footprints:
         return None
-    for entry in structure.components:
-        # Ensure entry is a ComponentEntry
-        if not isinstance(entry, ComponentEntry):
-            continue
-        if entry.categories:
-            if entry.categories[0] == footprint.category and (
-                len(entry.categories) == 1
-                or (
-                    footprint.subcategory
-                    and len(entry.categories) > 1
-                    and entry.categories[1] == footprint.subcategory
-                )
-            ):
-                return entry
+
+    # Get the library name from the footprint
+    library_name = footprint.library_name
+    if not library_name or library_name not in structure.footprints:
+        return None
+
+    # Get the component group for this library
+    component_group = structure.footprints[library_name]
+
+    # Check entries in this group
+    if component_group.entries:
+        for entry_name, entry in component_group.entries.items():
+            if entry.categories:
+                if entry.categories[0] == footprint.category and (
+                    len(entry.categories) == 1
+                    or (
+                        footprint.subcategory
+                        and len(entry.categories) > 1
+                        and entry.categories[1] == footprint.subcategory
+                    )
+                ):
+                    return entry
+
+    # Check subgroups recursively
+    if component_group.subgroups:
+        for subgroup in component_group.subgroups.values():
+            if subgroup.entries:
+                for entry_name, entry in subgroup.entries.items():
+                    if entry.categories:
+                        if entry.categories[0] == footprint.category and (
+                            len(entry.categories) == 1
+                            or (
+                                footprint.subcategory
+                                and len(entry.categories) > 1
+                                and entry.categories[1] == footprint.subcategory
+                            )
+                        ):
+                            return entry
+
     return None
 
 
