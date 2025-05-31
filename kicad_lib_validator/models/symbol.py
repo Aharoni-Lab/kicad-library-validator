@@ -18,7 +18,15 @@ class Pin(BaseModel):
 
 
 class Symbol(BaseModel):
-    """Represents a KiCad symbol."""
+    """Represents a KiCad symbol.
+
+    Required KiCad fields:
+    - Reference: Component reference designator (e.g., R, C, U)
+    - Value: Component value or part number
+    - Footprint: Associated footprint name
+    - Datasheet: Link to component datasheet
+    - Description: Component description
+    """
 
     name: str
     library_name: str  # The name of the library this symbol belongs to

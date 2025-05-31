@@ -236,30 +236,75 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
     def _format_validation_results(self, results: Dict[str, List[str]]) -> str:
         """Format validation results as markdown."""
         lines = []
-        for msg in results.get("successes", []):
-            lines.append(f"    - ✅ {msg}")
-        for msg in results.get("warnings", []):
-            lines.append(f"    - ⚠️ {msg}")
-        for msg in results.get("errors", []):
-            lines.append(f"    - ❌ {msg}")
+        if results.get("successes"):
+            lines.append("  - ✅ **Passing Validations:**")
+            for msg in results["successes"]:
+                lines.append(f"    - {msg}")
+        if results.get("warnings"):
+            lines.append("  - ⚠️ **Warnings:**")
+            for msg in results["warnings"]:
+                lines.append(f"    - {msg}")
+        if results.get("errors"):
+            lines.append("  - ❌ **Errors:**")
+            for msg in results["errors"]:
+                lines.append(f"    - {msg}")
         return "\n".join(lines)
 
-    def _group_by_category(self, items: List[Any]) -> Dict[str, Dict[str, List[Any]]]:
-        """Group items by their category and subcategory."""
-        grouped: Dict[str, Dict[str, List[Any]]] = {}
+    def _group_by_category(self, items: List[Any]) -> Dict[str, Any]:
+        """Group items by their full category path."""
+        grouped: Dict[str, Any] = {}
         for item in items:
             # Get categories list, defaulting to ["Uncategorized"] if None
             categories = item.categories or ["Uncategorized"]
-            # Use first category as main category, second as subcategory
-            category = categories[0] if categories else "Uncategorized"
-            subcategory = categories[1] if len(categories) > 1 else "Uncategorized"
-            
-            if category not in grouped:
-                grouped[category] = {}
-            if subcategory not in grouped[category]:
-                grouped[category][subcategory] = []
-            grouped[category][subcategory].append(item)
+
+            # Start at the root of our grouped dict
+            current = grouped
+
+            # Traverse the category path
+            for i, category in enumerate(categories):
+                if i == len(categories) - 1:
+                    # Last category - store the item
+                    if category not in current:
+                        current[category] = []
+                    current[category].append(item)
+                else:
+                    # Not the last category - create/use subgroup
+                    if category not in current:
+                        current[category] = {}
+                    current = current[category]
+
         return grouped
+
+    def _format_category_section(self, items: Dict[str, Any], indent: int = 0) -> List[str]:
+        """Format a category section with proper indentation."""
+        lines = []
+        for name, content in sorted(items.items()):
+            if isinstance(content, list):
+                # This is a leaf node with items
+                lines.append(f"{'#' * (indent + 4)} {name}")
+                for item in sorted(content, key=lambda x: x.name):
+                    lines.append(f"- **{item.name}**")
+                    # Validate using the full category path
+                    if item.categories:
+                        results = self._validate_item(item)
+                        lines.append(self._format_validation_results(results))
+            else:
+                # This is a subgroup
+                lines.append(f"{'#' * (indent + 3)} {name}")
+                lines.extend(self._format_category_section(content, indent + 1))
+        return lines
+
+    def _validate_item(self, item: Any) -> Dict[str, List[str]]:
+        """Validate an item based on its type."""
+        if isinstance(item, Symbol):
+            return validate_symbol(item, self.structure)
+        elif isinstance(item, Footprint):
+            return validate_footprint(item, self.structure)
+        elif isinstance(item, Model3D):
+            return validate_model3d(item, self.structure)
+        elif isinstance(item, Documentation):
+            return validate_documentation(item, self.structure)
+        return {"errors": ["Unknown item type"], "warnings": [], "successes": []}
 
     def _generate_symbols_section(self, changed_files: Dict[str, FileStatus]) -> str:
         """Generate the symbols section with validation results."""
@@ -288,18 +333,7 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         if all_symbols:
             sections.append("\n### Symbol Validation Results")
             grouped_symbols = self._group_by_category(all_symbols)
-
-            for category, subcategories in sorted(grouped_symbols.items()):
-                sections.append(f"\n#### {category}")
-                for subcategory, symbols in sorted(subcategories.items()):
-                    sections.append(f"\n##### {subcategory}")
-                    for symbol in sorted(symbols, key=lambda x: x.name):
-                        sections.append(f"- **{symbol.name}**")
-                        # Validate symbols using their categories list
-                        if symbol.categories and len(symbol.categories) >= 2:
-                            if symbol.categories[0] == category and symbol.categories[1] == subcategory:
-                                results = validate_symbol(symbol, self.structure)
-                                sections.append(self._format_validation_results(results))
+            sections.extend(self._format_category_section(grouped_symbols))
         else:
             sections.append("No symbols found to validate.")
 
@@ -332,18 +366,7 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         if all_footprints:
             sections.append("\n### Footprint Validation Results")
             grouped_footprints = self._group_by_category(all_footprints)
-
-            for category, subcategories in sorted(grouped_footprints.items()):
-                sections.append(f"\n#### {category}")
-                for subcategory, footprints in sorted(subcategories.items()):
-                    sections.append(f"\n##### {subcategory}")
-                    for footprint in sorted(footprints, key=lambda x: x.name):
-                        sections.append(f"- **{footprint.name}**")
-                        # Validate footprints using their categories list
-                        if footprint.categories and len(footprint.categories) >= 2:
-                            if footprint.categories[0] == category and footprint.categories[1] == subcategory:
-                                results = validate_footprint(footprint, self.structure)
-                                sections.append(self._format_validation_results(results))
+            sections.extend(self._format_category_section(grouped_footprints))
         else:
             sections.append("No footprints found to validate.")
 
@@ -376,18 +399,7 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         if all_models:
             sections.append("\n### 3D Model Validation Results")
             grouped_models = self._group_by_category(all_models)
-
-            for category, subcategories in sorted(grouped_models.items()):
-                sections.append(f"\n#### {category}")
-                for subcategory, models in sorted(subcategories.items()):
-                    sections.append(f"\n##### {subcategory}")
-                    for model in sorted(models, key=lambda x: x.name):
-                        sections.append(f"- **{model.name}**")
-                        # Validate 3D models using their categories list
-                        if model.categories and len(model.categories) >= 2:
-                            if model.categories[0] == category and model.categories[1] == subcategory:
-                                results = validate_model3d(model, self.structure)
-                                sections.append(self._format_validation_results(results))
+            sections.extend(self._format_category_section(grouped_models))
         else:
             sections.append("No 3D models found to validate.")
 
@@ -420,18 +432,7 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         if all_docs:
             sections.append("\n### Documentation Validation Results")
             grouped_docs = self._group_by_category(all_docs)
-
-            for category, subcategories in sorted(grouped_docs.items()):
-                sections.append(f"\n#### {category}")
-                for subcategory, docs in sorted(subcategories.items()):
-                    sections.append(f"\n##### {subcategory}")
-                    for doc in sorted(docs, key=lambda x: x.name):
-                        sections.append(f"- **{doc.name}**")
-                        # Validate documentation using their categories list
-                        if doc.categories and len(doc.categories) >= 2:
-                            if doc.categories[0] == category and doc.categories[1] == subcategory:
-                                results = validate_documentation(doc, self.structure)
-                                sections.append(self._format_validation_results(results))
+            sections.extend(self._format_category_section(grouped_docs))
         else:
             sections.append("No documentation found to validate.")
 

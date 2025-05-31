@@ -214,6 +214,12 @@ class ComponentEntry(BaseModel):
     pins: Optional[PinRequirements] = None
     required_layers: Optional[List[str]] = None
     required_pads: Optional[PinRequirements] = None
+    reference_prefix: Optional[str] = (
+        None  # Expected prefix for Reference field (e.g., "R" for resistors)
+    )
+    reference_pattern: Optional[str] = (
+        None  # Expected pattern for Reference field (e.g., "REF**" for footprints)
+    )
 
     @field_validator("required_layers")
     @classmethod
@@ -236,6 +242,26 @@ class ComponentEntry(BaseModel):
             invalid_layers = [l for l in v if l not in valid_layers]
             if invalid_layers:
                 raise ValueError(f"Invalid layers: {', '.join(invalid_layers)}")
+        return v
+
+    @field_validator("reference_prefix")
+    @classmethod
+    def validate_reference_prefix(cls, v: Optional[str]) -> Optional[str]:
+        """Validate reference prefix if provided."""
+        if v is not None:
+            if not re.match(r"^[A-Za-z0-9]+$", v):
+                raise ValueError("Reference prefix must contain only alphanumeric characters")
+        return v
+
+    @field_validator("reference_pattern")
+    @classmethod
+    def validate_reference_pattern(cls, v: Optional[str]) -> Optional[str]:
+        """Validate reference pattern if provided."""
+        if v is not None:
+            try:
+                re.compile(v)
+            except re.error as e:
+                raise ValueError(f"Invalid reference pattern: {e}")
         return v
 
 

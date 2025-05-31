@@ -26,6 +26,12 @@ def validate_symbol(symbol: Symbol, structure: LibraryStructure) -> Dict[str, Li
     """
     result: Dict[str, List[str]] = {"errors": [], "warnings": [], "successes": []}
 
+    # Check for KiCad required fields
+    required_fields = ["Reference", "Value", "Footprint", "Datasheet", "Description"]
+    for field in required_fields:
+        if field not in symbol.properties:
+            result["errors"].append(f"Missing required KiCad field: {field}")
+
     # Require categories for lookup
     if (
         not symbol.categories
@@ -69,6 +75,18 @@ def validate_symbol(symbol: Symbol, structure: LibraryStructure) -> Dict[str, Li
             )
             return result
 
+    # Validate Reference field prefix if specified in structure
+    if entry.reference_prefix and "Reference" in symbol.properties:
+        ref_value = symbol.properties["Reference"]
+        if not ref_value.startswith(entry.reference_prefix):
+            result["errors"].append(
+                f"Reference '{ref_value}' does not start with required prefix: {entry.reference_prefix}"
+            )
+        else:
+            result["successes"].append(
+                f"Reference '{ref_value}' has correct prefix: {entry.reference_prefix}"
+            )
+
     # Validate symbol name
     if entry.naming and entry.naming.pattern:
         pattern_str = entry.naming.pattern
@@ -102,7 +120,7 @@ def validate_symbol(symbol: Symbol, structure: LibraryStructure) -> Dict[str, Li
     # Check for unknown properties
     if entry.required_properties:
         for prop_name in symbol.properties:
-            if prop_name not in entry.required_properties:
+            if prop_name not in entry.required_properties and prop_name not in required_fields:
                 result["warnings"].append(f"Unknown property: {prop_name}")
 
     return result

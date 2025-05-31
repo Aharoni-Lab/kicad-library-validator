@@ -32,9 +32,15 @@ def validate_footprint(footprint: Footprint, structure: LibraryStructure) -> Dic
         structure: Library structure definition
 
     Returns:
-        Dictionary containing validation results
+        Dictionary containing lists of errors, warnings, and successes
     """
     result: Dict[str, List[str]] = {"errors": [], "warnings": [], "successes": []}
+
+    # Check for KiCad required fields
+    required_fields = ["Reference", "Value", "Datasheet", "Description"]
+    for field in required_fields:
+        if field not in footprint.properties:
+            result["errors"].append(f"Missing required KiCad field: {field}")
 
     # Require categories for lookup
     if (
@@ -81,6 +87,18 @@ def validate_footprint(footprint: Footprint, structure: LibraryStructure) -> Dic
             )
             return result
 
+    # Validate Reference field pattern if specified in structure
+    if entry.reference_pattern and "Reference" in footprint.properties:
+        ref_value = footprint.properties["Reference"]
+        if not re.match(entry.reference_pattern, ref_value):
+            result["errors"].append(
+                f"Reference '{ref_value}' does not match required pattern: {entry.reference_pattern}"
+            )
+        else:
+            result["successes"].append(
+                f"Reference '{ref_value}' matches required pattern: {entry.reference_pattern}"
+            )
+
     # Validate footprint name
     if entry.naming and entry.naming.pattern:
         pattern_str = entry.naming.pattern
@@ -114,7 +132,7 @@ def validate_footprint(footprint: Footprint, structure: LibraryStructure) -> Dic
     # Check for unknown properties
     if entry.required_properties:
         for prop_name in footprint.properties:
-            if prop_name not in entry.required_properties:
+            if prop_name not in entry.required_properties and prop_name not in required_fields:
                 result["warnings"].append(f"Unknown property: {prop_name}")
 
     # Validate required layers

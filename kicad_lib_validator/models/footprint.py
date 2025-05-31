@@ -12,8 +12,8 @@ class Pad(BaseModel):
     type: str  # e.g., "thru_hole", "smd", etc.
     position: Position
     size: Size
-    layers: List[str]
-    drill: Optional[Dict] = None
+    layers: List[str] = Field(default_factory=list)
+    drill: Optional[Position] = None
     net: Optional[str] = None
     pad_type: Optional[str] = None
     roundrect_rratio: Optional[float] = None
@@ -21,7 +21,14 @@ class Pad(BaseModel):
 
 
 class Footprint(BaseModel):
-    """Represents a KiCad footprint."""
+    """Represents a KiCad footprint.
+
+    Required KiCad fields:
+    - Reference: Component reference designator (must be REF**)
+    - Value: Component value or part number
+    - Datasheet: Link to component datasheet
+    - Description: Component description
+    """
 
     name: str
     library_name: str  # The name of the library this footprint belongs to
