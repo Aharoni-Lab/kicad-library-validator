@@ -141,7 +141,19 @@ class KiCadLibraryValidator:
         symbols = _find_symbols(self.library_path, self.structure)
         for symbol in symbols:
             results = validate_symbol(symbol, self.structure)
-            self._add_validation_results(results, f"Symbol '{symbol.name}'")
+            if (
+                hasattr(results, "errors")
+                and hasattr(results, "warnings")
+                and hasattr(results, "successes")
+            ):
+                results_dict = {
+                    "errors": list(getattr(results, "errors", [])),
+                    "warnings": list(getattr(results, "warnings", [])),
+                    "successes": list(getattr(results, "successes", [])),
+                }
+            else:
+                results_dict = {"errors": [], "warnings": [], "successes": []}
+            self._add_validation_results(results_dict, f"Symbol '{symbol.name}'")
 
     def _validate_footprints(self) -> None:
         """Validate footprint files."""
@@ -154,7 +166,19 @@ class KiCadLibraryValidator:
         footprints = _find_footprints(self.library_path, self.structure)
         for footprint in footprints:
             results = validate_footprint(footprint, self.structure)
-            self._add_validation_results(results, f"Footprint '{footprint.name}'")
+            if (
+                hasattr(results, "errors")
+                and hasattr(results, "warnings")
+                and hasattr(results, "successes")
+            ):
+                results_dict = {
+                    "errors": list(getattr(results, "errors", [])),
+                    "warnings": list(getattr(results, "warnings", [])),
+                    "successes": list(getattr(results, "successes", [])),
+                }
+            else:
+                results_dict = {"errors": [], "warnings": [], "successes": []}
+            self._add_validation_results(results_dict, f"Footprint '{footprint.name}'")
 
     def _validate_3d_models(self) -> None:
         """Validate 3D model files."""
@@ -167,7 +191,19 @@ class KiCadLibraryValidator:
         models = _find_models_3d(self.library_path, self.structure)
         for model in models:
             results = validate_model3d(model, self.structure)
-            self._add_validation_results(results, f"3D Model '{model.name}'")
+            if (
+                hasattr(results, "errors")
+                and hasattr(results, "warnings")
+                and hasattr(results, "successes")
+            ):
+                results_dict = {
+                    "errors": list(getattr(results, "errors", [])),
+                    "warnings": list(getattr(results, "warnings", [])),
+                    "successes": list(getattr(results, "successes", [])),
+                }
+            else:
+                results_dict = {"errors": [], "warnings": [], "successes": []}
+            self._add_validation_results(results_dict, f"3D Model '{model.name}'")
 
     def _validate_documentation(self) -> None:
         """Validate documentation files."""
@@ -180,7 +216,19 @@ class KiCadLibraryValidator:
         docs = _find_documentation(self.library_path, self.structure)
         for doc in docs:
             results = validate_documentation(doc, self.structure)
-            self._add_validation_results(results, f"Documentation '{doc.name}'")
+            if (
+                hasattr(results, "errors")
+                and hasattr(results, "warnings")
+                and hasattr(results, "successes")
+            ):
+                results_dict = {
+                    "errors": list(getattr(results, "errors", [])),
+                    "warnings": list(getattr(results, "warnings", [])),
+                    "successes": list(getattr(results, "successes", [])),
+                }
+            else:
+                results_dict = {"errors": [], "warnings": [], "successes": []}
+            self._add_validation_results(results_dict, f"Documentation '{doc.name}'")
 
     def _add_validation_results(self, results: Dict[str, List[str]], context: str) -> None:
         """Add validation results to the overall result."""

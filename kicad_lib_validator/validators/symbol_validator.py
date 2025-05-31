@@ -11,118 +11,84 @@ from kicad_lib_validator.models.structure import (
     LibraryStructure,
 )
 from kicad_lib_validator.models.symbol import Symbol
+from kicad_lib_validator.validator import ValidationResult
 
 
-def validate_symbol(symbol: Symbol, structure: LibraryStructure) -> Dict[str, List[str]]:
-    """
-    Validate a symbol against the library structure.
+def _find_matching_entry(symbol: Symbol, structure: LibraryStructure) -> Optional[ComponentEntry]:
+    """Find the matching component entry in the structure for a symbol."""
+    if not structure.components:
+        return None
+    for entry in structure.components:
+        # Ensure entry is a ComponentEntry
+        if not isinstance(entry, ComponentEntry):
+            continue
+        if entry.categories and symbol.categories:
+            if all(cat in symbol.categories for cat in entry.categories):
+                return entry
+    return None
 
-    Args:
-        symbol: Symbol to validate
-        structure: Library structure definition
 
-    Returns:
-        Dictionary containing lists of errors, warnings, and successes
-    """
-    result: Dict[str, List[str]] = {"errors": [], "warnings": [], "successes": []}
-
-    # Check for KiCad required fields
-    required_fields = ["Reference", "Value", "Footprint", "Datasheet", "Description"]
+def validate_symbol(symbol: Symbol, structure: LibraryStructure) -> ValidationResult:
+    """Validate a symbol against the library structure."""
+    result = ValidationResult()
+    required_fields = ["Reference", "Value", "Footprint", "Datasheet", "Description", "ki_keywords"]
     for field in required_fields:
         if field not in symbol.properties:
-            result["errors"].append(f"Missing required KiCad field: {field}")
-
-    # Require categories for lookup
-    if (
-        not symbol.categories
-        or not isinstance(symbol.categories, list)
-        or len(symbol.categories) == 0
-    ):
-        result["errors"].append("Symbol must specify a non-empty categories list for validation.")
+            result.add_error(f"Missing required field: {field}")
+    entry = _find_matching_entry(symbol, structure)
+    if not entry:
+        result.add_warning(f"No matching component entry found for symbol {symbol.name}")
         return result
-
-    # Traverse the nested structure using categories
-    group = structure.symbols
-    entry = None
-    path = symbol.categories.copy()
-    while path:
-        key = path.pop(0)
-        if isinstance(group, dict):
-            if key not in group:
-                result["errors"].append(f"Unknown group: {key}")
-                return result
-            group = group[key]
-        elif isinstance(group, ComponentGroup):
-            if group.subgroups and key in group.subgroups:
-                group = group.subgroups[key]
-            elif group.entries and key in group.entries:
-                entry = group.entries[key]
-                break
-            else:
-                result["errors"].append(f"Unknown subgroup or entry: {key}")
-                return result
-        else:
-            result["errors"].append(f"Invalid group structure at: {key}")
-            return result
-
-    if entry is None:
-        # If we ended on a ComponentGroup with only one entry, use it
-        if isinstance(group, ComponentGroup) and group.entries and len(group.entries) == 1:
-            entry = next(iter(group.entries.values()))
-        else:
-            result["errors"].append(
-                "Could not resolve a ComponentEntry for the given categories path."
-            )
-            return result
-
-    # Validate Reference field prefix if specified in structure
+    if entry.required_properties:
+        for prop_name, prop_def in entry.required_properties.items():
+            prop_value = None
+            if prop_def.ki_field_name and prop_def.ki_field_name in symbol.properties:
+                prop_value = symbol.properties[prop_def.ki_field_name]
+            elif prop_name in symbol.properties:
+                prop_value = symbol.properties[prop_name]
+            if prop_value is None:
+                if prop_def.required:
+                    result.add_error(f"Missing required property: {prop_name}")
+                continue
+            if prop_def.pattern:
+                if not prop_def.validate_pattern(prop_value):
+                    result.add_error(
+                        f"Property '{prop_name}' value '{prop_value}' does not match pattern: {prop_def.pattern}"
+                    )
+                else:
+                    result.add_success(
+                        f"Property '{prop_name}' value '{prop_value}' matches pattern: {prop_def.pattern}"
+                    )
     if entry.reference_prefix and "Reference" in symbol.properties:
         ref_value = symbol.properties["Reference"]
         if not ref_value.startswith(entry.reference_prefix):
-            result["errors"].append(
+            result.add_error(
                 f"Reference '{ref_value}' does not start with required prefix: {entry.reference_prefix}"
             )
         else:
-            result["successes"].append(
+            result.add_success(
                 f"Reference '{ref_value}' has correct prefix: {entry.reference_prefix}"
             )
-
-    # Validate symbol name
-    if entry.naming and entry.naming.pattern:
-        pattern_str = entry.naming.pattern
-        pattern = re.compile(pattern_str) if isinstance(pattern_str, str) else pattern_str
-        if not pattern.match(symbol.name):
-            result["errors"].append(
-                f"Symbol name '{symbol.name}' does not match pattern: {entry.naming.pattern}"
-            )
+    if entry.pins:
+        if entry.pins.count is not None and len(symbol.pins) != entry.pins.count:
+            result.add_error(f"Expected {entry.pins.count} pins, found {len(symbol.pins)}")
         else:
-            result["successes"].append(
-                f"Symbol name '{symbol.name}' matches pattern: {entry.naming.pattern}"
-            )
-
-    # Validate required properties
+            result.add_success(f"Pin count matches expected: {len(symbol.pins)}")
+        if entry.pins.required_names:
+            for pin_name in entry.pins.required_names:
+                if not any(pin.name == pin_name for pin in symbol.pins):
+                    result.add_error(f"Missing required pin: {pin_name}")
+                else:
+                    result.add_success(f"Found required pin: {pin_name}")
+    known_props = set(required_fields)
     if entry.required_properties:
-        for prop_name, prop_def in entry.required_properties.items():
-            if prop_name not in symbol.properties:
-                result["errors"].append(f"Missing required property: {prop_name}")
-            elif prop_def.pattern:
-                prop_pattern_str = prop_def.pattern
-                prop_pattern = (
-                    re.compile(prop_pattern_str)
-                    if isinstance(prop_pattern_str, str)
-                    else prop_pattern_str
-                )
-                if not prop_pattern.match(symbol.properties[prop_name]):
-                    result["errors"].append(
-                        f"Property '{prop_name}' value '{symbol.properties[prop_name]}' does not match pattern: {prop_def.pattern}"
-                    )
-
-    # Check for unknown properties
-    if entry.required_properties:
-        for prop_name in symbol.properties:
-            if prop_name not in entry.required_properties and prop_name not in required_fields:
-                result["warnings"].append(f"Unknown property: {prop_name}")
-
+        known_props.update(entry.required_properties.keys())
+        known_props.update(
+            prop.ki_field_name for prop in entry.required_properties.values() if prop.ki_field_name
+        )
+    for prop_name in symbol.properties:
+        if prop_name not in known_props and not prop_name.startswith("ki_"):
+            result.add_warning(f"Unknown property: {prop_name}")
     return result
 
 

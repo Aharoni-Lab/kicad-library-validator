@@ -3,10 +3,11 @@ Footprint validation logic for KiCad libraries.
 """
 
 import re
-from typing import Dict, List
+from typing import Any, Dict, List, Optional
 
 from kicad_lib_validator.models.footprint import Footprint
-from kicad_lib_validator.models.structure import ComponentEntry, ComponentGroup, LibraryStructure
+from kicad_lib_validator.models.structure import ComponentEntry, LibraryStructure
+from kicad_lib_validator.validator import ValidationResult
 
 
 def validate_footprint_name(name: str, structure: LibraryStructure, category: str) -> bool:
@@ -23,160 +24,99 @@ def validate_footprint_property(
     return True
 
 
-def validate_footprint(footprint: Footprint, structure: LibraryStructure) -> Dict[str, List[str]]:
-    """
-    Validate a footprint against the library structure.
+def _find_matching_entry(
+    footprint: Footprint, structure: LibraryStructure
+) -> Optional[ComponentEntry]:
+    """Find the matching component entry in the structure for a footprint."""
+    if not structure.components:
+        return None
+    for entry in structure.components:
+        # Ensure entry is a ComponentEntry
+        if not isinstance(entry, ComponentEntry):
+            continue
+        if entry.categories:
+            if entry.categories[0] == footprint.category and (
+                len(entry.categories) == 1
+                or (
+                    footprint.subcategory
+                    and len(entry.categories) > 1
+                    and entry.categories[1] == footprint.subcategory
+                )
+            ):
+                return entry
+    return None
 
-    Args:
-        footprint: Footprint to validate
-        structure: Library structure definition
 
-    Returns:
-        Dictionary containing lists of errors, warnings, and successes
-    """
-    result: Dict[str, List[str]] = {"errors": [], "warnings": [], "successes": []}
-
-    # Check for KiCad required fields
-    required_fields = ["Reference", "Value", "Datasheet", "Description"]
+def validate_footprint(footprint: Footprint, structure: LibraryStructure) -> ValidationResult:
+    """Validate a footprint against the library structure."""
+    result = ValidationResult()
+    required_fields = ["Reference", "Value", "Footprint", "Datasheet", "Description", "ki_keywords"]
     for field in required_fields:
         if field not in footprint.properties:
-            result["errors"].append(f"Missing required KiCad field: {field}")
-
-    # Require categories for lookup
-    if (
-        not footprint.categories
-        or not isinstance(footprint.categories, list)
-        or len(footprint.categories) == 0
-    ):
-        result["errors"].append(
-            "Footprint must specify a non-empty categories list for validation."
-        )
+            result.add_error(f"Missing required field: {field}")
+    entry = _find_matching_entry(footprint, structure)
+    if not entry:
+        result.add_warning(f"No matching component entry found for footprint {footprint.name}")
         return result
-
-    # Traverse the nested structure using categories
-    group = structure.footprints
-    entry = None
-    path = footprint.categories.copy()
-    while path:
-        key = path.pop(0)
-        if isinstance(group, dict):
-            if key not in group:
-                result["errors"].append(f"Unknown group: {key}")
-                return result
-            group = group[key]
-        elif isinstance(group, ComponentGroup):
-            if group.subgroups and key in group.subgroups:
-                group = group.subgroups[key]
-            elif group.entries and key in group.entries:
-                entry = group.entries[key]
-                break
-            else:
-                result["errors"].append(f"Unknown subgroup or entry: {key}")
-                return result
-        else:
-            result["errors"].append(f"Invalid group structure at: {key}")
-            return result
-
-    if entry is None:
-        # If we ended on a ComponentGroup with only one entry, use it
-        if isinstance(group, ComponentGroup) and group.entries and len(group.entries) == 1:
-            entry = next(iter(group.entries.values()))
-        else:
-            result["errors"].append(
-                "Could not resolve a ComponentEntry for the given categories path."
-            )
-            return result
-
-    # Validate Reference field pattern if specified in structure
+    if entry.required_properties:
+        for prop_name, prop_def in entry.required_properties.items():
+            prop_value = None
+            if prop_def.ki_field_name and prop_def.ki_field_name in footprint.properties:
+                prop_value = footprint.properties[prop_def.ki_field_name]
+            elif prop_name in footprint.properties:
+                prop_value = footprint.properties[prop_name]
+            if prop_value is None:
+                if prop_def.required:
+                    result.add_error(f"Missing required property: {prop_name}")
+                continue
+            if prop_def.pattern:
+                if not prop_def.validate_pattern(prop_value):
+                    result.add_error(
+                        f"Property '{prop_name}' value '{prop_value}' does not match pattern: {prop_def.pattern}"
+                    )
+                else:
+                    result.add_success(
+                        f"Property '{prop_name}' value '{prop_value}' matches pattern: {prop_def.pattern}"
+                    )
     if entry.reference_pattern and "Reference" in footprint.properties:
         ref_value = footprint.properties["Reference"]
         if not re.match(entry.reference_pattern, ref_value):
-            result["errors"].append(
+            result.add_error(
                 f"Reference '{ref_value}' does not match required pattern: {entry.reference_pattern}"
             )
         else:
-            result["successes"].append(
+            result.add_success(
                 f"Reference '{ref_value}' matches required pattern: {entry.reference_pattern}"
             )
-
-    # Validate footprint name
-    if entry.naming and entry.naming.pattern:
-        pattern_str = entry.naming.pattern
-        pattern = re.compile(pattern_str) if isinstance(pattern_str, str) else pattern_str
-        if not pattern.match(footprint.name):
-            result["errors"].append(
-                f"Footprint name '{footprint.name}' does not match pattern: {entry.naming.pattern}"
-            )
-        else:
-            result["successes"].append(
-                f"Footprint name '{footprint.name}' matches pattern: {entry.naming.pattern}"
-            )
-
-    # Validate required properties
-    if entry.required_properties:
-        for prop_name, prop_def in entry.required_properties.items():
-            if prop_name not in footprint.properties:
-                result["errors"].append(f"Missing required property: {prop_name}")
-            elif prop_def.pattern:
-                prop_pattern_str = prop_def.pattern
-                prop_pattern = (
-                    re.compile(prop_pattern_str)
-                    if isinstance(prop_pattern_str, str)
-                    else prop_pattern_str
-                )
-                if not prop_pattern.match(footprint.properties[prop_name]):
-                    result["errors"].append(
-                        f"Property '{prop_name}' value '{footprint.properties[prop_name]}' does not match pattern: {prop_def.pattern}"
-                    )
-
-    # Check for unknown properties
-    if entry.required_properties:
-        for prop_name in footprint.properties:
-            if prop_name not in entry.required_properties and prop_name not in required_fields:
-                result["warnings"].append(f"Unknown property: {prop_name}")
-
-    # Validate required layers
     if entry.required_layers:
-        missing_layers = []
-        for layer_name in entry.required_layers:
-            if layer_name not in footprint.layers:
-                missing_layers.append(layer_name)
-        if missing_layers:
-            result["errors"].append(f"Missing required layers: {', '.join(missing_layers)}")
-        else:
-            result["successes"].append(
-                f"Footprint contains all required layers: {', '.join(entry.required_layers)}"
-            )
-
-    # Validate required pads
+        for layer in entry.required_layers:
+            if layer not in footprint.layers:
+                result.add_error(f"Missing required layer: {layer}")
+            else:
+                result.add_success(f"Found required layer: {layer}")
     if entry.required_pads:
-        pad_count = len(footprint.pads)
-        min_count = entry.required_pads.min_count
-        max_count = entry.required_pads.max_count
-        if min_count is not None:
-            if pad_count < min_count:
-                result["errors"].append(
-                    f"Footprint has {pad_count} pads, but minimum required is {min_count}"
-                )
-        if max_count is not None:
-            if pad_count > max_count:
-                result["errors"].append(
-                    f"Footprint has {pad_count} pads, but maximum allowed is {max_count}"
-                )
-
-    # Validate description pattern if present
-    if entry.naming and entry.naming.description_pattern and hasattr(footprint, "description"):
-        desc_pattern_str = entry.naming.description_pattern
-        desc_pattern = (
-            re.compile(desc_pattern_str) if isinstance(desc_pattern_str, str) else desc_pattern_str
-        )
-        if not desc_pattern.match(getattr(footprint, "description", "")):
-            result["errors"].append(
-                f"Footprint description '{getattr(footprint, 'description', '')}' does not match pattern: {entry.naming.description_pattern}"
+        if (
+            entry.required_pads.count is not None
+            and len(footprint.pads) != entry.required_pads.count
+        ):
+            result.add_error(
+                f"Expected {entry.required_pads.count} pads, found {len(footprint.pads)}"
             )
         else:
-            result["successes"].append(
-                f"Footprint description '{getattr(footprint, 'description', '')}' matches pattern: {entry.naming.description_pattern}"
-            )
-
+            result.add_success(f"Pad count matches expected: {len(footprint.pads)}")
+        if entry.required_pads.required_names:
+            for pad_name in entry.required_pads.required_names:
+                if not any(pad == pad_name for pad in footprint.pads):
+                    result.add_error(f"Missing required pad: {pad_name}")
+                else:
+                    result.add_success(f"Found required pad: {pad_name}")
+    known_props = set(required_fields)
+    if entry.required_properties:
+        known_props.update(entry.required_properties.keys())
+        known_props.update(
+            prop.ki_field_name for prop in entry.required_properties.values() if prop.ki_field_name
+        )
+    for prop_name in footprint.properties:
+        if prop_name not in known_props and not prop_name.startswith("ki_"):
+            result.add_warning(f"Unknown property: {prop_name}")
     return result

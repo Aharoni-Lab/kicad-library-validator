@@ -95,31 +95,24 @@ class LibraryInfo(BaseModel):
 
 
 class PropertyDefinition(BaseModel):
-    """Definition of a property in a component."""
+    """Definition of a property with its requirements."""
 
-    type: str
+    description: str
+    required: bool = True
     pattern: Optional[str] = None
-    optional: Optional[bool] = False
-    description: Optional[str] = None
-
-    @field_validator("type")
-    @classmethod
-    def validate_type(cls, v: str) -> str:
-        """Validate property type."""
-        valid_types = {"string", "number", "boolean", "url", "email"}
-        if v.lower() not in valid_types:
-            raise ValueError(f"Property type must be one of: {', '.join(valid_types)}")
-        return v.lower()
+    ki_field_name: Optional[str] = (
+        None  # Maps to KiCad's internal field name (e.g., "ki_keywords" for "Keywords")
+    )
 
     @field_validator("pattern")
     @classmethod
-    def validate_pattern(cls, v: Optional[str], info: Any) -> Optional[str]:
-        """Validate regex pattern if provided."""
+    def validate_pattern(cls, v: Optional[str]) -> Optional[str]:
+        """Validate pattern if provided."""
         if v is not None:
             try:
                 re.compile(v)
             except re.error as e:
-                raise ValueError(f"Invalid regex pattern: {e}")
+                raise ValueError(f"Invalid pattern: {e}")
         return v
 
 

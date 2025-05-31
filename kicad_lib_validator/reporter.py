@@ -296,14 +296,33 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
     def _validate_item(self, item: Any) -> Dict[str, List[str]]:
         """Validate an item based on its type."""
+
+        def to_dict(result: Any) -> Dict[str, List[str]]:
+            if (
+                hasattr(result, "errors")
+                and hasattr(result, "warnings")
+                and hasattr(result, "successes")
+            ):
+                return {
+                    "errors": list(getattr(result, "errors", [])),
+                    "warnings": list(getattr(result, "warnings", [])),
+                    "successes": list(getattr(result, "successes", [])),
+                }
+            # Fallback: ensure all keys are present and are lists of str
+            return {
+                "errors": list(result.get("errors", [])),
+                "warnings": list(result.get("warnings", [])),
+                "successes": list(result.get("successes", [])),
+            }
+
         if isinstance(item, Symbol):
-            return validate_symbol(item, self.structure)
+            return to_dict(validate_symbol(item, self.structure))
         elif isinstance(item, Footprint):
-            return validate_footprint(item, self.structure)
+            return to_dict(validate_footprint(item, self.structure))
         elif isinstance(item, Model3D):
-            return validate_model3d(item, self.structure)
+            return to_dict(validate_model3d(item, self.structure))
         elif isinstance(item, Documentation):
-            return validate_documentation(item, self.structure)
+            return to_dict(validate_documentation(item, self.structure))
         return {"errors": ["Unknown item type"], "warnings": [], "successes": []}
 
     def _generate_symbols_section(self, changed_files: Dict[str, FileStatus]) -> str:

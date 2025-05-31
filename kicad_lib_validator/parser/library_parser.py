@@ -160,16 +160,30 @@ def parse_footprint_file(
         if structure.library.directories and structure.library.directories.footprints:
             footprints_dir = (library_root / structure.library.directories.footprints).resolve()
             rel_path = file_path.relative_to(footprints_dir)
-            categories = str(rel_path.parent).replace("\\", "/").split("/")
-            category = categories[0] if len(categories) > 0 and categories[0] else None
-            subcategory = categories[1] if len(categories) > 1 else None
+
+            # Handle .pretty directories specially
+            path_parts = []
+            for part in rel_path.parts:
+                if part.endswith(".pretty"):
+                    # Remove .pretty from the category name
+                    path_parts.append(part[:-6])
+                else:
+                    path_parts.append(part)
+
+            # Remove the filename from the path parts
+            path_parts = path_parts[:-1]
+
+            # Get category and subcategory
+            category = path_parts[0] if path_parts else None
+            subcategory = path_parts[1] if len(path_parts) > 1 else None
+
             full_library_name = library_name
             if (
                 structure.library.naming
                 and structure.library.naming.footprints
                 and structure.library.naming.footprints.include_categories
             ):
-                for cat in categories:
+                for cat in path_parts:
                     if cat and structure.library.naming.footprints.category_separator:
                         full_library_name += (
                             structure.library.naming.footprints.category_separator
@@ -177,42 +191,70 @@ def parse_footprint_file(
                         )
             with open(file_path, "r", encoding="utf-8") as f:
                 raw_data = f.read()
+                if not raw_data.strip():
+                    logging.error(f"Empty footprint file: {file_path}")
+                    return footprints
+
                 logging.debug(f"Raw file content: {raw_data[:200]}...")  # Print first 200 chars
-                data = sexpdata.loads(raw_data)
+                try:
+                    data = sexpdata.loads(raw_data)
+                except Exception as e:
+                    logging.error(f"Failed to parse footprint file {file_path}: {e}")
+                    return footprints
+
                 logging.debug(f"Parsed data type: {type(data)}")
                 logging.debug(f"Parsed data: {data}")
-                if isinstance(data, list) and data:
-                    logging.debug(f"data[0] type: {type(data[0])}, value: {data[0]}")
-                    # Accept both (footprint ...) and (kicad_module ...)
-                    if str(data[0]) in ("footprint", "kicad_module"):
-                        footprint_name = str(data[1])
-                        properties = {}
-                        layers = []
-                        for prop in data[2:]:
-                            if isinstance(prop, list) and prop:
-                                if str(prop[0]) == "property":
+
+                if not isinstance(data, list) or not data:
+                    logging.error(f"Invalid footprint data in {file_path}: expected non-empty list")
+                    return footprints
+
+                logging.debug(f"data[0] type: {type(data[0])}, value: {data[0]}")
+                # Accept both (footprint ...) and (kicad_module ...)
+                if str(data[0]) in ("footprint", "kicad_module"):
+                    if len(data) < 2:
+                        logging.error(f"Invalid footprint data in {file_path}: missing name")
+                        return footprints
+
+                    footprint_name = str(data[1])
+                    properties = {}
+                    layers = []
+                    pads = []
+
+                    for prop in data[2:]:
+                        if isinstance(prop, list) and prop:
+                            if str(prop[0]) == "property":
+                                if len(prop) >= 3:
                                     prop_name = str(prop[1])
                                     prop_value = str(prop[2])
                                     properties[prop_name] = prop_value
-                                elif str(prop[0]) == "layer":
+                            elif str(prop[0]) == "layer":
+                                if len(prop) >= 2:
                                     layers.append(str(prop[1]))
-                        footprints.append(
-                            Footprint(
-                                name=footprint_name,
-                                library_name=full_library_name,
-                                properties=properties,
-                                layers=layers,
-                                category=category,
-                                subcategory=subcategory,
-                            )
-                        )
-                        logging.debug(
-                            f"Extracted footprint: {footprint_name} with properties: {properties}"
-                        )
+                            elif str(prop[0]) == "pad":
+                                if len(prop) >= 2:
+                                    pads.append(str(prop[1]))
+
+                    footprint = Footprint(
+                        name=footprint_name,
+                        library_name=full_library_name,
+                        properties=properties,
+                        layers=layers,
+                        pads=pads,
+                        category=category,
+                        subcategory=subcategory,
+                    )
+                    footprints.append(footprint)
+                    logging.debug(
+                        f"Extracted footprint: {footprint_name} with properties: {properties}"
+                    )
+                else:
+                    logging.error(
+                        f"Invalid footprint data in {file_path}: expected 'footprint' or 'kicad_module'"
+                    )
     except Exception as e:
         logging.error(f"Error parsing footprint file {file_path}: {e}")
     logging.debug(f"Returning footprints from {file_path}: {footprints}")
-    print(f"[DEBUG] Returning footprints from {file_path}: {footprints}")
     return footprints
 
 
