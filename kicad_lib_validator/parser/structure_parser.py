@@ -69,6 +69,9 @@ def parse_library_structure_from_yaml(
     if library_root is not None:
         _validate_directory_structure(structure, Path(library_root))
 
+    # Debug output
+    print(f"[DEBUG] Parsed Library Structure: {structure}")
+
     return structure
 
 

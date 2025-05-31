@@ -56,10 +56,25 @@ def _find_matching_entry(
             for footprint_cat, entry_cat in zip(footprint_categories, entry_categories)
         )
     
+    # Extract categories from the file path
+    # The path should be like "footprints/passive/capacitor_smd.pretty/C_0201_0603Metric.kicad_mod"
+    path_parts = footprint.file_path.parts
+    if len(path_parts) >= 3:  # We need at least footprints/category/subcategory
+        # Skip the first part (footprints) and use the rest as categories
+        # Also remove the .pretty suffix from the subcategory
+        categories = []
+        for part in path_parts[1:-1]:  # Remove first (footprints) and last (filename) parts
+            if part.endswith('.pretty'):
+                categories.append(part[:-7])  # Remove .pretty suffix
+            else:
+                categories.append(part)
+    else:
+        categories = []
+    
     # Check entries in this group
     if component_group.entries:
         for entry_name, entry in component_group.entries.items():
-            if check_entry_categories(entry.categories, [footprint.category, footprint.subcategory]):
+            if check_entry_categories(entry.categories, categories):
                 return entry
     
     # Check subgroups recursively
@@ -67,7 +82,7 @@ def _find_matching_entry(
         for subgroup in component_group.subgroups.values():
             if subgroup.entries:
                 for entry_name, entry in subgroup.entries.items():
-                    if check_entry_categories(entry.categories, [footprint.category, footprint.subcategory]):
+                    if check_entry_categories(entry.categories, categories):
                         return entry
     
     return None
