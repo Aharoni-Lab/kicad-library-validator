@@ -11,7 +11,7 @@ from kicad_lib_validator.models.structure import (
     LibraryStructure,
 )
 from kicad_lib_validator.models.symbol import Symbol
-from kicad_lib_validator.validator import ValidationResult
+from kicad_lib_validator.models.validation import ValidationResult
 
 
 def _find_matching_entry(symbol: Symbol, structure: LibraryStructure) -> Optional[ComponentEntry]:

@@ -7,6 +7,7 @@ from typing import Dict, List, Optional, Union, cast
 
 from kicad_lib_validator.models.documentation import Documentation
 from kicad_lib_validator.models.structure import ComponentEntry, ComponentGroup, LibraryStructure
+from kicad_lib_validator.models.validation import ValidationResult
 
 ValidationResult = Union[bool, str]  # True for success, str for error message
 

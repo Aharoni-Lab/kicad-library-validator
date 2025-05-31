@@ -25,36 +25,7 @@ from kicad_lib_validator.validators.document_validator import validate_documenta
 from kicad_lib_validator.validators.footprint_validator import validate_footprint
 from kicad_lib_validator.validators.model3d_validator import validate_model3d
 from kicad_lib_validator.validators.symbol_validator import validate_symbol
-
-
-class ValidationResult:
-    """Holds validation results."""
-
-    def __init__(self) -> None:
-        self.errors: List[str] = []
-        self.warnings: List[str] = []
-        self.successes: List[str] = []
-
-    def add_error(self, message: str) -> None:
-        """Add an error message."""
-        self.errors.append(message)
-
-    def add_warning(self, message: str) -> None:
-        """Add a warning message."""
-        self.warnings.append(message)
-
-    def add_success(self, message: str) -> None:
-        """Add a success message."""
-        self.successes.append(message)
-
-    @property
-    def has_errors(self) -> bool:
-        """Check if there are any errors."""
-        return len(self.errors) > 0
-
-    def is_valid(self) -> bool:
-        """Check if validation passed (no errors)."""
-        return len(self.errors) == 0
+from kicad_lib_validator.models.validation import ValidationResult
 
 
 class KiCadLibraryValidator:
@@ -141,18 +112,15 @@ class KiCadLibraryValidator:
         symbols = _find_symbols(self.library_path, self.structure)
         for symbol in symbols:
             results = validate_symbol(symbol, self.structure)
-            if (
-                hasattr(results, "errors")
-                and hasattr(results, "warnings")
-                and hasattr(results, "successes")
-            ):
+            # Convert ValidationResult to dict if needed
+            if hasattr(results, 'errors') and hasattr(results, 'warnings') and hasattr(results, 'successes'):
                 results_dict = {
-                    "errors": list(getattr(results, "errors", [])),
-                    "warnings": list(getattr(results, "warnings", [])),
-                    "successes": list(getattr(results, "successes", [])),
+                    'errors': list(getattr(results, 'errors', [])),
+                    'warnings': list(getattr(results, 'warnings', [])),
+                    'successes': list(getattr(results, 'successes', [])),
                 }
             else:
-                results_dict = {"errors": [], "warnings": [], "successes": []}
+                results_dict = results
             self._add_validation_results(results_dict, f"Symbol '{symbol.name}'")
 
     def _validate_footprints(self) -> None:
@@ -166,18 +134,14 @@ class KiCadLibraryValidator:
         footprints = _find_footprints(self.library_path, self.structure)
         for footprint in footprints:
             results = validate_footprint(footprint, self.structure)
-            if (
-                hasattr(results, "errors")
-                and hasattr(results, "warnings")
-                and hasattr(results, "successes")
-            ):
+            if hasattr(results, 'errors') and hasattr(results, 'warnings') and hasattr(results, 'successes'):
                 results_dict = {
-                    "errors": list(getattr(results, "errors", [])),
-                    "warnings": list(getattr(results, "warnings", [])),
-                    "successes": list(getattr(results, "successes", [])),
+                    'errors': list(getattr(results, 'errors', [])),
+                    'warnings': list(getattr(results, 'warnings', [])),
+                    'successes': list(getattr(results, 'successes', [])),
                 }
             else:
-                results_dict = {"errors": [], "warnings": [], "successes": []}
+                results_dict = results
             self._add_validation_results(results_dict, f"Footprint '{footprint.name}'")
 
     def _validate_3d_models(self) -> None:
