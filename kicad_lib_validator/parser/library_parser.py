@@ -5,7 +5,7 @@ Parser for the actual KiCad library contents, using the structure definition.
 import logging
 import re
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 import sexpdata  # type: ignore
 
@@ -289,9 +289,9 @@ def parse_footprint_file(
 
         # Parse the content to extract properties
         properties = {}
-        tags = []
+        tags: List[str] = []
         pads = []
-        layers = []
+        layers: List[str] = []
 
         # Import Pad model
         from kicad_lib_validator.models.footprint import Pad

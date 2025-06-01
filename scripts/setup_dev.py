@@ -18,7 +18,7 @@ def run_command(command: List[str]) -> bool:
         return False
 
 
-def main():
+def main() -> None:
     """Set up the development environment."""
     # Ensure we're in the project root
     project_root = Path(__file__).parent.parent

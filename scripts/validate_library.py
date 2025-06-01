@@ -12,7 +12,7 @@ from kicad_lib_validator.utils.generate_report import generate_report
 from kicad_lib_validator.utils.create_library_structure import create_directory_structure
 from kicad_lib_validator.utils.generate_library_tables import generate_library_tables
 
-def main():
+def main() -> None:
     # Set up logging
     logging.basicConfig(
         level=logging.INFO,
@@ -35,15 +35,19 @@ def main():
     try:
         # Generate library tables
         print("Generating library tables...")
-        generate_library_tables(Path("structure.yaml"), verbose=True)
+        generate_library_tables(Path("data/structure.yaml"))
         print("Library tables generated.\n")
         
         # Run validation
         print("Running validation...")
-        library = parse_library(Path("data"), parse_library_structure(Path("structure.yaml")))
-        validate_library(library)
+        validator = KiCadLibraryValidator(
+            library_path=Path("data"),
+            structure_file=Path("data/structure.yaml")
+        )
+        result = validator.validate()
+        
         print("\nGenerating report...")
-        generate_report(Path("."), verbose=True)
+        generate_report(Path("data"))
         print("\nReport saved to data/library_report.md")
         
     except Exception as e:

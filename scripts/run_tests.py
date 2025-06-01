@@ -18,7 +18,7 @@ def run_command(command: List[str]) -> bool:
         return False
 
 
-def main():
+def main() -> None:
     """Run tests with various tools."""
     # Ensure we're in the project root
     project_root = Path(__file__).parent.parent
