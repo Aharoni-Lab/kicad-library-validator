@@ -17,6 +17,8 @@ def create_component_directories(
     dry_run: bool,
     logger: logging.Logger,
     is_symbol: bool = False,
+    is_3d_model: bool = False,
+    is_documentation: bool = False,
 ) -> None:
     """
     Recursively create directories for component groups.
@@ -28,6 +30,8 @@ def create_component_directories(
         dry_run: If True, only print what would be done
         logger: Logger instance
         is_symbol: Whether this is a symbol library
+        is_3d_model: Whether this is a 3D model directory
+        is_documentation: Whether this is a documentation directory
     """
     # Create directory for current group
     current_dir = base_dir / "/".join(current_path)
@@ -80,7 +84,7 @@ def create_component_directories(
                             "(kicad_symbol_lib (version 20211014) (generator kicad_symbol_editor)\n)\n"
                         )
             # For footprints, rename the final entry directory to end with .pretty
-            elif not is_symbol:
+            elif not is_symbol and not is_3d_model and not is_documentation:
                 pretty_dir = entry_dir.with_name(f"{entry_name}.pretty")
                 if not pretty_dir.exists():
                     if dry_run:
@@ -91,6 +95,23 @@ def create_component_directories(
                         # Add README.md to ensure directory is tracked by git
                         readme_path = pretty_dir / "README.md"
                         readme_content = f"# {entry_name}\n\nThis directory contains {entry_name} footprint components."
+                        if dry_run:
+                            logger.info(f"Would create README.md: {readme_path}")
+                        else:
+                            logger.info(f"Creating README.md: {readme_path}")
+                            readme_path.write_text(readme_content)
+            # For 3D models, rename the final entry directory to end with .3dshapes
+            elif is_3d_model and not is_documentation:
+                shapes_dir = entry_dir.with_name(f"{entry_name}.3dshapes")
+                if not shapes_dir.exists():
+                    if dry_run:
+                        logger.info(f"Would rename directory to: {shapes_dir}")
+                    else:
+                        logger.info(f"Renaming directory to: {shapes_dir}")
+                        entry_dir.rename(shapes_dir)
+                        # Add README.md to ensure directory is tracked by git
+                        readme_path = shapes_dir / "README.md"
+                        readme_content = f"# {entry_name}\n\nThis directory contains {entry_name} 3D model components."
                         if dry_run:
                             logger.info(f"Would create README.md: {readme_path}")
                         else:
@@ -107,6 +128,8 @@ def create_component_directories(
                 dry_run,
                 logger,
                 is_symbol,
+                is_3d_model,
+                is_documentation,
             )
 
 
@@ -191,6 +214,8 @@ def create_directory_structure(
                 dry_run,
                 logger,
                 is_symbol=(dir_type == "symbols"),
+                is_3d_model=(dir_type == "models_3d"),
+                is_documentation=(dir_type == "documentation"),
             )
 
 

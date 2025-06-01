@@ -1,136 +1,162 @@
 """
-3D model validation logic for KiCad libraries.
+Validator for 3D model files in the library.
 """
 
 import re
-from typing import Dict, List
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union, cast
 
 from kicad_lib_validator.models.model3d import Model3D
 from kicad_lib_validator.models.structure import ComponentEntry, ComponentGroup, LibraryStructure
 from kicad_lib_validator.models.validation import ValidationResult
 
 
-def validate_model3d(model3d: Model3D, structure: LibraryStructure) -> ValidationResult:
-    """
-    Validate a 3D model against the library structure.
+def _find_matching_entry(model: Model3D, structure: LibraryStructure) -> Optional[ComponentEntry]:
+    """Find the matching component entry in the structure for a 3D model."""
+    if not structure.models_3d:
+        print("[DEBUG] No 3D models found in the structure.")
+        return None
 
-    Args:
-        model3d: 3D model to validate
-        structure: Library structure definition
+    categories = model.categories or []
+    print(f"[DEBUG] Extracted categories from model: {categories}")
 
-    Returns:
-        ValidationResult object containing validation results
-    """
+    current_group: ComponentGroup = structure.models_3d  # type: ignore
+    for category in categories[:-1]:
+        if category not in current_group:
+            print(f"[DEBUG] Category '{category}' not found in structure.")
+            return None
+        current_group = current_group[category]
+        if not isinstance(current_group, ComponentGroup):
+            print(f"[DEBUG] Expected ComponentGroup for '{category}', got {type(current_group)}")
+            return None
+        current_group = cast(ComponentGroup, current_group)
+    current_group = cast(ComponentGroup, current_group)
+
+    last_category = categories[-1] if categories else None
+    if (
+        last_category
+        and hasattr(current_group, "entries")
+        and isinstance(current_group.entries, dict)
+    ):
+        if last_category in current_group.entries:
+            entry = current_group.entries[last_category]
+            print(f"[DEBUG] Found matching entry: {last_category}")
+            return entry
+        else:
+            print(f"[DEBUG] Entry '{last_category}' not found in group.")
+            return None
+    print(f"[DEBUG] current_group has no entries attribute or entries is not a dict.")
+    return None
+
+
+def validate_model3d(model: Model3D, structure: LibraryStructure) -> ValidationResult:
+    """Validate a 3D model against the library structure."""
     result = ValidationResult()
 
-    # Validate format
-    supported_formats = ["step", "wrl"]
-    if model3d.format.lower() not in supported_formats:
-        result.add_error("3D Model", f"unsupported format: {model3d.format}")
-
-    # Validate units
-    supported_units = ["mm", "inch"]
-    if model3d.units.lower() not in supported_units:
-        result.add_error("3D Model", f"unsupported units: {model3d.units}")
-
-    # Require categories for lookup
-    if (
-        not model3d.categories
-        or not isinstance(model3d.categories, list)
-        or len(model3d.categories) == 0
-    ):
-        result.add_error(
-            "3D Model", "3D model must specify a non-empty categories list for validation."
-        )
+    # Find matching entry based on categories
+    entry = _find_matching_entry(model, structure)
+    if not entry:
+        result.add_warning("3D Model", f"No matching component entry found for model {model.file_path}")
         return result
 
-    # Traverse the nested structure using categories
-    group = structure.models_3d
-    entry = None
-    path = model3d.categories.copy()
-    while path:
-        key = path.pop(0)
-        if isinstance(group, dict):
-            if key not in group:
-                result.add_error("3D Model", f"Unknown group: {key}")
-                return result
-            group = group[key]
-        elif isinstance(group, ComponentGroup):
-            if group.subgroups and key in group.subgroups:
-                group = group.subgroups[key]
-            elif group.entries and key in group.entries:
-                entry = group.entries[key]
-                break
-            else:
-                result.add_error("3D Model", f"Unknown subgroup or entry: {key}")
-                return result
-        else:
-            result.add_error("3D Model", f"Invalid group structure at: {key}")
-            return result
+    # Validate format
+    model_path = Path(model.file_path)
+    if model_path.suffix.lower() not in ['.step', '.wrl']:
+        result.add_error("3D Model", f"Invalid model format: {model_path.suffix}. Must be .step or .wrl")
+    else:
+        result.add_success("3D Model", f"Model format {model_path.suffix} is valid")
 
-    if entry is None:
-        # If we ended on a ComponentGroup with only one entry, use it
-        if isinstance(group, ComponentGroup) and group.entries and len(group.entries) == 1:
-            entry = next(iter(group.entries.values()))
-        else:
-            result.add_error(
-                "3D Model", "Could not resolve a ComponentEntry for the given categories path."
-            )
-            return result
-
-    # Validate model name
+    # Validate name pattern if specified
     if entry.naming and entry.naming.pattern:
-        pattern_str = entry.naming.pattern
-        pattern = re.compile(pattern_str) if isinstance(pattern_str, str) else pattern_str
-        if not pattern.match(model3d.name):
+        if not re.match(entry.naming.pattern, model_path.stem):
             result.add_error(
                 "3D Model",
-                f"Model name '{model3d.name}' does not match pattern: {entry.naming.pattern}",
-            )
-        else:
-            result.add_success(
-                "3D Model", f"Model name '{model3d.name}' matches pattern: {entry.naming.pattern}"
-            )
-
-    # Validate required properties
-    if entry.required_properties:
-        for prop_name, prop_def in entry.required_properties.items():
-            if prop_name not in model3d.properties:
-                result.add_error("3D Model", f"Missing required property: {prop_name}")
-            elif prop_def.pattern:
-                prop_pattern_str = prop_def.pattern
-                prop_pattern = (
-                    re.compile(prop_pattern_str)
-                    if isinstance(prop_pattern_str, str)
-                    else prop_pattern_str
-                )
-                if not prop_pattern.match(model3d.properties[prop_name]):
-                    result.add_error(
-                        "3D Model",
-                        f"Property '{prop_name}' value '{model3d.properties[prop_name]}' does not match pattern: {prop_def.pattern}",
-                    )
-
-    # Check for unknown properties
-    if entry.required_properties:
-        for prop_name in model3d.properties:
-            if prop_name not in entry.required_properties:
-                result.add_warning("3D Model", f"Unknown property: {prop_name}")
-
-    # Validate description pattern if present
-    if entry.naming and entry.naming.description_pattern and hasattr(model3d, "description"):
-        desc_pattern_str = entry.naming.description_pattern
-        desc_pattern = (
-            re.compile(desc_pattern_str) if isinstance(desc_pattern_str, str) else desc_pattern_str
-        )
-        if not desc_pattern.match(getattr(model3d, "description", "")):
-            result.add_error(
-                "3D Model",
-                f"Model description '{getattr(model3d, 'description', '')}' does not match pattern: {entry.naming.description_pattern}",
+                f"Model name '{model_path.stem}' does not match pattern: {entry.naming.pattern}",
             )
         else:
             result.add_success(
                 "3D Model",
-                f"Model description '{getattr(model3d, 'description', '')}' matches pattern: {entry.naming.description_pattern}",
+                f"Model name '{model_path.stem}' matches pattern: {entry.naming.pattern}",
             )
 
     return result
+
+
+class Model3DValidator:
+    """Validator for 3D model files."""
+    def __init__(self, structure: LibraryStructure) -> None:
+        """Initialize the validator.
+
+        Args:
+            structure: Library structure definition
+        """
+        self.structure = structure
+        self.result = ValidationResult()
+
+    def validate(self) -> ValidationResult:
+        """Validate all 3D model files."""
+        if not self.structure.library.directories or not self.structure.library.directories.models_3d:
+            self.result.add_error("3D Model", "3D models directory not configured in structure")
+            return self.result
+
+        models_3d_dir = Path(self.structure.library.directories.models_3d)
+        if not models_3d_dir.exists():
+            self.result.add_error("3D Model", "3D models directory not found")
+            return self.result
+
+        # Find all .step and .wrl files
+        for model_path in models_3d_dir.rglob("*.step"):
+            # Get categories from path, handling .3dshapes directory
+            rel_path = model_path.relative_to(models_3d_dir)
+            categories = []
+            
+            # Process each part of the path
+            for part in rel_path.parts[:-1]:  # Exclude the filename
+                if part.endswith('.3dshapes'):
+                    # Use the directory name without .3dshapes as the category
+                    category = part[:-9].lower()  # Remove '.3dshapes' and convert to lowercase
+                    if category not in categories:
+                        categories.append(category)
+                else:
+                    categories.append(part.lower())
+
+            model = Model3D(
+                name=model_path.stem,
+                library_name=self.structure.library.prefix,
+                format="step",
+                units="mm",
+                file_path=str(rel_path),  # Use relative path
+                properties={},
+                categories=categories
+            )
+            result = validate_model3d(model, self.structure)
+            self.result.merge(result)
+
+        for model_path in models_3d_dir.rglob("*.wrl"):
+            # Get categories from path, handling .3dshapes directory
+            rel_path = model_path.relative_to(models_3d_dir)
+            categories = []
+            
+            # Process each part of the path
+            for part in rel_path.parts[:-1]:  # Exclude the filename
+                if part.endswith('.3dshapes'):
+                    # Use the directory name without .3dshapes as the category
+                    category = part[:-9].lower()  # Remove '.3dshapes' and convert to lowercase
+                    if category not in categories:
+                        categories.append(category)
+                else:
+                    categories.append(part.lower())
+
+            model = Model3D(
+                name=model_path.stem,
+                library_name=self.structure.library.prefix,
+                format="wrl",
+                units="mm",
+                file_path=str(rel_path),  # Use relative path
+                properties={},
+                categories=categories
+            )
+            result = validate_model3d(model, self.structure)
+            self.result.merge(result)
+
+        return self.result

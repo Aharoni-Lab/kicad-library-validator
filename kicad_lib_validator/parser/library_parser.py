@@ -394,54 +394,30 @@ def _find_footprints(library_root: Path, structure: LibraryStructure) -> List[Fo
 
 
 def _find_models_3d(library_root: Path, structure: LibraryStructure) -> List[Model3D]:
+    """Find all 3D model files in the library and parse them."""
     models: List[Model3D] = []
     if not structure.library.directories or not structure.library.directories.models_3d:
         return models
+
     models_dir = library_root / structure.library.directories.models_3d
+    abs_models_dir = models_dir.resolve()
+    logger.info(f"Searching for 3D model files in: {abs_models_dir}")
+    print(f"[DEBUG] Searching for 3D model files in: {abs_models_dir}")
+
     if not models_dir.exists():
+        logger.warning(f"3D models directory not found: {abs_models_dir}")
+        print(f"[DEBUG] 3D models directory not found: {abs_models_dir}")
         return models
+
     # Case-insensitive search for .step and .wrl files
-    model_files = [
-        f for f in models_dir.rglob("*") if f.is_file() and f.suffix.lower() in [".step", ".wrl"]
-    ]
-    for file in model_files:
-        # Get the relative path from the models_3d directory
-        models_dir_abs = models_dir.resolve()
-        rel_path = file.relative_to(models_dir_abs)
-        category_path = str(rel_path.parent).replace("\\", "/")
-        categories = category_path.split("/") if category_path else []
+    for file in models_dir.rglob("*"):
+        if file.is_file() and file.suffix.lower() in [".step", ".wrl"]:
+            logger.info(f"Found 3D model file: {file}")
+            print(f"[DEBUG] Found 3D model file: {file.resolve()}")
+            model = parse_model3d_file(file, library_root.resolve(), structure)
+            if model:
+                models.append(model)
 
-        # Set category and subcategory
-        category = categories[0] if categories and categories[0] else None
-        subcategory = categories[1] if len(categories) > 1 else None
-
-        full_library_name = structure.library.prefix
-        if (
-            structure.library.naming
-            and structure.library.naming.models_3d
-            and structure.library.naming.models_3d.include_categories
-            and structure.library.naming.models_3d.category_separator
-        ):
-            for cat in categories:
-                if cat:
-                    full_library_name += (
-                        structure.library.naming.models_3d.category_separator + cat.capitalize()
-                    )
-        else:
-            for category in categories:
-                full_library_name += "_" + category.capitalize()
-        models.append(
-            Model3D(
-                name=file.stem,
-                format=file.suffix.lower().lstrip("."),
-                units="mm",
-                file_path=str(file),
-                library_name=full_library_name,
-                properties={},
-                category=category,
-                subcategory=subcategory,
-            )
-        )
     return models
 
 
@@ -492,3 +468,57 @@ def _find_documentation(library_root: Path, structure: LibraryStructure) -> List
             )
         )
     return docs
+
+
+def parse_model3d_file(file: Path, library_root: Path, structure: LibraryStructure) -> Optional[Model3D]:
+    """Parse a 3D model file and create a Model3D object."""
+    try:
+        # Get the relative path from the library root
+        rel_path = file.resolve().relative_to(library_root.resolve())
+        category_path = str(rel_path.parent).replace("\\", "/")
+        categories = category_path.split("/") if category_path else []
+
+        # Remove '3dmodels' from categories if present
+        if categories and categories[0] == '3dmodels':
+            categories = categories[1:]
+
+        # Handle .3dshapes directory
+        processed_categories = []
+        for cat in categories:
+            if cat.endswith('.3dshapes'):
+                # Use the directory name without .3dshapes as the category
+                processed_categories.append(cat[:-9].lower())
+            else:
+                processed_categories.append(cat.lower())
+
+
+        # Build library name
+        full_library_name = structure.library.prefix
+        if (
+            structure.library.naming
+            and structure.library.naming.models_3d
+            and structure.library.naming.models_3d.include_categories
+            and structure.library.naming.models_3d.category_separator
+        ):
+            for cat in processed_categories:
+                if cat:
+                    full_library_name += (
+                        structure.library.naming.models_3d.category_separator + cat.capitalize()
+                    )
+        else:
+            for cat in processed_categories:
+                full_library_name += "_" + cat.capitalize()
+
+        return Model3D(
+            name=file.stem,
+            format=file.suffix.lower().lstrip("."),
+            units="mm",
+            file_path=str(rel_path),  # Use relative path from library root
+            library_name=full_library_name,
+            properties={},
+            categories=processed_categories,  # Add the categories list
+        )
+    except Exception as e:
+        logger.error(f"Error parsing 3D model file {file}: {e}")
+        print(f"[DEBUG] Error parsing 3D model file {file}: {e}")
+        return None

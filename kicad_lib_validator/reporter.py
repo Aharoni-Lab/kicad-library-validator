@@ -404,7 +404,10 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         if not models_dir.exists():
             return "\n".join(sections + ["No 3D models directory found.", ""])
 
-        model_files = list(models_dir.rglob("*.step"))
+        # Search for both .step and .wrl files
+        model_files = []
+        for ext in [".step", ".wrl"]:
+            model_files.extend(list(models_dir.rglob(f"*{ext}")))
         if not model_files:
             return "\n".join(sections + ["No 3D model files found.", ""])
 
