@@ -12,70 +12,43 @@ from kicad_lib_validator.utils.generate_report import generate_report
 from kicad_lib_validator.utils.create_library_structure import create_directory_structure
 from kicad_lib_validator.utils.generate_library_tables import generate_library_tables
 
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(levelname)s: %(message)s",
-)
-
 def main():
-    """Run the validation on the library."""
-    # Get the library path from command line or use default
-    if len(sys.argv) > 1:
-        library_path = Path(sys.argv[1])
-    else:
-        library_path = Path("data")
-    
-    # Get the structure file path
-    structure_file = library_path / "structure.yaml"
-    
-    # Check if expected directories exist
-    expected_dirs = ["symbols", "footprints", "3dmodels", "docs", "tables"]
-    missing_dirs = [d for d in expected_dirs if not (library_path / d).exists()]
-    
-    if missing_dirs:
-        print(f"Missing directories: {', '.join(missing_dirs)}")
-        print("Creating directory structure...")
-        create_directory_structure(structure_file)
-        print("Directory structure created.")
-    
-    # Generate tables
-    print("\nGenerating library tables...")
-    generate_library_tables(structure_file)
-    print("Library tables generated.")
-    
-    # Create the validator
-    validator = KiCadLibraryValidator(library_path, structure_file)
-    
-    # Run validation
-    print("\nRunning validation...")
-    result = validator.validate()
-    
-    # Generate report
-    print("\nGenerating report...")
-    report_path = library_path / "library_report.md"
-    generate_report(
-        library_dir=library_path,
-        output_path=report_path,
-        structure_file=structure_file,
+    # Set up logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(message)s'  # Simplified format for non-debug messages
     )
-    print(f"Report saved to {report_path}")
     
-    # Print summary
-    print("\nValidation Summary:")
-    print(f"Errors: {len(result.errors)}")
-    print(f"Warnings: {len(result.warnings)}")
-    print(f"Successes: {len(result.successes)}")
+    # Create a separate debug logger that writes to stderr
+    debug_logger = logging.getLogger('debug')
+    debug_handler = logging.StreamHandler(sys.stderr)
+    debug_handler.setLevel(logging.DEBUG)
+    debug_logger.addHandler(debug_handler)
+    debug_logger.setLevel(logging.DEBUG)
     
-    if result.errors:
-        print("\nErrors:")
-        for error in result.errors:
-            print(f"  - {error}")
+    # Redirect debug messages to stderr
+    for logger_name in ['kicad_lib_validator.parser', 'kicad_lib_validator.validator']:
+        logger = logging.getLogger(logger_name)
+        logger.setLevel(logging.DEBUG)
+        logger.addHandler(debug_handler)
     
-    if result.warnings:
-        print("\nWarnings:")
-        for warning in result.warnings:
-            print(f"  - {warning}")
+    try:
+        # Generate library tables
+        print("Generating library tables...")
+        generate_library_tables(Path("structure.yaml"), verbose=True)
+        print("Library tables generated.\n")
+        
+        # Run validation
+        print("Running validation...")
+        library = parse_library(Path("data"), parse_library_structure(Path("structure.yaml")))
+        validate_library(library)
+        print("\nGenerating report...")
+        generate_report(Path("."), verbose=True)
+        print("\nReport saved to data/library_report.md")
+        
+    except Exception as e:
+        print(f"Error: {str(e)}", file=sys.stderr)
+        sys.exit(1)
 
 if __name__ == "__main__":
     main() 
