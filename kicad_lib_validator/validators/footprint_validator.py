@@ -6,7 +6,7 @@ import re
 from typing import Any, Dict, List, Optional
 
 from kicad_lib_validator.models.footprint import Footprint
-from kicad_lib_validator.models.structure import ComponentEntry, LibraryStructure, ComponentGroup
+from kicad_lib_validator.models.structure import ComponentEntry, ComponentGroup, LibraryStructure
 from kicad_lib_validator.models.validation import ValidationResult
 
 
@@ -31,14 +31,14 @@ def _find_matching_entry(
     if not structure.footprints:
         print("[DEBUG] No footprints found in the structure.")
         return None
-    
+
     # Get categories from the footprint
     categories = footprint.categories or []
     print(f"[DEBUG] Extracted categories from footprint: {categories}")
-    
+
     # Start with the root footprints group
     current_group = structure.footprints
-    
+
     # Navigate through the categories
     for category in categories[:-1]:  # All but the last category are groups
         if category not in current_group:
@@ -48,13 +48,13 @@ def _find_matching_entry(
         if not isinstance(current_group, ComponentGroup):
             print(f"[DEBUG] Expected ComponentGroup for '{category}', got {type(current_group)}")
             return None
-    
+
     # The last category should be an entry
     last_category = categories[-1] if categories else None
     if not last_category or last_category not in current_group.entries:
         print(f"[DEBUG] Entry '{last_category}' not found in group.")
         return None
-    
+
     entry = current_group.entries[last_category]
     print(f"[DEBUG] Found matching entry: {last_category}")
     return entry
@@ -63,19 +63,19 @@ def _find_matching_entry(
 def validate_footprint(footprint: Footprint, structure: LibraryStructure) -> ValidationResult:
     """Validate a footprint against the library structure."""
     result = ValidationResult()
-    
+
     # Required fields for footprints
     required_fields = ["Reference", "Value", "Datasheet", "Description"]
     for field in required_fields:
         if field not in footprint.properties:
             result.add_error(f"Missing required field: {field}")
-    
+
     # Find matching entry based on categories
     entry = _find_matching_entry(footprint, structure)
     if not entry:
         result.add_warning(f"No matching component entry found for footprint {footprint.name}")
         return result
-    
+
     # Validate required properties from the entry
     if entry.required_properties:
         for prop_name, prop_def in entry.required_properties.items():
@@ -97,7 +97,7 @@ def validate_footprint(footprint: Footprint, structure: LibraryStructure) -> Val
                     result.add_success(
                         f"Property '{prop_name}' value '{prop_value}' matches pattern: {prop_def.pattern}"
                     )
-    
+
     # Validate reference pattern if specified
     if entry.reference_pattern and "Reference" in footprint.properties:
         ref_value = footprint.properties["Reference"]
@@ -109,7 +109,7 @@ def validate_footprint(footprint: Footprint, structure: LibraryStructure) -> Val
             result.add_success(
                 f"Reference '{ref_value}' matches required pattern: {entry.reference_pattern}"
             )
-    
+
     # Validate required layers
     if entry.required_layers:
         for layer in entry.required_layers:
@@ -117,7 +117,7 @@ def validate_footprint(footprint: Footprint, structure: LibraryStructure) -> Val
                 result.add_error(f"Missing required layer: {layer}")
             else:
                 result.add_success(f"Found required layer: {layer}")
-    
+
     # Validate required pads
     if entry.required_pads:
         if (
@@ -135,7 +135,7 @@ def validate_footprint(footprint: Footprint, structure: LibraryStructure) -> Val
                     result.add_error(f"Missing required pad: {pad_name}")
                 else:
                     result.add_success(f"Found required pad: {pad_name}")
-    
+
     # Check for unknown properties
     known_props = set(required_fields)
     if entry.required_properties:
@@ -146,5 +146,5 @@ def validate_footprint(footprint: Footprint, structure: LibraryStructure) -> Val
     for prop_name in footprint.properties:
         if prop_name not in known_props and not prop_name.startswith("ki_"):
             result.add_warning(f"Unknown property: {prop_name}")
-    
+
     return result

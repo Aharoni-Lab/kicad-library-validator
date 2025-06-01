@@ -19,21 +19,23 @@ def _find_matching_entry(symbol: Symbol, structure: LibraryStructure) -> Optiona
     if not structure.symbols:
         print("[DEBUG] No symbols found in the structure.")
         return None
-    
+
     # Get the library name from the symbol
     library_name = symbol.library_name
     if not library_name:
         print("[DEBUG] No library name found in symbol.")
         return None
-    
+
     # Extract categories from the library name
     # Example: .Lab_Passive_Capacitor -> ["passive", "capacitor"]
-    categories = [cat.lower() for cat in library_name.split("_")[1:]]  # Skip the library prefix and convert to lowercase
+    categories = [
+        cat.lower() for cat in library_name.split("_")[1:]
+    ]  # Skip the library prefix and convert to lowercase
     print(f"[DEBUG] Extracted categories from library name: {categories}")
-    
+
     # Start with the root symbols group
     current_group = structure.symbols
-    
+
     # Navigate through the categories
     for category in categories[:-1]:  # All but the last category are groups
         if category not in current_group:
@@ -43,13 +45,13 @@ def _find_matching_entry(symbol: Symbol, structure: LibraryStructure) -> Optiona
         if not isinstance(current_group, ComponentGroup):
             print(f"[DEBUG] Expected ComponentGroup for '{category}', got {type(current_group)}")
             return None
-    
+
     # The last category should be an entry
     last_category = categories[-1]
     if last_category not in current_group.entries:
         print(f"[DEBUG] Entry '{last_category}' not found in group.")
         return None
-    
+
     entry = current_group.entries[last_category]
     print(f"[DEBUG] Found matching entry: {last_category}")
     return entry

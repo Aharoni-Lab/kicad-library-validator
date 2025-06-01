@@ -11,6 +11,7 @@ from .base import Position, Size
 
 class Pad(BaseModel):
     """Represents a pad in a KiCad footprint."""
+
     number: str
     type: str
     shape: str

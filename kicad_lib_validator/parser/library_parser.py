@@ -3,9 +3,9 @@ Parser for the actual KiCad library contents, using the structure definition.
 """
 
 import logging
+import re
 from pathlib import Path
 from typing import List, Optional
-import re
 
 import sexpdata  # type: ignore
 
@@ -102,10 +102,16 @@ def parse_symbol_file(
                                         # Find the symbol definition that contains pins (usually ends with _1_1)
                                         for subitem in item[2:]:
                                             if isinstance(subitem, list) and subitem:
-                                                if str(subitem[0]) == "symbol" and str(subitem[1]).endswith("_1_1"):
+                                                if str(subitem[0]) == "symbol" and str(
+                                                    subitem[1]
+                                                ).endswith("_1_1"):
                                                     # Extract pins from this symbol definition
                                                     for pin_item in subitem[2:]:
-                                                        if isinstance(pin_item, list) and pin_item and str(pin_item[0]) == "pin":
+                                                        if (
+                                                            isinstance(pin_item, list)
+                                                            and pin_item
+                                                            and str(pin_item[0]) == "pin"
+                                                        ):
                                                             pin_type = str(pin_item[1])
                                                             pin_name = None
                                                             pin_number = None
@@ -113,37 +119,78 @@ def parse_symbol_file(
                                                             pin_length = None
                                                             pin_orientation = None
                                                             pin_effects = {}
-                                                            
+
                                                             for pin_prop in pin_item[2:]:
-                                                                if isinstance(pin_prop, list) and pin_prop:
+                                                                if (
+                                                                    isinstance(pin_prop, list)
+                                                                    and pin_prop
+                                                                ):
                                                                     if str(pin_prop[0]) == "name":
                                                                         pin_name = str(pin_prop[1])
-                                                                    elif str(pin_prop[0]) == "number":
-                                                                        pin_number = str(pin_prop[1])
+                                                                    elif (
+                                                                        str(pin_prop[0]) == "number"
+                                                                    ):
+                                                                        pin_number = str(
+                                                                            pin_prop[1]
+                                                                        )
                                                                     elif str(pin_prop[0]) == "at":
                                                                         # at has format (x y angle)
-                                                                        pin_position = {"x": float(pin_prop[1]), "y": float(pin_prop[2])}
-                                                                        pin_orientation = float(pin_prop[3]) if len(pin_prop) > 3 else None
-                                                                    elif str(pin_prop[0]) == "length":
-                                                                        pin_length = float(pin_prop[1])
-                                                                    elif str(pin_prop[0]) == "effects":
+                                                                        pin_position = {
+                                                                            "x": float(pin_prop[1]),
+                                                                            "y": float(pin_prop[2]),
+                                                                        }
+                                                                        pin_orientation = (
+                                                                            float(pin_prop[3])
+                                                                            if len(pin_prop) > 3
+                                                                            else None
+                                                                        )
+                                                                    elif (
+                                                                        str(pin_prop[0]) == "length"
+                                                                    ):
+                                                                        pin_length = float(
+                                                                            pin_prop[1]
+                                                                        )
+                                                                    elif (
+                                                                        str(pin_prop[0])
+                                                                        == "effects"
+                                                                    ):
                                                                         for effect in pin_prop[1:]:
-                                                                            if isinstance(effect, list) and effect:
-                                                                                pin_effects[str(effect[0])] = effect[1:]
-                                                            
-                                                            if pin_name is not None and pin_number is not None and pin_position is not None and pin_length is not None:
-                                                                from kicad_lib_validator.models.symbol import Pin
-                                                                from kicad_lib_validator.models.base import Position
-                                                                
-                                                                pins.append(Pin(
-                                                                    name=pin_name,
-                                                                    number=pin_number,
-                                                                    type=pin_type,
-                                                                    position=Position(**pin_position),
-                                                                    length=pin_length,
-                                                                    orientation=pin_orientation,
-                                                                    effects=pin_effects
-                                                                ))
+                                                                            if (
+                                                                                isinstance(
+                                                                                    effect, list
+                                                                                )
+                                                                                and effect
+                                                                            ):
+                                                                                pin_effects[
+                                                                                    str(effect[0])
+                                                                                ] = effect[1:]
+
+                                                            if (
+                                                                pin_name is not None
+                                                                and pin_number is not None
+                                                                and pin_position is not None
+                                                                and pin_length is not None
+                                                            ):
+                                                                from kicad_lib_validator.models.base import (
+                                                                    Position,
+                                                                )
+                                                                from kicad_lib_validator.models.symbol import (
+                                                                    Pin,
+                                                                )
+
+                                                                pins.append(
+                                                                    Pin(
+                                                                        name=pin_name,
+                                                                        number=pin_number,
+                                                                        type=pin_type,
+                                                                        position=Position(
+                                                                            **pin_position
+                                                                        ),
+                                                                        length=pin_length,
+                                                                        orientation=pin_orientation,
+                                                                        effects=pin_effects,
+                                                                    )
+                                                                )
                                                 elif str(subitem[0]) == "property":
                                                     prop_name = str(subitem[1])
                                                     prop_value = str(subitem[2])
@@ -154,7 +201,7 @@ def parse_symbol_file(
                                                 library_name=full_library_name,
                                                 properties=properties,
                                                 categories=categories,
-                                                pins=pins
+                                                pins=pins,
                                             )
                                         )
                                         logging.debug(
@@ -193,24 +240,30 @@ def _find_symbols(library_root: Path, structure: LibraryStructure) -> List[Symbo
     return symbols
 
 
-def parse_footprint_file(file_path: Path, footprints_dir: Path, structure: Optional[LibraryStructure] = None) -> Optional[Footprint]:
+def parse_footprint_file(
+    file_path: Path, footprints_dir: Path, structure: Optional[LibraryStructure] = None
+) -> Optional[Footprint]:
     """Parse a KiCad footprint file and extract footprint names and properties."""
     try:
         # Get relative path from footprints directory
         rel_path = file_path.resolve().relative_to(footprints_dir)
-        
+
         # Extract categories from path
         # Example path: passive/capacitor_smd.pretty/C_0201_0603Metric.kicad_mod
         path_parts = list(rel_path.parts)
         # Remove .pretty from the directory name if present
         for i, part in enumerate(path_parts):
-            if part.endswith('.pretty'):
+            if part.endswith(".pretty"):
                 path_parts[i] = part[:-7]  # Remove .pretty suffix
         categories = path_parts[:-1]  # All parts except the filename
-        
+
         # Build library_name using prefix and categories, like for symbols
         library_name = None
-        if structure is not None and hasattr(structure, 'library') and hasattr(structure.library, 'prefix'):
+        if (
+            structure is not None
+            and hasattr(structure, "library")
+            and hasattr(structure.library, "prefix")
+        ):
             prefix = structure.library.prefix
             separator = "_"
             if (
@@ -227,62 +280,62 @@ def parse_footprint_file(file_path: Path, footprints_dir: Path, structure: Optio
         else:
             # fallback
             library_name = "_".join(["Lib"] + [cat.capitalize() for cat in categories])
-        
-        with open(file_path, 'r', encoding='utf-8') as f:
+
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
-            
+
         # Extract footprint name from file name
         footprint_name = file_path.stem
-        
+
         # Parse the content to extract properties
         properties = {}
         tags = []
         pads = []
         layers = []
-        
+
         # Import Pad model
         from kicad_lib_validator.models.footprint import Pad
-        
+
         # Initialize required KiCad fields with empty values
         properties["Datasheet"] = ""
         properties["Description"] = ""
-        
+
         # Extract properties and tags
-        for line in content.split('\n'):
+        for line in content.split("\n"):
             line = line.strip()
-            if line.startswith('(property'):
+            if line.startswith("(property"):
                 # Extract property name and value
                 match = re.search(r'property\s+"([^"]+)"\s+"([^"]+)"', line)
                 if match:
                     prop_name, prop_value = match.groups()
                     properties[prop_name] = prop_value
-            elif line.startswith('(tags'):
+            elif line.startswith("(tags"):
                 # Extract tags
                 match = re.search(r'tags\s+"([^"]+)"', line)
                 if match:
                     tags = match.group(1).split()
-            elif line.startswith('(pad'):
+            elif line.startswith("(pad"):
                 # Extract pad information
                 pad_match = re.search(r'pad\s+"([^"]+)"\s+([^\s]+)', line)
                 if pad_match:
                     pad_number = pad_match.group(1)
                     pad_type = pad_match.group(2)
                     # Extract shape, position, size, and layers
-                    shape_match = re.search(r'shape\s+([^\s]+)', line)
+                    shape_match = re.search(r"shape\s+([^\s]+)", line)
                     shape = shape_match.group(1) if shape_match else "rect"
-                    at_match = re.search(r'at\s+([\-\d.]+)\s+([\-\d.]+)(?:\s+([\-\d.]+))?', line)
+                    at_match = re.search(r"at\s+([\-\d.]+)\s+([\-\d.]+)(?:\s+([\-\d.]+))?", line)
                     if at_match:
                         x, y = float(at_match.group(1)), float(at_match.group(2))
                         rotation = float(at_match.group(3)) if at_match.group(3) else 0
                         at = [x, y, rotation]
                     else:
                         at = [0, 0, 0]
-                    size_match = re.search(r'size\s+([\-\d.]+)\s+([\-\d.]+)', line)
+                    size_match = re.search(r"size\s+([\-\d.]+)\s+([\-\d.]+)", line)
                     if size_match:
                         size = [float(size_match.group(1)), float(size_match.group(2))]
                     else:
                         size = [0, 0]
-                    layers_match = re.search(r'layers\s+([^\s]+)', line)
+                    layers_match = re.search(r"layers\s+([^\s]+)", line)
                     if layers_match:
                         pad_layers = layers_match.group(1).split()
                     else:
@@ -293,10 +346,10 @@ def parse_footprint_file(file_path: Path, footprints_dir: Path, structure: Optio
                         shape=shape,
                         at=at,
                         size=size,
-                        layers=pad_layers
+                        layers=pad_layers,
                     )
                     pads.append(pad_obj)
-        
+
         # Create Footprint object
         footprint = Footprint(
             name=footprint_name,
@@ -305,12 +358,12 @@ def parse_footprint_file(file_path: Path, footprints_dir: Path, structure: Optio
             pads=pads,
             layers=layers,
             categories=categories,
-            tags=tags
+            tags=tags,
         )
-        
+
         logger.debug(f"Extracted footprint: {footprint}")
         return footprint
-        
+
     except Exception as e:
         logger.error(f"Error parsing footprint file {file_path}: {str(e)}")
         return None
