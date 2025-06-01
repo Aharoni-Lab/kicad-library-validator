@@ -1,3 +1,7 @@
+"""
+Footprint model for KiCad libraries.
+"""
+
 from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field
@@ -6,18 +10,13 @@ from .base import Position, Size
 
 
 class Pad(BaseModel):
-    """Represents a pad in a footprint."""
-
+    """Represents a pad in a KiCad footprint."""
     number: str
-    type: str  # e.g., "thru_hole", "smd", etc.
-    position: Position
-    size: Size
+    type: str
+    shape: str
+    at: List[float] = Field(default_factory=lambda: [0, 0, 0])
+    size: List[float] = Field(default_factory=lambda: [0, 0])
     layers: List[str] = Field(default_factory=list)
-    drill: Optional[Position] = None
-    net: Optional[str] = None
-    pad_type: Optional[str] = None
-    roundrect_rratio: Optional[float] = None
-    thermal_bridge_angle: Optional[int] = None
 
 
 class Footprint(BaseModel):
@@ -28,6 +27,7 @@ class Footprint(BaseModel):
     - Value: Component value or part number
     - Datasheet: Link to component datasheet
     - Description: Component description
+    - Tags: Keywords for the footprint (defined in the tags field)
     """
 
     name: str
@@ -37,3 +37,4 @@ class Footprint(BaseModel):
     layers: List[str] = Field(default_factory=list)
     attr: Optional[Dict] = None  # Footprint attributes (through_hole, smd, etc.)
     categories: Optional[List[str]] = None  # Nested categories for structure lookup
+    tags: List[str] = Field(default_factory=list)  # Keywords for the footprint

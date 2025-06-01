@@ -6,7 +6,7 @@ import re
 from typing import Any, Dict, List, Optional
 
 from kicad_lib_validator.models.footprint import Footprint
-from kicad_lib_validator.models.structure import ComponentEntry, LibraryStructure
+from kicad_lib_validator.models.structure import ComponentEntry, LibraryStructure, ComponentGroup
 from kicad_lib_validator.models.validation import ValidationResult
 
 
@@ -29,76 +29,54 @@ def _find_matching_entry(
 ) -> Optional[ComponentEntry]:
     """Find the matching component entry in the structure for a footprint."""
     if not structure.footprints:
+        print("[DEBUG] No footprints found in the structure.")
         return None
     
-    # Get the library name from the footprint
-    library_name = footprint.library_name
-    if not library_name or library_name not in structure.footprints:
+    # Get categories from the footprint
+    categories = footprint.categories or []
+    print(f"[DEBUG] Extracted categories from footprint: {categories}")
+    
+    # Start with the root footprints group
+    current_group = structure.footprints
+    
+    # Navigate through the categories
+    for category in categories[:-1]:  # All but the last category are groups
+        if category not in current_group:
+            print(f"[DEBUG] Category '{category}' not found in structure.")
+            return None
+        current_group = current_group[category]
+        if not isinstance(current_group, ComponentGroup):
+            print(f"[DEBUG] Expected ComponentGroup for '{category}', got {type(current_group)}")
+            return None
+    
+    # The last category should be an entry
+    last_category = categories[-1] if categories else None
+    if not last_category or last_category not in current_group.entries:
+        print(f"[DEBUG] Entry '{last_category}' not found in group.")
         return None
     
-    # Get the component group for this library
-    component_group = structure.footprints[library_name]
-    
-    def check_entry_categories(entry_categories: List[str], footprint_categories: List[str]) -> bool:
-        """Check if footprint categories match the entry categories hierarchy."""
-        # If entry has no categories, it matches any footprint
-        if not entry_categories:
-            return True
-        
-        # If footprint has no categories, it only matches entries with no categories
-        if not footprint_categories:
-            return not entry_categories
-        
-        # Check if footprint categories start with the entry categories
-        # This allows for hierarchical matching (e.g., "passive/capacitor" matches "passive")
-        return all(
-            footprint_cat == entry_cat 
-            for footprint_cat, entry_cat in zip(footprint_categories, entry_categories)
-        )
-    
-    # Extract categories from the file path
-    # The path should be like "footprints/passive/capacitor_smd.pretty/C_0201_0603Metric.kicad_mod"
-    path_parts = footprint.file_path.parts
-    if len(path_parts) >= 3:  # We need at least footprints/category/subcategory
-        # Skip the first part (footprints) and use the rest as categories
-        # Also remove the .pretty suffix from the subcategory
-        categories = []
-        for part in path_parts[1:-1]:  # Remove first (footprints) and last (filename) parts
-            if part.endswith('.pretty'):
-                categories.append(part[:-7])  # Remove .pretty suffix
-            else:
-                categories.append(part)
-    else:
-        categories = []
-    
-    # Check entries in this group
-    if component_group.entries:
-        for entry_name, entry in component_group.entries.items():
-            if check_entry_categories(entry.categories, categories):
-                return entry
-    
-    # Check subgroups recursively
-    if component_group.subgroups:
-        for subgroup in component_group.subgroups.values():
-            if subgroup.entries:
-                for entry_name, entry in subgroup.entries.items():
-                    if check_entry_categories(entry.categories, categories):
-                        return entry
-    
-    return None
+    entry = current_group.entries[last_category]
+    print(f"[DEBUG] Found matching entry: {last_category}")
+    return entry
 
 
 def validate_footprint(footprint: Footprint, structure: LibraryStructure) -> ValidationResult:
     """Validate a footprint against the library structure."""
     result = ValidationResult()
-    required_fields = ["Reference", "Value", "Footprint", "Datasheet", "Description", "ki_keywords"]
+    
+    # Required fields for footprints
+    required_fields = ["Reference", "Value", "Datasheet", "Description"]
     for field in required_fields:
         if field not in footprint.properties:
             result.add_error(f"Missing required field: {field}")
+    
+    # Find matching entry based on categories
     entry = _find_matching_entry(footprint, structure)
     if not entry:
         result.add_warning(f"No matching component entry found for footprint {footprint.name}")
         return result
+    
+    # Validate required properties from the entry
     if entry.required_properties:
         for prop_name, prop_def in entry.required_properties.items():
             prop_value = None
@@ -119,6 +97,8 @@ def validate_footprint(footprint: Footprint, structure: LibraryStructure) -> Val
                     result.add_success(
                         f"Property '{prop_name}' value '{prop_value}' matches pattern: {prop_def.pattern}"
                     )
+    
+    # Validate reference pattern if specified
     if entry.reference_pattern and "Reference" in footprint.properties:
         ref_value = footprint.properties["Reference"]
         if not re.match(entry.reference_pattern, ref_value):
@@ -129,12 +109,16 @@ def validate_footprint(footprint: Footprint, structure: LibraryStructure) -> Val
             result.add_success(
                 f"Reference '{ref_value}' matches required pattern: {entry.reference_pattern}"
             )
+    
+    # Validate required layers
     if entry.required_layers:
         for layer in entry.required_layers:
             if layer not in footprint.layers:
                 result.add_error(f"Missing required layer: {layer}")
             else:
                 result.add_success(f"Found required layer: {layer}")
+    
+    # Validate required pads
     if entry.required_pads:
         if (
             entry.required_pads.count is not None
@@ -147,10 +131,12 @@ def validate_footprint(footprint: Footprint, structure: LibraryStructure) -> Val
             result.add_success(f"Pad count matches expected: {len(footprint.pads)}")
         if entry.required_pads.required_names:
             for pad_name in entry.required_pads.required_names:
-                if not any(pad == pad_name for pad in footprint.pads):
+                if not any(pad.number == pad_name for pad in footprint.pads):
                     result.add_error(f"Missing required pad: {pad_name}")
                 else:
                     result.add_success(f"Found required pad: {pad_name}")
+    
+    # Check for unknown properties
     known_props = set(required_fields)
     if entry.required_properties:
         known_props.update(entry.required_properties.keys())
@@ -160,4 +146,5 @@ def validate_footprint(footprint: Footprint, structure: LibraryStructure) -> Val
     for prop_name in footprint.properties:
         if prop_name not in known_props and not prop_name.startswith("ki_"):
             result.add_warning(f"Unknown property: {prop_name}")
+    
     return result

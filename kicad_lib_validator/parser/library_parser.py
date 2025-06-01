@@ -5,6 +5,7 @@ Parser for the actual KiCad library contents, using the structure definition.
 import logging
 from pathlib import Path
 from typing import List, Optional
+import re
 
 import sexpdata  # type: ignore
 
@@ -192,112 +193,127 @@ def _find_symbols(library_root: Path, structure: LibraryStructure) -> List[Symbo
     return symbols
 
 
-def parse_footprint_file(
-    file_path: Path, library_name: str, structure: LibraryStructure, library_root: Path
-) -> List[Footprint]:
+def parse_footprint_file(file_path: Path, footprints_dir: Path, structure: Optional[LibraryStructure] = None) -> Optional[Footprint]:
     """Parse a KiCad footprint file and extract footprint names and properties."""
-    logging.debug(f"Parsing footprint file: {file_path}")
-    footprints: List[Footprint] = []
     try:
-        if structure.library.directories and structure.library.directories.footprints:
-            footprints_dir = (library_root / structure.library.directories.footprints).resolve()
-            rel_path = file_path.relative_to(footprints_dir)
-
-            # Handle .pretty directories specially
-            path_parts = []
-            for part in rel_path.parts:
-                if part.endswith(".pretty"):
-                    # Remove .pretty from the category name
-                    path_parts.append(part[:-6])
-                else:
-                    path_parts.append(part)
-
-            # Remove the filename from the path parts
-            path_parts = path_parts[:-1]
-
-            # Get category and subcategory
-            category = path_parts[0] if path_parts else None
-            subcategory = path_parts[1] if len(path_parts) > 1 else None
-
-            full_library_name = library_name
+        # Get relative path from footprints directory
+        rel_path = file_path.resolve().relative_to(footprints_dir)
+        
+        # Extract categories from path
+        # Example path: passive/capacitor_smd.pretty/C_0201_0603Metric.kicad_mod
+        path_parts = list(rel_path.parts)
+        # Remove .pretty from the directory name if present
+        for i, part in enumerate(path_parts):
+            if part.endswith('.pretty'):
+                path_parts[i] = part[:-7]  # Remove .pretty suffix
+        categories = path_parts[:-1]  # All parts except the filename
+        
+        # Build library_name using prefix and categories, like for symbols
+        library_name = None
+        if structure is not None and hasattr(structure, 'library') and hasattr(structure.library, 'prefix'):
+            prefix = structure.library.prefix
+            separator = "_"
             if (
-                structure.library.naming
+                hasattr(structure.library, "naming")
+                and structure.library.naming
+                and hasattr(structure.library.naming, "footprints")
                 and structure.library.naming.footprints
-                and structure.library.naming.footprints.include_categories
+                and hasattr(structure.library.naming.footprints, "category_separator")
+                and structure.library.naming.footprints.category_separator
             ):
-                for cat in path_parts:
-                    if cat and structure.library.naming.footprints.category_separator:
-                        full_library_name += (
-                            structure.library.naming.footprints.category_separator
-                            + cat.capitalize()
-                        )
-            with open(file_path, "r", encoding="utf-8") as f:
-                raw_data = f.read()
-                if not raw_data.strip():
-                    logging.error(f"Empty footprint file: {file_path}")
-                    return footprints
-
-                logging.debug(f"Raw file content: {raw_data[:200]}...")  # Print first 200 chars
-                try:
-                    data = sexpdata.loads(raw_data)
-                except Exception as e:
-                    logging.error(f"Failed to parse footprint file {file_path}: {e}")
-                    return footprints
-
-                logging.debug(f"Parsed data type: {type(data)}")
-                logging.debug(f"Parsed data: {data}")
-
-                if not isinstance(data, list) or not data:
-                    logging.error(f"Invalid footprint data in {file_path}: expected non-empty list")
-                    return footprints
-
-                logging.debug(f"data[0] type: {type(data[0])}, value: {data[0]}")
-                # Accept both (footprint ...) and (kicad_module ...)
-                if str(data[0]) in ("footprint", "kicad_module"):
-                    if len(data) < 2:
-                        logging.error(f"Invalid footprint data in {file_path}: missing name")
-                        return footprints
-
-                    footprint_name = str(data[1])
-                    properties = {}
-                    layers = []
-                    pads = []
-
-                    for prop in data[2:]:
-                        if isinstance(prop, list) and prop:
-                            if str(prop[0]) == "property":
-                                if len(prop) >= 3:
-                                    prop_name = str(prop[1])
-                                    prop_value = str(prop[2])
-                                    properties[prop_name] = prop_value
-                            elif str(prop[0]) == "layer":
-                                if len(prop) >= 2:
-                                    layers.append(str(prop[1]))
-                            elif str(prop[0]) == "pad":
-                                if len(prop) >= 2:
-                                    pads.append(str(prop[1]))
-
-                    footprint = Footprint(
-                        name=footprint_name,
-                        library_name=full_library_name,
-                        properties=properties,
-                        layers=layers,
-                        pads=pads,
-                        category=category,
-                        subcategory=subcategory,
+                separator = structure.library.naming.footprints.category_separator
+            # Capitalize categories if needed (to match symbol logic)
+            library_name = prefix + separator.join(cat.capitalize() for cat in categories)
+        else:
+            # fallback
+            library_name = "_".join(["Lib"] + [cat.capitalize() for cat in categories])
+        
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+            
+        # Extract footprint name from file name
+        footprint_name = file_path.stem
+        
+        # Parse the content to extract properties
+        properties = {}
+        tags = []
+        pads = []
+        layers = []
+        
+        # Import Pad model
+        from kicad_lib_validator.models.footprint import Pad
+        
+        # Initialize required KiCad fields with empty values
+        properties["Datasheet"] = ""
+        properties["Description"] = ""
+        
+        # Extract properties and tags
+        for line in content.split('\n'):
+            line = line.strip()
+            if line.startswith('(property'):
+                # Extract property name and value
+                match = re.search(r'property\s+"([^"]+)"\s+"([^"]+)"', line)
+                if match:
+                    prop_name, prop_value = match.groups()
+                    properties[prop_name] = prop_value
+            elif line.startswith('(tags'):
+                # Extract tags
+                match = re.search(r'tags\s+"([^"]+)"', line)
+                if match:
+                    tags = match.group(1).split()
+            elif line.startswith('(pad'):
+                # Extract pad information
+                pad_match = re.search(r'pad\s+"([^"]+)"\s+([^\s]+)', line)
+                if pad_match:
+                    pad_number = pad_match.group(1)
+                    pad_type = pad_match.group(2)
+                    # Extract shape, position, size, and layers
+                    shape_match = re.search(r'shape\s+([^\s]+)', line)
+                    shape = shape_match.group(1) if shape_match else "rect"
+                    at_match = re.search(r'at\s+([\-\d.]+)\s+([\-\d.]+)(?:\s+([\-\d.]+))?', line)
+                    if at_match:
+                        x, y = float(at_match.group(1)), float(at_match.group(2))
+                        rotation = float(at_match.group(3)) if at_match.group(3) else 0
+                        at = [x, y, rotation]
+                    else:
+                        at = [0, 0, 0]
+                    size_match = re.search(r'size\s+([\-\d.]+)\s+([\-\d.]+)', line)
+                    if size_match:
+                        size = [float(size_match.group(1)), float(size_match.group(2))]
+                    else:
+                        size = [0, 0]
+                    layers_match = re.search(r'layers\s+([^\s]+)', line)
+                    if layers_match:
+                        pad_layers = layers_match.group(1).split()
+                    else:
+                        pad_layers = []
+                    pad_obj = Pad(
+                        number=pad_number,
+                        type=pad_type,
+                        shape=shape,
+                        at=at,
+                        size=size,
+                        layers=pad_layers
                     )
-                    footprints.append(footprint)
-                    logging.debug(
-                        f"Extracted footprint: {footprint_name} with properties: {properties}"
-                    )
-                else:
-                    logging.error(
-                        f"Invalid footprint data in {file_path}: expected 'footprint' or 'kicad_module'"
-                    )
+                    pads.append(pad_obj)
+        
+        # Create Footprint object
+        footprint = Footprint(
+            name=footprint_name,
+            library_name=library_name,
+            properties=properties,
+            pads=pads,
+            layers=layers,
+            categories=categories,
+            tags=tags
+        )
+        
+        logger.debug(f"Extracted footprint: {footprint}")
+        return footprint
+        
     except Exception as e:
-        logging.error(f"Error parsing footprint file {file_path}: {e}")
-    logging.debug(f"Returning footprints from {file_path}: {footprints}")
-    return footprints
+        logger.error(f"Error parsing footprint file {file_path}: {str(e)}")
+        return None
 
 
 def _find_footprints(library_root: Path, structure: LibraryStructure) -> List[Footprint]:
@@ -318,9 +334,9 @@ def _find_footprints(library_root: Path, structure: LibraryStructure) -> List[Fo
         for file in footprints_dir.rglob("*.kicad_mod"):
             logger.info(f"Found footprint file: {file}")
             print(f"[DEBUG] Found footprint file: {file.resolve()}")
-            footprints.extend(
-                parse_footprint_file(file, structure.library.prefix, structure, library_root)
-            )
+            footprint = parse_footprint_file(file, abs_footprints_dir, structure)
+            if footprint:
+                footprints.append(footprint)
     return footprints
 
 
